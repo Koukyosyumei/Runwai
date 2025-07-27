@@ -96,7 +96,15 @@ rel_op ::= "<" | "<=" | ">" | ">=" | "==" | "!="
 ──────────────────────────────────────────── (T-FIELD-OP)
 Γ ⊢ e₁ ⊕ e₂ : {ν: F | ν = e₁ ⊕ e₂}
 
-// 
+// Lookup operation
+Γ.lookups(table) = T₁ → T₂,    Γ ⊢ key : T₁
+──────────────────────────────────────────── (T-LOOKUP)
+Γ ⊢ lookup(table, key) : T₂
+
+// Constraint assertion
+Γ ⊢ e₁ : {ν: F | φ₁}, Γ ⊢ e₂ : {ν: F | φ₂}
+──────────────────────────────────────────── (T-ASSERT)
+Γ ⊢ assert e : {ν: Unit | e₁ = e₂}
 ```
 
 ## Subtyping Rule
