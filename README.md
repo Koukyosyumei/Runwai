@@ -14,11 +14,11 @@ circuit_def        ::= "circuit" ID "{"
                        "}"
  
 public_values_decl ::= "public_values" "{" 
-                          (ID ":" type ";")*
+                          (ID ":" refinment_type ";")*
                        "}"
 
 columns_decl       ::= "columns" "{"
-                          (ID ":" type ";")*
+                          (ID ":" refinment_type ";")*
                        "}"
 
 constraints_decl   ::= "constraints" "{" statement* "}"
@@ -54,4 +54,26 @@ statement ::= "assert" "(" expr ")" ";"
 lookup_stmt ::= "lookup" "(" ID "," expr_list ")"
 
 range ::= field_literal ".." field_literal // Exclusive range
+```
+
+- Type System
+
+```c
+refinement_type ::= base_type
+                  | "{" ID ":" base_type "|" formula "}"
+
+base_type ::= "F"                       // Field element
+            | "[" base_type "]" "^" nat // Fixed-size array
+            | "Bool"                    // Boolean (sugar for {v: F | binary(v)})
+
+formula ::= expr                                        // Boolean expression
+          | "binary" "(" expr ")"                       // Binary constraint  
+          | "range" "(" expr "," expr ")"               // Range constraint [min, max)
+          | "toNat" "(" expr ")" rel_op expr            // Conversion + comparison
+          | formula "∧" formula                        // Conjunction
+          | formula "∨" formula                        // Disjunction  
+          | "∀" ID ":" base_type "." formula           // Universal quantification
+          | "if" formula "then" formula "else" formula  // Conditional
+
+rel_op ::= "<" | "<=" | ">" | ">=" | "==" | "!="
 ```
