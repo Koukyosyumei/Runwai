@@ -2,6 +2,8 @@
 
 User-Friendly DSL for AIR constraints of Zero-Knowledge Circuits with Refinement Types
 
+## Syntax
+
 - Program Structure
 
 ```c
@@ -80,3 +82,21 @@ formula ::= expr                                        // Boolean expression
 
 rel_op ::= "<" | "<=" | ">" | ">=" | "==" | "!="
 ```
+
+## Typing Rule
+
+```c
+// Variable reference
+Γ(x) = {ν: T | φ}
+──────────────────── (T-VAR)
+Γ ⊢ x : {ν: T | ν = x}
+
+// Field operations  
+Γ ⊢ e₁ : {ν: F | φ₁}    Γ ⊢ e₂ : {ν: F | φ₂}
+──────────────────────────────────────────── (T-FIELD-OP)
+Γ ⊢ e₁ ⊕ e₂ : {ν: F | ν = e₁ ⊕ e₂}
+
+// 
+```
+
+## Subtyping Rule
