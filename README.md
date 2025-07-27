@@ -108,3 +108,103 @@ rel_op ::= "<" | "<=" | ">" | ">=" | "==" | "!="
 ```
 
 ## Subtyping Rule
+
+## Example
+
+```c
+// Example
+
+circuit Fib {
+	public_values {
+		final_value: F;
+	}
+
+	columns {
+		// there is an unexplicit column `row_id`
+		// define registers
+		x1: F;
+		x2: F;
+	}
+	
+	constraints {
+		// curr is equivalent to row[i]
+		// next is equivalent to row[i+1]
+	
+	  // is_first_row() is equivalent to curr.row_id == 0
+		if is_first_row() {
+			assert(curr.x1 == 0);
+			assert(curr.x2 == 1);
+		}
+		
+		
+		// is_transition() is equivalent to curr.row_id < NUM_ROW - 1
+		if is_transition() {
+			// when is_transition, the existence of next should be gurantted
+			assert(next.x1 == curr.x2);
+			assert(next.x2 == curr.x1 + curr.x2);
+		}
+		
+		// is_last_row() is equivalent to curr.row_id == NUM_ROW - 1, where NUM_ROW is a symbolic var
+		if is_last_row() {
+			// should not be able to access `next`.
+			assert(curr.x2 == final_value);
+		}
+		
+		// We want to prove that `curr.x2: {v : F | \forall{curr.row_id} 2 * v = clk * (clk + 1)}`
+}
+
+circuit CloClz {
+	columns {
+		a: [F]^4    // results
+		b: [F]^4    // inputs
+    bb: [F]^4;
+    sr1: [F]^4;
+    is_clz: F;
+    is_clo: F;
+    is_real: F;
+	}
+	
+	constraints {
+		for i in 0..4 {
+			if (cur.is_clo) {
+				assert(curr.b[0] + curr.b[1] == 255);
+			}
+			if (cur.is_clz) {
+				assert(curr.b[0], curr.b[1]);
+			}
+		}
+		// TODO: range check of curr.bb
+		
+    // ensure result < 33
+    // Send the comparison lookup.
+    if (curr.is_real) {
+	    lookup(LTU, curr.a[0], 33);
+	    // We should be able to derive `curr.a[0] : {v: F | toNat(v) < 33}` from this lookup
+	    assert(curr.a[1] == 0);
+	    assert(curr.a[2] == 0);
+	    assert(curr.a[3] == 0);
+    }
+    
+    // curr.is_bb_zero is boolean
+    assert(curr.is_bb_zero * (curr.is_bb_zero - 1) == 0);
+    
+    if (curr.is_bb_zero) {
+	    assert(curr.bb.reduce() == 0);
+	    assert(curr.a[0] == 32);
+    }
+    
+    // check sr1 = bb >> (31 - result)
+    lookup(SRL, sr1, bb, (31 - curr.a[0]));
+    
+    if (!curr.is_bb_zero) {
+	    assert(curr.sr1.reduce() == 1);
+    }
+    
+    assert(curr.is_clo * (curr.is_clo - 1) == 0);
+    assert(curr.is_clz * (curr.is_clz - 1) == 0);
+    assert(curr.is_clo + curr.is_clz == 1);
+    
+    // We want to prove that `curr.a[0] | {v: F | if is_clz == 1 then (b >> (32 - curr.a[0] + 1)) == 1 && b >> (32 - result) == 0 else ..}`
+	}
+}
+```
