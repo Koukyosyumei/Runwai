@@ -1,2 +1,3 @@
-# Daruma
-User-Friendly DSL for Zero-Knowledge Circuits via IR-based Verification
+# Norito
+
+User-Friendly DSL for AIR constraints of Zero-Knowledge Circuits with Refinment Types
