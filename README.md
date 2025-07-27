@@ -4,7 +4,7 @@ User-Friendly DSL for AIR constraints of Zero-Knowledge Circuits with Refinement
 
 - Program Structure
 
-```bash
+```c
 program            ::= circuit_def*
 
 circuit_def        ::= "circuit" ID "{" 
@@ -26,7 +26,7 @@ constraints_decl   ::= "constraints" "{" statement* "}"
 
 - Expression Syntax
 
-```bash
+```c
 expr ::= ID                                // Variable reference
        | field_literal                     // Field constant  
        | "curr" "." ID                     // Current row
