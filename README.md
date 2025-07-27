@@ -33,7 +33,7 @@ expr ::= ID                                // Variable reference
        | "next" "." ID                     // Next row
        | "lookup" "(" ID "," expr_list ")" // Lookup operation
        | expr bin_op expr                  // Binary operations
-       | "assert" "(" expr ")"             // Constraint assertion
+       | "assert_eq" "(" expr "," expr ")" // Constraint assertion
        | "(" expr ")"                      // Parentheses
        | array_expr                        // Array operations
        | builtin_fn "(" ")"                // Built-in predicates
@@ -46,7 +46,7 @@ builtin_fn ::= "is_first_row" | "is_transition" | "is_last_row"
 
 bin_op ::= "+" | "-" | "*" | "==" | "!="
 
-statement ::= "assert" "(" expr ")" ";"
+statement ::= "assert_eq" "(" expr "," expr ")" ";"
             | "if" "(" expr ")" "{" statement* "}"
             | "for" ID "in" range "{" statement* "}"
             | lookup_stmt ";"
@@ -65,6 +65,9 @@ refinement_type ::= base_type
 base_type ::= "F"                       // Field element
             | "[" base_type "]" "^" nat // Fixed-size array
             | "Bool"                    // Boolean (sugar for {v: F | binary(v)})
+
+function_type ::= base_type
+                | x: function_type "→" function_type
 
 formula ::= expr                                        // Boolean expression
           | "binary" "(" expr ")"                       // Binary constraint  
