@@ -14,8 +14,8 @@ circuit Fib {
   // _NUM_ROWS can be symbolic, but users might be able to assign a concrete value.
   // _trace: [F, _NUM_COLS] × _NUM_ROWS;
 
-  // auxilirary values
-  auxilirary_values {
+  // auxiliary values
+  auxiliary_values {
     final_value: F
   }
 
@@ -133,6 +133,7 @@ circuit CloClz {
     assert_eq(curr.is_clo + curr.is_clz, 1);
     
     // We want to prove that `curr.a[0] | {v: F | if is_clz == 1 then (b >> (32 - curr.a[0] + 1)) == 1 && b >> (32 - result) == 0 else ..}`
+    // We need to allow non-quadratic operations inside the predicate of the refinment types.
 	}
 }
 ```
@@ -142,23 +143,23 @@ circuit CloClz {
 - Program Structure
 
 ```c
-program            ::= circuit_def*
+program               ::= circuit_def*
 
-circuit_def        ::= "circuit" ID "{" 
-                          public_values_decl?
-                          columns_decl
-                          constraints_decl
-                       "}"
+circuit_def           ::= "circuit" ID "{" 
+                            auxiliary_values_decl?
+                            columns_decl
+                            constraints_decl
+                          "}"
  
-public_values_decl ::= "public_values" "{" 
-                          (ID ":" refinment_type ";")*
-                       "}"
+auxiliary_values_decl ::= "auxiliary_values" "{" 
+                            (ID ":" refinment_type ";")*
+                          "}"
 
-columns_decl       ::= "columns" "{"
-                          (ID ":" refinment_type ";")*
-                       "}"
+columns_decl          ::= "columns" "{"
+                            (ID ":" refinment_type ";")*
+                          "}"
 
-constraints_decl   ::= "constraints" "{" statement* "}"
+constraints_decl      ::= "constraints" "{" statement* "}"
 ```
 
 - Expression Syntax
@@ -171,6 +172,7 @@ expr ::= ID                                // Variable reference
        | "lookup" "(" ID "," expr_list ")" // Lookup operation
        | expr bin_op expr                  // Binary operations
        | "assert_eq" "(" expr "," expr ")" // Constraint assertion
+       | "if" "{" expr "}"                 // If-branch 
        | "(" expr ")"                      // Parentheses
        | array_expr                        // Array operations
        | builtin_fn "(" ")"                // Built-in predicates
@@ -196,26 +198,31 @@ range ::= field_literal ".." field_literal // Exclusive range
 - Type System
 
 ```c
-refinement_type ::= base_type
-                  | "{" ID ":" base_type "|" formula "}"
+// Basic Types
+T ::= "F"                                  // Field element
+    | "Bool"                               // Boolean (alias for {v: F | v * (v - 1) == 0})
+    | T1 × · · · × Tn                      // Product (Unit denotes empty)
+    | "[" T "]" "^" nat                    // Fixed-size array
+    | "{" ID ":" base_type "|" formula "}" // Refinment type
 
-base_type ::= "F"                       // Field element
-            | "[" base_type "]" "^" nat // Fixed-size array
-            | "Bool"                    // Boolean (sugar for {v: F | binary(v)})
-
-function_type ::= base_type
+function_type ::= T
                 | x: function_type "→" function_type
 
 formula ::= expr                                        // Boolean expression
-          | "binary" "(" expr ")"                       // Binary constraint  
-          | "range" "(" expr "," expr ")"               // Range constraint [min, max)
-          | "toNat" "(" expr ")" rel_op expr            // Conversion + comparison
+          | refinment_terms
           | formula "∧" formula                        // Conjunction
           | formula "∨" formula                        // Disjunction  
           | "∀" ID ":" base_type "." formula           // Universal quantification
           | "if" formula "then" formula "else" formula  // Conditional
 
+refinment_terms ::= true | false
+                  | expr
+                  | "toNat" "(" refinment_terms ")"
+                  | refinment_terms rel_op refinment_terms
+                  | refinment_terms nonquadratic_op refinment_terms
+
 rel_op ::= "<" | "<=" | ">" | ">=" | "==" | "!="
+nonquadratic_op ::= "/" | "<<" | ">>"
 ```
 
 ## Typing Rule
@@ -225,6 +232,11 @@ rel_op ::= "<" | "<=" | ">" | ">=" | "==" | "!="
 Γ(x) = {ν: T | φ}
 ──────────────────── (T-VAR)
 Γ ⊢ x : {ν: T | ν = x}
+
+// Constant Field
+f \in F
+──────────────────────── (T-CONSTF)
+Γ ⊢ f : {ν: F | ν = f}
 
 // Field operations  
 Γ ⊢ e₁ : {ν: F | φ₁}    Γ ⊢ e₂ : {ν: F | φ₂}
@@ -240,27 +252,35 @@ rel_op ::= "<" | "<=" | ">" | ">=" | "==" | "!="
 Γ ⊢ e₁ : {ν: F | φ₁}, Γ ⊢ e₂ : {ν: F | φ₂}
 ──────────────────────────────────────────── (T-ASSERT)
 Γ ⊢ assert e : {ν: Unit | e₁ = e₂}
-```
 
-It might be interesting to introduce `mathematical-induction` typing rule (something like the bellow)
+// Sub-Type
+Γ ⊢ e : T'          Γ ⊢ T' <: T
+──────────────────────────────────── (T-SUB)
+Γ ⊢ e : T
 
-```
-Γ ⊢ row[0] : {ν: F | φ}    
-Γ ⊢ row[i] : {ν: F | φ} \to Γ ⊢ row[i+1] : {ν: F | φ}
+// Mathematical Induction
+Γ ⊢ _trace[0] : {ν: T | φ}    
+Γ ⊢ _trace[i] : {ν: T | φ} \to Γ ⊢ _trace[i+1] : {ν: T | φ}
 ────────────────────────────────────────────────────────── (T-INDUCTION)
-\forall{i}. Γ ⊢ row[i] : {ν: F | φ}   
+\forall{i}. Γ ⊢ _trace[i] : {ν: T | φ}   
 ```
 
 ## Subtyping Rule
 
 ```c
-────────────────────────────────── (S-REFL)
+────────────────────────────────── (SUB-REFL)
 Γ ⊢ T <: T
+
+Γ ⊢ T1 <: T2  Γ ⊢ T2 <: T3 
+────────────────────────────────── (SUB-TRANS)
+Γ ⊢ T1 <: T3
 
 Γ ⊢ T₁ <: T₂    P ≡ φ₁ → φ₂
 ∀v. Encode(Γ) → P
-────────────────────────────────── (S-REFINE)
+────────────────────────────────── (SUB-REFINE)
 Γ ⊢ {ν: T₁ | φ₁} <: {ν: T₂ | φ₂}
 
-
+Γ ⊢ Ti <: Ti' for all i \in {0, ..., n}
+───────────────────────────────────────── (SUB-PRODUCT)
+Γ ⊢ T1 × . . . × Tn <: T1' × . . . × Tn'
 ```
