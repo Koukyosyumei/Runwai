@@ -2,6 +2,31 @@
 
 User-Friendly DSL for AIR constraints of Zero-Knowledge Circuits with Refinement Types
 
+## Design Memo
+
+Air constraints are essentially constraints on the trace, which is a matrix on the finite field.
+
+`curr` can be viewd as `row[i]`, where the type of `row[i]` is exactly the tuple of columns defined in `columns` section.
+
+For example, if columns is `columns {a: F, b: [F]^2}`, the base type of `row[i]` is `(F, [F]^2)`.
+
+`next` can be viewd as `row[i+1]`.
+
+`is_first_row` means `i == 0`.
+
+`is_last_row` means `i == NUM_ROW - 1`, where `NUM_ROW` can be defined as symbolic variable (or a constant number).
+
+`is_transition` means that `i < NUM_ROW - 1`.
+
+It might be interesting to introduce `mathematical-induction` typing rule (something like the bellow)
+
+```
+Γ ⊢ row[0] : {ν: F | φ}    
+Γ ⊢ row[i] : {ν: F | φ} \to Γ ⊢ row[i+1] : {ν: F | φ}
+────────────────────────────────────────────────────────── (T-INDUCTION)
+\forall{i}. Γ ⊢ row[i] : {ν: F | φ}   
+```
+
 ## Syntax
 
 - Program Structure
@@ -109,13 +134,25 @@ rel_op ::= "<" | "<=" | ">" | ">=" | "==" | "!="
 
 ## Subtyping Rule
 
+```c
+──────────────────────────── (S-REFL)
+Γ ⊢ T <: T
+
+Γ ⊢ T₁ <: T₂    P ≡ φ₁ → φ₂
+∀v. Encode(Γ) → P
+──────────────────────────── (S-REFINE)
+Γ ⊢ {ν: T₁ | φ₁} <: {ν: T₂ | φ₂}
+
+
+```
+
 ## Example
 
 ```c
 // Example
 
 circuit Fib {
-	public_values {
+  public_values {
 		final_value: F;
 	}
 
