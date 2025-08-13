@@ -37,6 +37,9 @@ inductive SubtypeJudgment :
       SubtypeJudgment σ Δ Γ (pure τ₂) (pure τ₃) →
       SubtypeJudgment σ Δ Γ (pure τ₁) (pure τ₃)
 
+  --| TSub_Field {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {φ : Ast.Predicate} :
+  --    SubtypeJudgment σ Δ Γ (pure (Ast.Ty.refin Ast.Ty.field φ)) (pure Ast.Ty.field)
+
   /-- TSUB-REFINE: Refinement subtyping -/
   | TSub_Refine {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} :
       SubtypeJudgment σ Δ Γ (pure T₁) (pure T₂) →
@@ -75,6 +78,17 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
     Env.lookupTy Γ f = (Ast.Ty.func x τ₁ τ₂) →
     TypeJudgment Γ (Ast.Expr.var f) (Ast.Ty.func x τ₁ τ₂)
 
+  --| TE_TriF {Γ: Env.TyEnv} {e: Ast.Expr}:
+  --  TypeJudgment Γ e (Ast.Ty.field) →
+  --  TypeJudgment Γ e (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.const (Ast.Expr.constBool true)))
+
+  -- TE-ARRY-INDEX
+  | TE_ArrayIndex {Γ: Env.TyEnv} {e idx: Ast.Expr} {τ: Ast.Ty} {n: Int} {i: F} {φ: Ast.Predicate}:
+    TypeJudgment Γ e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
+    Eval.EvalProp σ Δ idx (Ast.Value.vF i) →
+    i.toNat ≤ n →
+    TypeJudgment Γ (Ast.Expr.arrIdx e idx) τ
+
   -- TE-BRANCH
   | TE_Branch {Γ: Env.TyEnv} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty}:
     TypeJudgment Γ e₁ τ →
@@ -89,7 +103,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
   | TE_Assert {Γ: Env.TyEnv} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate}:
     TypeJudgment Γ e₁ (Ast.Ty.refin (Ast.Ty.field) φ₁) →
     TypeJudgment Γ e₂ (Ast.Ty.refin (Ast.Ty.field) φ₂) →
-    TypeJudgment Γ (Ast.Expr.assertE e₁ e₂) (Ast.Ty.refin Ast.Ty.bool (Ast.Predicate.const (Ast.exprEq e₁ e₂)))
+    TypeJudgment Γ (Ast.Expr.assertE e₁ e₂) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.const (Ast.exprEq e₁ e₂)))
 
   -- TE-BINOPFIELD
   | TE_BinOpField {Γ: Env.TyEnv} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.FieldOp}:
