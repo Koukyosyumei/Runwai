@@ -4,5 +4,5 @@
 > This tool is under active development. Usage patterns and features may change over time.
 
 <p align="center">
-    <img src="./img/logo-runway-drawio.svg" alt="Loda Logo" height="126">
+    <img src="./img/logo-runway-drawio.svg" alt="Loda Logo" height="150">
 </p>
