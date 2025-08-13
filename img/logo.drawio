@@ -1,0 +1,22 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36" version="28.1.0">
+  <diagram name="ページ1" id="H9DLqD_fg-c9619jVLe8">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Vucp7RwmlvXDFQS7CCig-3" value="" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#121212;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="319" y="220" width="210" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="Vucp7RwmlvXDFQS7CCig-4" value="" style="rounded=1;whiteSpace=wrap;html=1;rotation=90;fillColor=none;strokeColor=#00F5FF;" vertex="1" parent="1">
+          <mxGeometry x="375.5" y="275.5" width="98" height="73" as="geometry" />
+        </mxCell>
+        <mxCell id="Vucp7RwmlvXDFQS7CCig-2" value="" style="shape=mxgraph.signs.transportation.airplane_6;html=1;pointerEvents=1;fillColor=#FFFFFF;strokeColor=#00F5FF;verticalLabelPosition=bottom;verticalAlign=top;align=center;labelBorderColor=none;textShadow=0;" vertex="1" parent="1">
+          <mxGeometry x="375.5" y="250" width="97" height="101" as="geometry" />
+        </mxCell>
+        <mxCell id="Vucp7RwmlvXDFQS7CCig-6" value="&lt;font style=&quot;color: rgb(224, 255, 255);&quot;&gt;&lt;b style=&quot;&quot;&gt;Runwai&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=23;fontFamily=Tahoma;" vertex="1" parent="1">
+          <mxGeometry x="394" y="370" width="60" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
