@@ -3,7 +3,6 @@ import Runwai.Typing
 @[simp]
 def assertCircuit : Ast.Circuit := {
   name   := "assert",
-  height := 2,
   width  := 2,
   goal   := Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constF 1)) (Ast.Expr.constF 0))
               Ast.RelOp.eq (Ast.Expr.constF 2),
@@ -15,12 +14,12 @@ def assertCircuit : Ast.Circuit := {
 
 def Δ : Env.CircuitEnv := [("assert", assertCircuit)]
 
-theorem assertCircuit_correct : (Ty.circuitCorrect Δ assertCircuit) := by
+theorem assertCircuit_correct : (Ty.circuitCorrect Δ assertCircuit 1) := by
   unfold Ty.circuitCorrect
   unfold assertCircuit
   simp_all
-  intro x i hs hi hσ
-  set envs := Ty.makeEnvs assertCircuit x i
+  intro x i height hs hi hσ
+  set envs := Ty.makeEnvs assertCircuit x i height
   set σ := envs.1
   set Γ := envs.2
   apply Ty.TypeJudgment.TE_LetIn

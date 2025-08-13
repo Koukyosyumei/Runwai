@@ -116,7 +116,6 @@ def v: Expr := Expr.var ".v"
 
 structure Circuit where
   name   : String
-  height : ℤ
   width  : ℤ
   goal   : Ast.Expr
   body   : Ast.Expr
@@ -207,14 +206,13 @@ instance : Repr Circuit where
     Format.text s!
 "Circuit \{
   name   := \"{c.name}\",
-  shape  := ({c.height} × {c.width}),
+  width  := {c.width},
   goal   := {repr c.goal},
   body   := {repr c.body}
 }"
 
 def DefaultCircuit : Circuit := {
     name   := "dummy"
-    height := 0
     width  := 0
     goal   := Ast.Expr.constBool true
     body   := Expr.assertE (Expr.constF 1) (Expr.constF 1)
