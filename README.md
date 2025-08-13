@@ -1,4 +1,4 @@
-# Runwai
+# Runwai: Where zk Proofs Take Flight
 
 > [!IMPORTANT]
 > This tool is under active development. Usage patterns and features may change over time.
