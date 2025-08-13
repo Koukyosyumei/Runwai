@@ -36,6 +36,11 @@ def evalRelOp (op: RelOp) : Value → Value → Option Bool
     | RelOp.eq => i = j
     | RelOp.lt => i.val % p < j.val % p
     | RelOp.le => i.val % p ≤ j.val % p
+  | Value.vZ i, Value.vZ j =>
+    some $ match op with
+    | RelOp.eq => i = j
+    | RelOp.lt => i < j
+    | RelOp.le => i ≤ j
   | _, _ => none
 
 /-- Evaluate a boolean operator `op` on two `Value.bool` arguments. -/
@@ -51,6 +56,7 @@ mutual
   inductive EvalProp : ValEnv → CircuitEnv → Expr → Value → Prop
     -- E‑VALUE
     | ConstF        {σ Δ v} : EvalProp σ Δ (Expr.constF v) (Value.vF v)
+    | ConstZ        {σ Δ v} : EvalProp σ Δ (Expr.constZ v) (Value.vZ v)
     | ConstBool     {σ Δ b} : EvalProp σ Δ (Expr.constBool b) (Value.vBool b)
     | ConstArr  {σ Δ xs es} (ih : ∀ xe ∈ List.zip xs es, EvalProp σ Δ xe.fst xe.snd) :
       EvalProp σ Δ (Expr.arr xs) (Value.vArr es)
@@ -113,12 +119,14 @@ mutual
         (idx : vs[j.toNat]? = some v) :
         EvalProp σ Δ (Expr.arrIdx a i) v
 
+    /-
     -- E‑CREF
     | CircRef  {σ Δ name arg v c out}
         (iha : EvalProp σ Δ arg v)
         (ic  : lookupCircuit Δ name = c)
         (ihb : EvalProp (updateVal σ name v) Δ c.body out) :
         EvalProp σ Δ (Expr.circRef name arg) out
+    -/
 end
 
 end Eval

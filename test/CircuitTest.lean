@@ -3,12 +3,10 @@ import Runwai.Typing
 @[simp]
 def assertCircuit : Ast.Circuit := {
   name   := "assert",
-  inputs := ("trace", Ast.Ty.refin (Ast.Ty.arr (Ast.Ty.refin (Ast.Ty.arr (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.const (Ast.Expr.constBool true))) 2) (Ast.Predicate.const (Ast.Expr.constBool True))) 2) (Ast.Predicate.const (Ast.Expr.constBool true))),
-  output := ("u", Ast.Ty.refin (Ast.Ty.unit)
-                      (Ast.Predicate.const (Ast.Expr.binRel
-                        (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constF 1)) (Ast.Expr.constF 0))
-                        Ast.RelOp.eq
-                        (Ast.Expr.constF 2)))),
+  height := 2,
+  width  := 2,
+  goal   := Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constF 1)) (Ast.Expr.constF 0))
+              Ast.RelOp.eq (Ast.Expr.constF 2),
   body   := (Ast.Expr.letIn "u" (Ast.Expr.assertE
               (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constF 1)) (Ast.Expr.constF 0))
               (Ast.Expr.constF 2))
@@ -21,8 +19,8 @@ theorem assertCircuit_correct : (Ty.circuitCorrect Δ assertCircuit) := by
   unfold Ty.circuitCorrect
   unfold assertCircuit
   simp_all
-  intro x hs hi hσ
-  set envs := Ty.makeEnvs assertCircuit x
+  intro x i hs hi hσ
+  set envs := Ty.makeEnvs assertCircuit x i
   set σ := envs.1
   set Γ := envs.2
   apply Ty.TypeJudgment.TE_LetIn

@@ -37,9 +37,6 @@ inductive SubtypeJudgment :
       SubtypeJudgment σ Δ Γ (pure τ₂) (pure τ₃) →
       SubtypeJudgment σ Δ Γ (pure τ₁) (pure τ₃)
 
-  --| TSub_Field {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {φ : Ast.Predicate} :
-  --    SubtypeJudgment σ Δ Γ (pure (Ast.Ty.refin Ast.Ty.field φ)) (pure Ast.Ty.field)
-
   /-- TSUB-REFINE: Refinement subtyping -/
   | TSub_Refine {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} :
       SubtypeJudgment σ Δ Γ (pure T₁) (pure T₂) →
@@ -78,10 +75,6 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
     Env.lookupTy Γ f = (Ast.Ty.func x τ₁ τ₂) →
     TypeJudgment Γ (Ast.Expr.var f) (Ast.Ty.func x τ₁ τ₂)
 
-  --| TE_TriF {Γ: Env.TyEnv} {e: Ast.Expr}:
-  --  TypeJudgment Γ e (Ast.Ty.field) →
-  --  TypeJudgment Γ e (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.const (Ast.Expr.constBool true)))
-
   -- TE-ARRY-INDEX
   | TE_ArrayIndex {Γ: Env.TyEnv} {e idx: Ast.Expr} {τ: Ast.Ty} {n: Int} {i: F} {φ: Ast.Predicate}:
     TypeJudgment Γ e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
@@ -98,6 +91,10 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
   -- TE-CONSTF
   | TE_ConstF {Γ: Env.TyEnv} {f: F} :
     TypeJudgment Γ (Ast.Expr.constF f) (Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.eq (Ast.Expr.constF f)))
+
+  -- TE-CONSTZ
+  | TE_ConstZ {Γ: Env.TyEnv} {f: ℤ} :
+    TypeJudgment Γ (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.eq (Ast.Expr.constZ f)))
 
   -- TE-ASSERT
   | TE_Assert {Γ: Env.TyEnv} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate}:
@@ -144,23 +141,25 @@ axiom typeJudgmentRefinementSound {σ : Env.ValEnv} {Δ : Env.CircuitEnv}
  (Γ : Env.TyEnv) (τ : Ast.Ty) (e: Ast.Expr) (φ: Ast.Predicate):
   @Ty.TypeJudgment σ Δ Γ e (Ast.Ty.refin τ φ) → PropSemantics.predToProp σ Δ φ e
 
-def makeEnvs (c : Ast.Circuit) (x : Ast.Value) : Env.ValEnv × Env.TyEnv :=
-  let σ: Env.ValEnv := Env.updateVal [] c.inputs.fst x
-  let Γ: Env.TyEnv := Env.updateTy [] c.inputs.fst c.inputs.snd
+def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) : Env.ValEnv × Env.TyEnv :=
+  let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] "trace" trace) "i" i
+  let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] "trace"
+    (.refin (.arr (.refin (.arr (.refin .field
+      (.const (.constBool true))) c.width) (.const (.constBool True))) c.height) (.const (.constBool true))))
+    "i" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.const (Ast.Expr.binRel (Ast.Expr.var "i") Ast.RelOp.lt (Ast.Expr.constZ c.height))))
   (σ, Γ)
 
-def checkInputsTypes (c : Ast.Circuit) (x: Ast.Value) : Prop :=
-  match c.inputs.snd, x with
-  | Ast.Ty.field, Ast.Value.vF _ => True
-  | Ast.Ty.bool, Ast.Value.vBool _ => True
-  | Ast.Ty.refin baseTy _, val =>
-    match baseTy, val with
-    | Ast.Ty.field,    Ast.Value.vF _          => True
-    | Ast.Ty.bool,     Ast.Value.vBool _       => True
-    | Ast.Ty.arr _ n,    Ast.Value.vArr elems  => elems.length == n
-    | _,               _                       => False
-  | Ast.Ty.arr _ n,    Ast.Value.vArr elems    => elems.length == n
-  | _, _ => False
+def checkInputsTypes (c: Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) : Prop :=
+  match trace with
+  | Ast.Value.vArr rows => rows.length == c.height ∧ ∀ r ∈ rows, match r with
+    | Ast.Value.vArr cols => cols.length == c.width ∧ ∀ c ∈ cols, match c with
+      | Ast.Value.vF _ => True
+      | _ => False
+    | _ => False
+  | _ => False ∧
+  match i with
+  | Ast.Value.vZ _ => True
+  | _ => False
 
 /--
   Correctness of a circuit `c`:
@@ -168,12 +167,12 @@ def checkInputsTypes (c : Ast.Circuit) (x: Ast.Value) : Prop :=
   yields a value satisfying the output refinement.
 -/
 def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) : Prop :=
-  ∀ (x : Ast.Value),
-    x != Ast.Value.vStar →
-    let (σ, Γ) := makeEnvs c x
-    checkInputsTypes c x →
+  ∀ (trace i: Ast.Value),
+    trace != Ast.Value.vStar →
+    let (σ, Γ) := makeEnvs c trace i
+    checkInputsTypes c trace i →
     PropSemantics.tyenvToProp σ Δ Γ →
-    @TypeJudgment σ Δ Γ c.body c.output.snd
+    @TypeJudgment σ Δ Γ c.body (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.const c.goal))
 
 lemma lookupTy_mem (Γ: Env.TyEnv) (x: String) (τ :Ast.Ty) (φ: Ast.Predicate)
   (h : Env.lookupTy Γ x = Ast.Ty.refin τ φ) :
