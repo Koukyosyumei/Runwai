@@ -76,10 +76,10 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
     TypeJudgment Γ (Ast.Expr.var f) (Ast.Ty.func x τ₁ τ₂)
 
   -- TE-ARRY-INDEX
-  | TE_ArrayIndex {Γ: Env.TyEnv} {e idx: Ast.Expr} {τ: Ast.Ty} {n: Int} {i: F} {φ: Ast.Predicate}:
+  | TE_ArrayIndex {Γ: Env.TyEnv} {e idx: Ast.Expr} {τ: Ast.Ty} {n: Int} {i: ℕ} {φ: Ast.Predicate}:
     TypeJudgment Γ e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
-    Eval.EvalProp σ Δ idx (Ast.Value.vF i) →
-    i.toNat ≤ n →
+    Eval.EvalProp σ Δ idx (Ast.Value.vZ i) →
+    i ≤ n →
     TypeJudgment Γ (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
@@ -93,7 +93,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
     TypeJudgment Γ (Ast.Expr.constF f) (Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.eq (Ast.Expr.constF f)))
 
   -- TE-CONSTZ
-  | TE_ConstZ {Γ: Env.TyEnv} {f: ℤ} :
+  | TE_ConstZ {Γ: Env.TyEnv} {f: ℕ} :
     TypeJudgment Γ (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.eq (Ast.Expr.constZ f)))
 
   -- TE-ASSERT
@@ -141,7 +141,7 @@ axiom typeJudgmentRefinementSound {σ : Env.ValEnv} {Δ : Env.CircuitEnv}
  (Γ : Env.TyEnv) (τ : Ast.Ty) (e: Ast.Expr) (φ: Ast.Predicate):
   @Ty.TypeJudgment σ Δ Γ e (Ast.Ty.refin τ φ) → PropSemantics.predToProp σ Δ φ e
 
-def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℤ): Env.ValEnv × Env.TyEnv :=
+def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): Env.ValEnv × Env.TyEnv :=
   let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] "trace" trace) "i" i
   let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] "trace"
     (.refin (.arr (.refin (.arr (.refin .field
@@ -149,16 +149,13 @@ def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℤ):
     "i" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.const (Ast.Expr.binRel (Ast.Expr.var "i") Ast.RelOp.lt (Ast.Expr.constZ height))))
   (σ, Γ)
 
-def checkInputsTypes (c: Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℤ): Prop :=
+def checkInputsTrace (c: Ast.Circuit) (trace : Ast.Value) (height: ℕ): Prop :=
   match trace with
   | Ast.Value.vArr rows => rows.length == height ∧ ∀ r ∈ rows, match r with
     | Ast.Value.vArr cols => cols.length == c.width ∧ ∀ c ∈ cols, match c with
       | Ast.Value.vF _ => True
       | _ => False
     | _ => False
-  | _ => False ∧
-  match i with
-  | Ast.Value.vZ _ => True
   | _ => False
 
 /--
@@ -166,11 +163,12 @@ def checkInputsTypes (c: Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height
   if the input satisfies its refinement, then evaluating `c.body`
   yields a value satisfying the output refinement.
 -/
-def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) (lower_height: ℤ) : Prop :=
-  ∀ (trace i: Ast.Value) (height: ℤ),
-    lower_height ≤ height →
-    let (σ, Γ) := makeEnvs c trace i height
-    checkInputsTypes c trace i height →
+def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) (minimum_height: ℕ) : Prop :=
+  ∀ (trace: Ast.Value) (i height: ℕ),
+    minimum_height ≤ height →
+    i ≤ height →
+    let (σ, Γ) := makeEnvs c trace (Ast.Value.vZ i) height
+    checkInputsTrace c trace height →
     PropSemantics.tyenvToProp σ Δ Γ →
     @TypeJudgment σ Δ Γ c.body (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.const c.goal))
 

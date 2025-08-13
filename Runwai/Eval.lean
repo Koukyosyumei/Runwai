@@ -59,7 +59,7 @@ mutual
     | ConstZ        {σ Δ v} : EvalProp σ Δ (Expr.constZ v) (Value.vZ v)
     | ConstBool     {σ Δ b} : EvalProp σ Δ (Expr.constBool b) (Value.vBool b)
     | ConstArr  {σ Δ xs es} (ih : ∀ xe ∈ List.zip xs es, EvalProp σ Δ xe.fst xe.snd) :
-      EvalProp σ Δ (Expr.arr xs) (Value.vArr es)
+        EvalProp σ Δ (Expr.arr xs) (Value.vArr es)
 
     -- E‑VAR
     | Var         {σ Δ x v} : lookupVal σ x = v → EvalProp σ Δ (Expr.var x) v
@@ -115,8 +115,8 @@ mutual
     -- E‑ARRIDX
     | ArrIdx {σ Δ a i vs j v}
         (iha : EvalProp σ Δ a (Value.vArr vs))
-        (ihi : EvalProp σ Δ i (Value.vF j))
-        (idx : vs[j.toNat]? = some v) :
+        (ihi : EvalProp σ Δ i (Value.vZ j))
+        (idx : vs[j]? = some v) :
         EvalProp σ Δ (Expr.arrIdx a i) v
 
     /-

@@ -4,10 +4,10 @@ import Runwai.Typing
 def assertCircuit : Ast.Circuit := {
   name   := "assert",
   width  := 2,
-  goal   := Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constF 1)) (Ast.Expr.constF 0))
+  goal   := Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
               Ast.RelOp.eq (Ast.Expr.constF 2),
   body   := (Ast.Expr.letIn "u" (Ast.Expr.assertE
-              (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constF 1)) (Ast.Expr.constF 0))
+              (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
               (Ast.Expr.constF 2))
             (Ast.Expr.var "u"))
 }
@@ -18,8 +18,8 @@ theorem assertCircuit_correct : (Ty.circuitCorrect Δ assertCircuit 1) := by
   unfold Ty.circuitCorrect
   unfold assertCircuit
   simp_all
-  intro x i height hs hi hσ
-  set envs := Ty.makeEnvs assertCircuit x i height
+  intro x i height hs hi ht hσ
+  set envs := Ty.makeEnvs assertCircuit x (Ast.Value.vZ i) height
   set σ := envs.1
   set Γ := envs.2
   apply Ty.TypeJudgment.TE_LetIn
@@ -40,14 +40,18 @@ theorem assertCircuit_correct : (Ty.circuitCorrect Δ assertCircuit 1) := by
       . rfl
     . rfl
   . rfl
-  apply Eval.EvalProp.ConstF
+  apply Eval.EvalProp.Var
+  unfold Ty.makeEnvs
+  unfold Env.lookupVal
+  unfold Env.updateVal
   simp_all
-  apply Eval.EvalProp.ConstF
+  rfl
+  simp_all
+  apply Eval.EvalProp.ConstZ
   simp_all
   apply Ty.TypeJudgment.TE_ConstF
   apply Ty.TypeJudgment.TE_VarEnv
   unfold Env.updateTy
   unfold Env.lookupTy
   simp_all
-  unfold Ast.exprEq
   rfl

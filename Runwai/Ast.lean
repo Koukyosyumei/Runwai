@@ -54,7 +54,7 @@ mutual
   /-- Core expressions syntax for Runwai. -/
   inductive Expr where
     | constF      : (x : F) → Expr                                       -- field constant
-    | constZ      : (x : ℤ) → Expr                                       -- integer constant
+    | constZ      : (x : ℕ) → Expr                                       -- integer constant
     | constBool   : (b: Bool) → Expr                                     -- boolean constant
     | arr         : (elems: List Expr) → Expr                            -- [e₁, ..., eₙ]
     | var         : (name: String) → Expr                                -- variable x
@@ -73,7 +73,7 @@ mutual
   /-- Runtime values in Runwai. -/
   inductive Value where
     | vF       : (x: F) → Value
-    | vZ       : (x: ℤ) -> Value
+    | vZ       : (x: ℕ) -> Value
     | vStar    : Value
     | vBool    : (b: Bool) → Value
     | vArr     : (elems: List Value) → Value
