@@ -175,11 +175,11 @@ theorem evalprop_deterministic
       simp_all
   }
 
-lemma isZero_eval_eq_branch_semantics {x y inv: String} {σ: Env.ValEnv} {Δ: Env.CircuitEnv}
-  (h₁: Eval.EvalProp σ Δ (exprEq (Expr.var y) ((((Expr.constF 0).fieldExpr FieldOp.sub (Expr.var x)).fieldExpr FieldOp.mul (Expr.var inv)).fieldExpr
+lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.CircuitEnv}
+  (h₁: Eval.EvalProp σ Δ (exprEq y ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr
                   FieldOp.add (Expr.constF 1))) (Value.vBool true))
-  (h₂: Eval.EvalProp σ Δ (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)) (Value.vBool true)) :
-  Eval.EvalProp σ Δ (exprEq (.var y) (.branch ((Expr.var x).binRel RelOp.eq (Expr.constF 0)) (Expr.constF 1) (Expr.constF 0))) (Value.vBool true) := by {
+  (h₂: Eval.EvalProp σ Δ (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)) (Value.vBool true)) :
+  Eval.EvalProp σ Δ (exprEq y (.branch (x.binRel RelOp.eq (Expr.constF 0)) (Expr.constF 1) (Expr.constF 0))) (Value.vBool true) := by {
     cases h₁ with
     | Rel ih₁ ih₂ r₁ => {
       rename_i v₁ v₂
@@ -222,7 +222,7 @@ lemma isZero_eval_eq_branch_semantics {x y inv: String} {σ: Env.ValEnv} {Δ: En
                       unfold exprEq
                       apply Eval.EvalProp.Rel
                       exact ih₁₂
-                      have h₃: x_val = 0 → Eval.EvalProp σ Δ (((Expr.var x).binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 1) := by {
+                      have h₃: x_val = 0 → Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 1) := by {
                         intro h
                         apply Eval.EvalProp.IfTrue
                         apply Eval.EvalProp.Rel
@@ -232,7 +232,7 @@ lemma isZero_eval_eq_branch_semantics {x y inv: String} {σ: Env.ValEnv} {Δ: En
                         simp_all
                         apply Eval.EvalProp.ConstF
                       }
-                      have h₄: x_val ≠ 0 → Eval.EvalProp σ Δ (((Expr.var x).binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 0) := by {
+                      have h₄: x_val ≠ 0 → Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 0) := by {
                         intro h
                         apply Eval.EvalProp.IfFalse
                         apply Eval.EvalProp.Rel
@@ -242,7 +242,7 @@ lemma isZero_eval_eq_branch_semantics {x y inv: String} {σ: Env.ValEnv} {Δ: En
                         simp_all
                         apply Eval.EvalProp.ConstF
                       }
-                      have h₅: Eval.EvalProp σ Δ (((Expr.var x).binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (if x_val = 0 then (Value.vF 1) else (Value.vF 0)) := by {
+                      have h₅: Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (if x_val = 0 then (Value.vF 1) else (Value.vF 0)) := by {
                         by_cases hz : x_val = 0
                         . simp_all
                         . simp_all
