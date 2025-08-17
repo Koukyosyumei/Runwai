@@ -34,7 +34,7 @@ lemma ne_imp_exists_diff {α: Type} {xs ys : List α}
   specialize hne i hx
   simpa [←hlen] using hne
 
-lemma zip_get_ne {es : List Expr} {xs xs' : List Value} {i : Nat}
+lemma zip_get_ne {α β: Type} {es : List α} {xs xs' : List β} {i : Nat}
     (h_len₁ : xs.length = es.length)
     (h_len₂ : xs.length = xs'.length)
     (h_i_xs : i < xs.length)
@@ -79,7 +79,25 @@ theorem evalprop_deterministic
     by_contra hneq
     have hneq' : ¬ xs = xs' := by sorry
     have ⟨i, hi_lt, hi_ne⟩ := ne_imp_exists_diff hlen hneq'
-    sorry
+    have hes_ne := zip_get_ne (Eq.symm h_length) hlen hi_lt hi_ne
+    have h_len₁ : i < (es.zip xs).length := by
+      rw [List.length_zip, h_length]
+      simp_all
+      rw[hlen] at hi_lt
+      exact hi_lt
+    have h_len₂ : i < (es.zip xs').length := by
+      rw [List.length_zip, h_length, hlen]
+      simp_all
+    set exs_lhs := (es.zip xs).get ⟨i, h_len₁⟩ with lhs_eq
+    set exs_rhs := (es.zip xs').get ⟨i, h_len₂⟩ with rhs_eq
+    have h_in: exs_lhs ∈ es.zip xs := by apply List.get_mem
+    have h_in': exs_rhs ∈ es.zip xs' := by apply List.get_mem
+    have h₁ := h_forall exs_lhs h_in
+    have h₂ := h_forall' exs_rhs h_in'
+    have h₃ : exs_lhs.1 = exs_rhs.1 := by simp_all
+    rw[← h₃] at h₂
+    have h₄ := in_det exs_lhs h_in h₂
+    simp_all
   | Var lookup_eq =>
     cases h₂
     case Var lookup_eq' =>
