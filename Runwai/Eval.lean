@@ -1,6 +1,7 @@
+import Mathlib.Data.List.Forall2
+
 import Runwai.Ast
 import Runwai.Env
-import Mathlib.Data.List.Forall2
 
 open Ast
 open Env
@@ -58,7 +59,7 @@ mutual
     | ConstF        {σ Δ v} : EvalProp σ Δ (Expr.constF v) (Value.vF v)
     | ConstZ        {σ Δ v} : EvalProp σ Δ (Expr.constZ v) (Value.vZ v)
     | ConstBool     {σ Δ b} : EvalProp σ Δ (Expr.constBool b) (Value.vBool b)
-    | ConstArr  {σ Δ xs es} (ih : ∀ xe ∈ List.zip xs es, EvalProp σ Δ xe.fst xe.snd) :
+    | ConstArr  {σ Δ xs es} (ilength: xs.length = es.length) (ih : ∀ xe ∈ List.zip xs es, EvalProp σ Δ xe.fst xe.snd) :
         EvalProp σ Δ (Expr.arr xs) (Value.vArr es)
 
     -- E‑VAR
