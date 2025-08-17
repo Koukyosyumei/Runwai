@@ -77,7 +77,7 @@ theorem evalprop_deterministic
     have hlen : xs.length = xs'.length := by
       rw [← h_length, h_length']
     by_contra hneq
-    have hneq' : ¬ xs = xs' := by sorry
+    have hneq' : ¬ xs = xs' := by simp_all
     have ⟨i, hi_lt, hi_ne⟩ := ne_imp_exists_diff hlen hneq'
     have hes_ne := zip_get_ne (Eq.symm h_length) hlen hi_lt hi_ne
     have h_len₁ : i < (es.zip xs).length := by

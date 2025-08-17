@@ -99,10 +99,14 @@ mutual
 end
 
 /-- Test for equality of two `Value`s. -/
-def valueEq : Value → Value → Bool
+partial def valueEq : Value → Value → Bool
   | Value.vF x, Value.vF y                     => x = y
   | Value.vZ x, Value.vZ y                     => x = y
   | Value.vBool b₁, Value.vBool b₂             => b₁ = b₂
+  | Value.vArr xs, Value.vArr ys   =>
+      if xs.length ≠ ys.length then false
+      else
+        List.all (List.zip xs ys) (fun (x, y) => valueEq x y)
   | _, _                                       => false
 
 instance : BEq Value where
