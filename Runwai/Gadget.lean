@@ -135,6 +135,13 @@ theorem evalprop_deterministic
     have h₂_eq := ih₂_ih ih₃'
     simp_all
   }
+  | Rel ih₁ ih₂ bv ih₁_ih ih₂_ih => {
+    cases h₂
+    case Rel b₁' b₂' b₃' ih₁' ih₂' ih₃' =>
+    have h₁_eq := ih₁_ih ih₁'
+    have h₂_eq := ih₂_ih ih₃'
+    simp_all
+  }
   | IfTrue ihc ih₁ ihc_ih ih₁_ih => {
     cases h₂
     case IfTrue ih₁' ih₂' =>
@@ -166,4 +173,102 @@ theorem evalprop_deterministic
       have ha := iha_ih iha'
       have hi := ihi_ih ihi'
       simp_all
+  }
+
+lemma isZero_eval_eq_branch_semantics {x y inv: String} {σ: Env.ValEnv} {Δ: Env.CircuitEnv}
+  (h₁: Eval.EvalProp σ Δ (exprEq (Expr.var y) ((((Expr.constF 0).fieldExpr FieldOp.sub (Expr.var x)).fieldExpr FieldOp.mul (Expr.var inv)).fieldExpr
+                  FieldOp.add (Expr.constF 1))) (Value.vBool true))
+  (h₂: Eval.EvalProp σ Δ (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)) (Value.vBool true)) :
+  Eval.EvalProp σ Δ (exprEq (.var y) (.branch ((Expr.var x).binRel RelOp.eq (Expr.constF 0)) (Expr.constF 1) (Expr.constF 0))) (Value.vBool true) := by {
+    cases h₁ with
+    | Rel ih₁ ih₂ r₁ => {
+      rename_i v₁ v₂
+      cases ih₂ with
+      | FBinOp ih₃ ih₄ r₂ => {
+        rename_i i₁ i₂
+        cases ih₃ with
+        | FBinOp ih₅ ih₆ r₃ => {
+          rename_i i₃ i₄
+          cases ih₅ with
+          | FBinOp ih₇ ih₈ r₄ => {
+            rename_i i₅ i₆
+            cases h₂ with
+            | Rel ih₉ ih₁₀ r₅ => {
+              rename_i i₇ i₈
+              cases ih₄
+              cases ih₇
+              cases ih₁₀
+              cases ih₉ with
+              | FBinOp ih₁₁ ih₁₂ r₆ => {
+                rename_i i₉ i₁₀
+                unfold Eval.evalFieldOp at r₂ r₃ r₄ r₆
+                simp_all
+                cases v₁ with
+                | vF xv₁ => {
+                  cases v₂ with
+                  | vF xv₂ => {
+                    cases i₇ with
+                    | vF xv₃ => {
+                      simp at r₁ r₅
+                      simp_all
+                      have h₁ := evalprop_deterministic ih₈ ih₁₁
+                      have h₂ := evalprop_deterministic ih₁ ih₁₂
+                      simp_all
+                      set inv_val := i₄
+                      set x_val := i₉
+                      set y_val := i₁₀
+                      rw[← r₄] at r₃
+                      rw[← r₃] at r₂
+                      unfold exprEq
+                      apply Eval.EvalProp.Rel
+                      exact ih₁₂
+                      have h₃: x_val = 0 → Eval.EvalProp σ Δ (((Expr.var x).binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 1) := by {
+                        intro h
+                        apply Eval.EvalProp.IfTrue
+                        apply Eval.EvalProp.Rel
+                        exact ih₁₁
+                        apply Eval.EvalProp.ConstF
+                        unfold Eval.evalRelOp
+                        simp_all
+                        apply Eval.EvalProp.ConstF
+                      }
+                      have h₄: x_val ≠ 0 → Eval.EvalProp σ Δ (((Expr.var x).binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 0) := by {
+                        intro h
+                        apply Eval.EvalProp.IfFalse
+                        apply Eval.EvalProp.Rel
+                        exact ih₁₁
+                        apply Eval.EvalProp.ConstF
+                        unfold Eval.evalRelOp
+                        simp_all
+                        apply Eval.EvalProp.ConstF
+                      }
+                      have h₅: Eval.EvalProp σ Δ (((Expr.var x).binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (if x_val = 0 then (Value.vF 1) else (Value.vF 0)) := by {
+                        by_cases hz : x_val = 0
+                        . simp_all
+                        . simp_all
+                      }
+                      exact h₅
+                      by_cases hz: x_val = 0
+                      . simp_all
+                        rw[← r₃] at r₄
+                        rw[← r₄] at r₂
+                        rw [neg_zero, zero_mul, zero_add] at r₂
+                        rw[r₂]
+                      . simp_all
+                    }
+                    | _ => simp_all
+                  }
+                  | _ => simp_all
+                }
+                | vZ => {
+                  cases v₂ with
+                  | _ => simp_all
+                }
+                | _ => simp_all
+              }
+            }
+          }
+        }
+      }
+    }
   }

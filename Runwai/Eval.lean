@@ -95,6 +95,13 @@ mutual
         (bv  : evalBoolOp op (Value.vBool b₁) (Value.vBool b₂) = some b) :
         EvalProp σ Δ (Expr.boolExpr e₁ op e₂) (Value.vBool b)
 
+    -- E‑REL
+    | Rel      {σ Δ e₁ e₂ op v₁ v₂ b}
+        (ih₁ : EvalProp σ Δ e₁ v₁)
+        (ih₂ : EvalProp σ Δ e₂ v₂)
+        (r   : evalRelOp op v₁ v₂ = some b) :
+        EvalProp σ Δ (Expr.binRel e₁ op e₂) (Value.vBool b)
+
     -- E-BRANCH
     | IfTrue {σ Δ c e₁ e₂ v₁}
         (ihc : EvalProp σ Δ c (Value.vBool true))
