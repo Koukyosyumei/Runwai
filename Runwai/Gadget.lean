@@ -187,7 +187,9 @@ theorem type_update_preserve
       unfold Env.lookupTy at hlookup ⊢
       unfold Env.updateTy
       simp_all
-      rfl
+      sorry
+      sorry
+      --rfl
     }
     | TE_VarEnv φ _ => {
       apply Ty.TypeJudgment.TE_VarEnv
@@ -195,6 +197,7 @@ theorem type_update_preserve
       unfold Env.lookupTy at hlookup ⊢
       unfold Env.updateTy
       simp_all
+      sorry
     }
     | TE_VarFunc _ => {
       apply Ty.TypeJudgment.TE_VarFunc
@@ -202,6 +205,7 @@ theorem type_update_preserve
       unfold Env.lookupTy at hlookup ⊢
       unfold Env.updateTy
       simp_all
+      sorry
     }
     | TE_ArrayIndex _ _ _ => sorry
     | TE_Branch _ _ => sorry
@@ -325,7 +329,9 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
   (htinv: @Ty.TypeJudgment σ Δ Γ inv (Ty.refin Ast.Ty.field φ₃))
   (hne₁: (Expr.var u₁) ≠ x)
   (hne₂: (Expr.var u₁) ≠ y)
-  (hne₃: ¬ u₁ = u₂):
+  (hne₃: ¬ u₁ = u₂)
+  (hf₁: ¬ (Γ.find? (·.1 = u₁)).isSome)
+  (hf₂: ¬ (Γ.find? (·.1 = u₂)).isSome):
   @Ty.TypeJudgment σ Δ Γ
     (Ast.Expr.letIn u₁ (.assertE y (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub x) .mul inv) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr x .mul y) (.constF 0)) (.var u₂)))
@@ -368,7 +374,8 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
         unfold PropSemantics.exprToProp
         unfold PropSemantics.varToProp
         simp_all
-        unfold Env.lookupTy Env.updateTy
+        unfold Env.lookupTy
+        unfold Env.updateTy
         simp_all
         intro v h₁ h₂
         have h₃ := h₁ u₁ (Ty.unit.refin
@@ -378,8 +385,10 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
                     (Expr.constF 1)))))
         have h₄ : ¬ u₂ = u₁ := by exact ne_symm' hne₃
         simp_all
+        have hf₃: (Γ.find? (·.1 = u₁)) = none := by sorry
+        rw [hf₃] at h₃
+        simp_all
         unfold PropSemantics.predToProp at h₃
-        simp at h₃
         unfold PropSemantics.exprToProp at h₃
         apply isZero_eval_eq_branch_semantics h₃ h₂
       }
@@ -387,5 +396,8 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
     exact h_sub
     apply Ty.TypeJudgment.TE_VarEnv
     unfold Env.updateTy Env.lookupTy
+    simp_all
+    have hf₅: (List.find? (fun x ↦ decide (x.1 = u₂)) Γ) = none := by sorry
+    rw[hf₅]
     simp_all
 }
