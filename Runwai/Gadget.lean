@@ -209,20 +209,21 @@ theorem swap_preserve (Γ: Env.TyEnv) (x₁ x₂: String) (τ₁ τ₂: Ast.Ty) 
             simp_all
           simp [hΓ, hΓ']
 
-/-- `y ≠ x` なら `updateTy` は `y` の lookup に影響しない -/
 lemma lookup_update_other
   (Γ : Env.TyEnv) (x y : String) (τ : Ast.Ty) (hxy : y ≠ x) :
   Env.lookupTy (Env.updateTy Γ x τ) y = Env.lookupTy Γ y := by
   unfold Env.updateTy
   by_cases hx : (Γ.find? (fun (p, _) => p = x)).isSome
-  · -- 既にあるので update は no-op
-    simp [hx, Env.lookupTy]
-  · -- 追加されるが y ≠ x なので y の lookup は不変
-    simp [hx, Env.lookupTy, hxy]
+  · simp [hx, Env.lookupTy]
+  · simp [hx, Env.lookupTy]
     simp_all
-    sorry
+    have h₁ : (if x = y then some (y, τ) else none) = none := by {
+      simp_all
+      exact ne_symm' hxy
+    }
+    rw[h₁]
+    simp_all
 
-/-- `x` 自身についての lookup の振る舞い -/
 lemma lookup_update_self
   (Γ : Env.TyEnv) (x : String) (τ : Ast.Ty) :
   Env.lookupTy (Env.updateTy Γ x τ) x =
@@ -231,13 +232,30 @@ lemma lookup_update_self
     | none   => some τ := by
   unfold Env.updateTy
   by_cases hx : (Γ.find? (fun (p, _) => p = x)).isSome
-  · -- 既存なら追加されず元の値
-    simp [hx, Env.lookupTy]
+  · unfold Env.lookupTy
+    rw[hx]
     simp_all
-    sorry
-  · -- 無ければ追加され、結果は `some τ`
-    simp [hx, Env.lookupTy]
-    sorry
+    cases hx': List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => {
+      simp_all
+      obtain ⟨τ'⟩ := hx
+      rename_i h'
+      have hy := hx' x τ'
+      simp at hy
+      contradiction
+    }
+    | some val => {
+      simp_all
+    }
+  · simp_all
+    simp [Env.lookupTy]
+    cases hx': List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => {
+      simp_all
+    }
+    | some val => {
+      simp_all
+    }
 
 /-- `Γ₁` と `Γ₂` が pointwise に等しいなら、同じ `(x, τ)` での `update` 後も pointwise に等しい -/
 lemma update_preserve_pointwise
@@ -255,12 +273,12 @@ lemma update_preserve_pointwise
 theorem ty_preserve' (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
   (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x)
   (h₂: @Ty.TypeJudgment σ Δ Γ₁ e τ) :
-  ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →@Ty.TypeJudgment σ Δ Γ₂ e τ := by {
-    induction h₂ with
+  ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
+        @Ty.TypeJudgment σ Δ Γ₂ e τ := by {
+    induction h₂ generalizing Γ₂ with
     | TE_Var φ ha => {
       rename_i Γ' x' τ'
       intro Γ₂ h
-      rename_i Γ₂'
       apply Ty.TypeJudgment.TE_Var
       have h₁' := h x'
       rw[← h₁']
@@ -299,14 +317,26 @@ theorem ty_preserve' (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e
     }
     | TE_Abs ih₀ ih₁ ih₂ => {
       rename_i Γ' x₁' τ₁' τ₂' e'
-      intro Γ₂ x
-      rename_i Γ₂'
+      intro Γ₂ h
       apply Ty.TypeJudgment.TE_Abs
-      sorry
+      have hu := @update_preserve_pointwise Γ' Γ₂ x₁' τ₁' h
+      unfold Env.lookupTy at h
+      have h' := h x₁'
+      rw[ih₀] at h'
+      simp at h'
+      have hn: List.find? (fun x ↦ decide (x.1 = x₁')) Γ₂ = none := by {
+        cases hf: List.find? (fun x ↦ decide (x.1 = x₁')) Γ₂ with
+        | none => rfl
+        | some val => {
+          rw[hf] at h'
+          simp at h'
+        }
+      }
+      exact hn
       apply ih₂
-      sorry
-      apply update_preserve_pointwise
-      sorry
+      have hu := @update_preserve_pointwise Γ' Γ₂ x₁' τ₁' h
+      exact hu
+      exact update_preserve_pointwise Γ' Γ₂ x₁' τ₁' h
     }
     | TE_App h₁ h₂ h₃ ih₁ ih₂ => {
       sorry
