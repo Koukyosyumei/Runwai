@@ -389,9 +389,7 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
                     (Expr.constF 1)))))
         have h₄ : ¬ u₂ = u₁ := by exact ne_symm' hne₃
         --simp
-        have hf₃: (Γ.find? (·.1 = u₁)) = none := by {
-          exact eq_none_of_isSome_eq_false (by simp [hf₁])
-        }
+        have hf₃: (Γ.find? (·.1 = u₁)) = none := eq_none_of_isSome_eq_false (by simp [hf₁])
         rw [hf₃] at h₃
         simp_all
         unfold PropSemantics.predToProp at h₃
