@@ -321,6 +321,10 @@ theorem ne_symm' {α} {a b : α} (h : a ≠ b) : b ≠ a :=
 by
   simpa [eq_comm] using h
 
+theorem eq_none_of_isSome_eq_false {α : Type _}
+    {o : Option α} (h : o.isSome = false) : o = none := by
+  cases o <;> simp_all
+
 lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
   (x y inv : Expr)
   (u₁ u₂: String)
@@ -373,10 +377,10 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
         unfold PropSemantics.predToProp
         unfold PropSemantics.exprToProp
         unfold PropSemantics.varToProp
-        simp_all
+        simp
         unfold Env.lookupTy
         unfold Env.updateTy
-        simp_all
+        simp
         intro v h₁ h₂
         have h₃ := h₁ u₁ (Ty.unit.refin
               (Predicate.const
@@ -384,8 +388,10 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
                   ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr FieldOp.add
                     (Expr.constF 1)))))
         have h₄ : ¬ u₂ = u₁ := by exact ne_symm' hne₃
-        simp_all
-        have hf₃: (Γ.find? (·.1 = u₁)) = none := by sorry
+        --simp
+        have hf₃: (Γ.find? (·.1 = u₁)) = none := by {
+          exact eq_none_of_isSome_eq_false (by simp [hf₁])
+        }
         rw [hf₃] at h₃
         simp_all
         unfold PropSemantics.predToProp at h₃
