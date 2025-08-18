@@ -175,6 +175,92 @@ theorem evalprop_deterministic
       simp_all
   }
 
+theorem ne_symm' {α} {a b : α} (h : a ≠ b) : b ≠ a :=
+by
+  simpa [eq_comm] using h
+
+theorem swap_preserve (Γ: Env.TyEnv) (x₁ x₂: String) (τ₁ τ₂: Ast.Ty) (hne: x₁ ≠ x₂):
+  ∀ x, Env.lookupTy (Env.updateTy (Env.updateTy Γ x₁ τ₁) x₂ τ₂) x = Env.lookupTy (Env.updateTy (Env.updateTy Γ x₂ τ₂) x₁ τ₁) x := by
+  unfold Env.updateTy
+  by_cases h₁ : (Γ.find? (fun x => x.1 = x₁)).isSome
+  · by_cases h₂ : (Γ.find? (fun x => x.1 = x₂)).isSome
+    · simp [h₁, h₂]
+    · simp [h₁, h₂]
+  · by_cases h₂ : (Γ.find? (fun x => x.1 = x₂)).isSome
+    · simp [h₁, h₂]
+    · simp [h₁, h₂]
+      intro x
+      have hne' : x₂ ≠ x₁ := ne_symm' hne
+      simp_all
+      by_cases b₃: x = x₁
+      . unfold Env.lookupTy
+        simp_all
+      . by_cases b₄: x = x₂
+        . unfold Env.lookupTy
+          simp_all
+        . unfold Env.lookupTy
+          have hΓ : (List.find? (fun x_1 => decide (x_1.1 = x)) [(x₁, τ₁), (x₂, τ₂)]) = none := by
+            have b₃' := ne_symm' b₃
+            have b₄' := ne_symm' b₄
+            simp_all
+          have hΓ' : (List.find? (fun x_1 => decide (x_1.1 = x)) [(x₂, τ₂), (x₁, τ₁)]) = none := by
+            have b₃' := ne_symm' b₃
+            have b₄' := ne_symm' b₄
+            simp_all
+          simp [hΓ, hΓ']
+
+theorem ty_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁ Γ₂: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
+  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x)
+  (h₂: @Ty.TypeJudgment σ Δ Γ₁ e τ) :
+  @Ty.TypeJudgment σ Δ Γ₂ e τ := by {
+    induction h₂ with
+    | TE_Var φ ha => {
+      rename_i x' τ'
+      apply Ty.TypeJudgment.TE_Var
+      have h₁' := h₁ x'
+      rw[← h₁']
+      exact ha
+    }
+    | TE_VarEnv φ _ => {
+      rename_i x' τ' ha
+      apply Ty.TypeJudgment.TE_VarEnv
+      have h₁' := h₁ x'
+      rw[← h₁']
+      exact ha
+    }
+    | TE_VarFunc _ => sorry
+    | TE_ArrayIndex h₁ h₂ h₃ a_ih => {
+      rename_i Γ' e₁ e₂ τ' idx n φ h₅
+      apply Ty.TypeJudgment.TE_ArrayIndex
+      apply a_ih
+      exact h₁
+      exact h₂
+      exact h₃
+    }
+    | TE_Branch _ _ => sorry
+    | TE_ConstF => sorry
+    | TE_ConstZ => sorry
+    | TE_Assert _ _ => sorry
+    | TE_BinOpField _ _ => sorry
+    | TE_Abs ih₁ ih₂ => {
+      rename_i Γ' x₁' τ₁' τ₂' e'
+      apply Ty.TypeJudgment.TE_Abs
+      sorry
+    }
+    | TE_App _ _ _ => sorry
+    | TE_SUB h₀ ht => sorry
+    | TE_LetIn h₁ h₂ => sorry
+
+
+  }
+
+
+theorem ty_swap_preserve (Γ: Env.TyEnv) (x₁ x₂: String) (τ₁ τ₂: Ast.Ty) (hne: x₁ ≠ x₂)
+  (h: @Ty.TypeJudgment σ Δ (Env.updateTy (Env.updateTy Γ x₁ τ₁) x₂ τ₂) e τ₁):
+  @Ty.TypeJudgment σ Δ (Env.updateTy (Env.updateTy Γ x₂ τ₂) x₁ τ₁) e τ₁ := by {
+    sorry
+  }
+
 theorem type_update_preserve
   (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (e: Expr) (τ₁ τ₂: Ty) (x: String)
   (h₁: @Ty.TypeJudgment σ Δ Γ e τ₁):
@@ -224,7 +310,10 @@ theorem type_update_preserve
       rename_i Γ' x' τ₁' τ₂' e'
       apply Ty.TypeJudgment.TE_Abs
       have h := ih₂ τ₂
-      sorry
+      by_cases b: x = x'
+      . simp_all
+        sorry
+      . sorry
       --unfold Env.updateTy at h ⊢
       --simp_all
     }
@@ -343,10 +432,6 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.
       }
     }
   }
-
-theorem ne_symm' {α} {a b : α} (h : a ≠ b) : b ≠ a :=
-by
-  simpa [eq_comm] using h
 
 theorem eq_none_of_isSome_eq_false {α : Type _}
     {o : Option α} (h : o.isSome = false) : o = none := by
