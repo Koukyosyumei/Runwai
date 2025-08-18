@@ -177,45 +177,73 @@ theorem evalprop_deterministic
 
 theorem type_update_preserve
   (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (e: Expr) (τ₁ τ₂: Ty) (x: String)
-  (h₁: @Ty.TypeJudgment σ Δ Γ e τ₁)
-  (h₂: (.var x) ≠ e):
+  (h₁: @Ty.TypeJudgment σ Δ Γ e τ₁):
   @Ty.TypeJudgment σ Δ (Env.updateTy Γ x τ₂) e τ₁ := by {
-    cases h₁ with
+    induction h₁ generalizing τ₂ with
     | TE_Var φ _ => {
       apply Ty.TypeJudgment.TE_Var
-      rename_i x' τ₁ hlookup
-      unfold Env.lookupTy at hlookup ⊢
-      unfold Env.updateTy
-      simp_all
       sorry
       sorry
     }
     | TE_VarEnv φ _ => {
       apply Ty.TypeJudgment.TE_VarEnv
-      rename_i x' τ₁ hlookup
-      unfold Env.lookupTy at hlookup ⊢
-      unfold Env.updateTy
-      simp_all
       sorry
     }
     | TE_VarFunc _ => {
       apply Ty.TypeJudgment.TE_VarFunc
-      rename_i x' f x'' τ₁ hlookup
-      unfold Env.lookupTy at hlookup ⊢
-      unfold Env.updateTy
-      simp_all
       sorry
     }
-    | TE_ArrayIndex _ _ _ => sorry
-    | TE_Branch _ _ => sorry
-    | TE_ConstF => sorry
-    | TE_ConstZ => sorry
-    | TE_Assert _ _ => sorry
-    | TE_BinOpField _ _ => sorry
-    | TE_Abs _ => sorry
-    | TE_App _ _ _ => sorry
-    | TE_SUB h₀ ht => sorry
-    | TE_LetIn h₁ h₂ => sorry
+    | TE_ArrayIndex hi₁ hi₂ hi₃ hi₄ => {
+      apply Ty.TypeJudgment.TE_ArrayIndex
+      apply hi₄ τ₂
+      exact hi₂
+      exact hi₃
+    }
+    | TE_Branch hi₁ hi₂ hi₃ hi₄ => {
+      apply Ty.TypeJudgment.TE_Branch
+      exact hi₃ τ₂
+      exact hi₄ τ₂
+    }
+    | TE_ConstF => {
+      apply Ty.TypeJudgment.TE_ConstF
+    }
+    | TE_ConstZ => {
+      apply Ty.TypeJudgment.TE_ConstZ
+    }
+    | TE_Assert ih₁ ih₂ ih₃ ih₄ => {
+      apply Ty.TypeJudgment.TE_Assert
+      apply ih₃ τ₂
+      apply ih₄ τ₂
+    }
+    | TE_BinOpField ih₁ ih₂ ih₄ ih₅ => {
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply ih₄ τ₂
+      apply ih₅ τ₂
+    }
+    | TE_Abs ih₁ ih₂ => {
+      rename_i Γ' x' τ₁' τ₂' e'
+      apply Ty.TypeJudgment.TE_Abs
+      have h := ih₂ τ₂
+      sorry
+      --unfold Env.updateTy at h ⊢
+      --simp_all
+    }
+    | TE_App ih₁ ih₂ ih₃ ih₄ ih₅ => {
+      apply Ty.TypeJudgment.TE_App
+      apply ih₄ τ₂
+      exact ih₂
+      apply ih₅
+    }
+    | TE_SUB h₀ ht ih₁ => {
+      apply Ty.TypeJudgment.TE_SUB
+      sorry
+      apply ih₁
+    }
+    | TE_LetIn h₁ h₂ ih₁ ih₂ => {
+      apply Ty.TypeJudgment.TE_LetIn
+      apply ih₁
+      sorry
+    }
   }
 
 lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.CircuitEnv}
@@ -354,10 +382,8 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
     apply Ty.TypeJudgment.TE_BinOpField
     apply type_update_preserve
     . exact htx
-    . exact hne₁
     apply type_update_preserve
     . exact hty
-    . exact hne₂
     apply Ty.TypeJudgment.TE_ConstF
     have h_sub : @Ty.SubtypeJudgment σ Δ (Env.updateTy
       (Env.updateTy Γ u₁
