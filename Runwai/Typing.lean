@@ -110,6 +110,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
 
   -- TE-ABS (function abstraction)
   | TE_Abs {Γ: Env.TyEnv} {x: String} {τ₁ τ₂: Ast.Ty} {e: Ast.Expr}:
+    Γ.find? (·.1 = x) = none →
     TypeJudgment (Env.updateTy Γ x τ₁) e (τ₂) →
     TypeJudgment Γ (Ast.Expr.lam x τ₁ e) ((Ast.Ty.func x τ₁ τ₂))
 
