@@ -339,13 +339,31 @@ theorem ty_preserve' (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e
       exact update_preserve_pointwise Γ' Γ₂ x₁' τ₁' h
     }
     | TE_App h₁ h₂ h₃ ih₁ ih₂ => {
-      sorry
+      rename_i Γ' e₁ e₂ x τ₁ τ₂ v₁ h₅
+      intro Γ₂ h
+      apply Ty.TypeJudgment.TE_App
+      apply ih₁
+      exact h₁
+      exact h
+      exact h₂
+      apply ih₂
+      exact h₁
+      exact h
     }
     | TE_SUB h₀ ht ih => {
       sorry
     }
     | TE_LetIn h₁ h₂ ih₁ ih₂ => {
-      sorry
+      rename_i Γ' x' e₁ e₂ τ₁ τ₂ h₃
+      intro Γ₂ h
+      apply Ty.TypeJudgment.TE_LetIn
+      apply ih₁
+      exact h
+      exact h
+      apply ih₂
+      have hu := @update_preserve_pointwise Γ' Γ₂ x' τ₁ h
+      exact hu
+      exact @update_preserve_pointwise Γ' Γ₂ x' τ₁ h
     }
   }
 
