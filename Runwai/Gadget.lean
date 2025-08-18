@@ -228,7 +228,13 @@ theorem ty_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁ Γ₂: Env.TyEn
       rw[← h₁']
       exact ha
     }
-    | TE_VarFunc _ => sorry
+    | TE_VarFunc _ => {
+      rename_i Γ' f' x' τ₁' τ₂' h
+      apply Ty.TypeJudgment.TE_VarFunc
+      have h₂ := h₁ f'
+      rw[← h₂]
+      exact h
+    }
     | TE_ArrayIndex h₁ h₂ h₃ a_ih => {
       rename_i Γ' e₁ e₂ τ' idx n φ h₅
       apply Ty.TypeJudgment.TE_ArrayIndex
@@ -237,21 +243,59 @@ theorem ty_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁ Γ₂: Env.TyEn
       exact h₂
       exact h₃
     }
-    | TE_Branch _ _ => sorry
-    | TE_ConstF => sorry
-    | TE_ConstZ => sorry
-    | TE_Assert _ _ => sorry
-    | TE_BinOpField _ _ => sorry
+    | TE_Branch h₁ h₂ ih₁ ih₂ => {
+      rename_i Γ'  c e₁ e₂ τ' h₃
+      apply Ty.TypeJudgment.TE_Branch
+      apply ih₁
+      exact h₁
+      apply ih₂
+      exact h₁
+    }
+    | TE_ConstF => {
+      apply Ty.TypeJudgment.TE_ConstF
+    }
+    | TE_ConstZ => {
+      apply Ty.TypeJudgment.TE_ConstZ
+    }
+    | TE_Assert h₁ h₂ ih₁ ih₂ => {
+      apply Ty.TypeJudgment.TE_Assert
+      apply ih₁
+      exact h₁
+      apply ih₂
+      exact h₁
+    }
+    | TE_BinOpField h₁ h₂ ih₁ ih₂ => {
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply ih₁
+      exact h₁
+      apply ih₂
+      exact h₁
+    }
     | TE_Abs ih₁ ih₂ => {
       rename_i Γ' x₁' τ₁' τ₂' e'
       apply Ty.TypeJudgment.TE_Abs
       sorry
     }
-    | TE_App _ _ _ => sorry
-    | TE_SUB h₀ ht => sorry
-    | TE_LetIn h₁ h₂ => sorry
-
-
+    | TE_App h₁ h₂ h₃ ih₁ ih₂ => {
+      apply Ty.TypeJudgment.TE_App
+      apply ih₁
+      exact h₁
+      exact h₂
+      apply ih₂
+      exact h₁
+    }
+    | TE_SUB h₀ ht ih => {
+      apply Ty.TypeJudgment.TE_SUB
+      sorry
+      apply ih
+      exact h₁
+    }
+    | TE_LetIn h₁ h₂ ih₁ ih₂ => {
+      apply Ty.TypeJudgment.TE_LetIn
+      apply ih₁
+      exact h₁
+      sorry
+    }
   }
 
 
