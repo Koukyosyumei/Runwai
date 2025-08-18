@@ -189,7 +189,6 @@ theorem type_update_preserve
       simp_all
       sorry
       sorry
-      --rfl
     }
     | TE_VarEnv φ _ => {
       apply Ty.TypeJudgment.TE_VarEnv
