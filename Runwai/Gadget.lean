@@ -175,6 +175,46 @@ theorem evalprop_deterministic
       simp_all
   }
 
+theorem type_update_preserve
+  (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (e: Expr) (τ₁ τ₂: Ty) (x: String)
+  (h₁: @Ty.TypeJudgment σ Δ Γ e τ₁)
+  (h₂: (.var x) ≠ e):
+  @Ty.TypeJudgment σ Δ (Env.updateTy Γ x τ₂) e τ₁ := by {
+    cases h₁ with
+    | TE_Var φ _ => {
+      apply Ty.TypeJudgment.TE_Var
+      rename_i x' τ₁ hlookup
+      unfold Env.lookupTy at hlookup ⊢
+      unfold Env.updateTy
+      simp_all
+      rfl
+    }
+    | TE_VarEnv φ _ => {
+      apply Ty.TypeJudgment.TE_VarEnv
+      rename_i x' τ₁ hlookup
+      unfold Env.lookupTy at hlookup ⊢
+      unfold Env.updateTy
+      simp_all
+    }
+    | TE_VarFunc _ => {
+      apply Ty.TypeJudgment.TE_VarFunc
+      rename_i x' f x'' τ₁ hlookup
+      unfold Env.lookupTy at hlookup ⊢
+      unfold Env.updateTy
+      simp_all
+    }
+    | TE_ArrayIndex _ _ _ => sorry
+    | TE_Branch _ _ => sorry
+    | TE_ConstF => sorry
+    | TE_ConstZ => sorry
+    | TE_Assert _ _ => sorry
+    | TE_BinOpField _ _ => sorry
+    | TE_Abs _ => sorry
+    | TE_App _ _ _ => sorry
+    | TE_SUB h₀ ht => sorry
+    | TE_LetIn h₁ h₂ => sorry
+  }
+
 lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.CircuitEnv}
   (h₁: Eval.EvalProp σ Δ (exprEq y ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr
                   FieldOp.add (Expr.constF 1))) (Value.vBool true))
@@ -272,3 +312,80 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.
       }
     }
   }
+
+theorem ne_symm' {α} {a b : α} (h : a ≠ b) : b ≠ a :=
+by
+  simpa [eq_comm] using h
+
+lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
+  (x y inv : Expr)
+  (u₁ u₂: String)
+  (htx: @Ty.TypeJudgment σ Δ Γ x (Ty.refin Ast.Ty.field φ₁))
+  (hty: @Ty.TypeJudgment σ Δ Γ y (Ty.refin Ast.Ty.field φ₂))
+  (htinv: @Ty.TypeJudgment σ Δ Γ inv (Ty.refin Ast.Ty.field φ₃))
+  (hne₁: (Expr.var u₁) ≠ x)
+  (hne₂: (Expr.var u₁) ≠ y)
+  (hne₃: ¬ u₁ = u₂):
+  @Ty.TypeJudgment σ Δ Γ
+    (Ast.Expr.letIn u₁ (.assertE y (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub x) .mul inv) (.add) (.constF 1)))
+      (Ast.Expr.letIn u₂ (.assertE (.fieldExpr x .mul y) (.constF 0)) (.var u₂)))
+    (Ty.refin Ast.Ty.unit (Ast.Predicate.const (exprEq y (.branch (.binRel x (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
+    apply Ty.TypeJudgment.TE_LetIn
+    apply Ty.TypeJudgment.TE_Assert
+    exact hty
+    apply Ty.TypeJudgment.TE_BinOpField
+    apply Ty.TypeJudgment.TE_BinOpField
+    apply Ty.TypeJudgment.TE_BinOpField
+    apply Ty.TypeJudgment.TE_ConstF
+    exact htx
+    exact htinv
+    apply Ty.TypeJudgment.TE_ConstF
+    apply Ty.TypeJudgment.TE_LetIn
+    apply Ty.TypeJudgment.TE_Assert
+    apply Ty.TypeJudgment.TE_BinOpField
+    apply type_update_preserve
+    . exact htx
+    . exact hne₁
+    apply type_update_preserve
+    . exact hty
+    . exact hne₂
+    apply Ty.TypeJudgment.TE_ConstF
+    have h_sub : @Ty.SubtypeJudgment σ Δ (Env.updateTy
+      (Env.updateTy Γ u₁
+        (Ty.unit.refin
+          (Predicate.const
+            (exprEq y
+              ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr FieldOp.add
+                (Expr.constF 1))))))
+      u₂ (Ty.unit.refin (Predicate.const (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)))))
+      (Ty.unit.refin (Predicate.const (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0))))
+      (Ty.unit.refin
+        (Predicate.const (exprEq y ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0))))) := by {
+        apply Ty.SubtypeJudgment.TSub_Refine
+        apply Ty.SubtypeJudgment.TSub_Refl
+        unfold PropSemantics.tyenvToProp
+        unfold PropSemantics.predToProp
+        unfold PropSemantics.exprToProp
+        unfold PropSemantics.varToProp
+        simp_all
+        unfold Env.lookupTy Env.updateTy
+        simp_all
+        intro v h₁ h₂
+        have h₃ := h₁ u₁ (Ty.unit.refin
+              (Predicate.const
+                (exprEq y
+                  ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr FieldOp.add
+                    (Expr.constF 1)))))
+        have h₄ : ¬ u₂ = u₁ := by exact ne_symm' hne₃
+        simp_all
+        unfold PropSemantics.predToProp at h₃
+        simp at h₃
+        unfold PropSemantics.exprToProp at h₃
+        apply isZero_eval_eq_branch_semantics h₃ h₂
+      }
+    apply Ty.TypeJudgment.TE_SUB
+    exact h_sub
+    apply Ty.TypeJudgment.TE_VarEnv
+    unfold Env.updateTy Env.lookupTy
+    simp_all
+}
