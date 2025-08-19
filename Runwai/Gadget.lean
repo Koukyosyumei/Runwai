@@ -422,7 +422,6 @@ theorem type_update_preserve
       apply Ty.TypeJudgment.TE_Abs
       by_cases b: x = x'
       . simp_all
-        intro a b h₂
         sorry
       . sorry
       sorry
