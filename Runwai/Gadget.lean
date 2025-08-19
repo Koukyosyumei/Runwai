@@ -267,6 +267,88 @@ lemma update_preserve_pointwise
     simp [lookup_update_self, h]
   · simp [lookup_update_other _ _ _ _ hy, h y]
 
+theorem eq_none_of_isSome_eq_false {α : Type _}
+    {o : Option α} (h : o.isSome = false) : o = none := by
+  cases o <;> simp_all
+
+lemma lookup_update_self_none (Γ: Env.TyEnv) (x: String) (τ: Ast.Ty) (h: Env.lookupTy Γ x = none):
+  Env.lookupTy (Env.updateTy Γ x τ) x = τ:= by {
+    unfold Env.lookupTy at h ⊢
+    unfold Env.updateTy
+    simp_all
+    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => {
+      simp
+      rw[b]
+      simp_all
+    }
+    | some val => {
+      simp_all
+    }
+  }
+
+lemma lookup_update_ne (Γ: Env.TyEnv) (x y: String) (τ: Ast.Ty) (h: x ≠ y):
+  Env.lookupTy (Env.updateTy Γ x τ) y = Env.lookupTy Γ y := by
+  unfold Env.lookupTy Env.updateTy
+  simp
+  by_cases hx : (List.find? (fun p => decide (p.1 = x)) Γ).isSome
+  · simp [hx]
+  · simp [hx]
+    have h': (if x = y then some (x, τ) else none) = none := by simp_all
+    rw[h']
+    simp
+
+lemma lookup_update_ne_none (Γ: Env.TyEnv) (x y: String) (hne: x ≠ y) (h: Env.lookupTy Γ y = none) (τ: Ast.Ty):
+  Env.lookupTy (Env.updateTy Γ x τ) y = none := by {
+    unfold Env.lookupTy at h ⊢
+    unfold Env.updateTy
+    simp_all
+    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => simp_all
+    | some val => simp_all
+  }
+
+lemma lookup_update_other_preserve (Γ: Env.TyEnv) (x y: String) (τ₁ τ₂: Ast.Ty) (h: Env.lookupTy Γ x = τ₁):
+  Env.lookupTy (Env.updateTy Γ y τ₂) x = τ₁ := by {
+    unfold Env.lookupTy at h ⊢
+    unfold Env.updateTy
+    simp_all
+    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => simp_all
+    | some val => {
+      cases b': List.find? (fun x_1 ↦ decide (x_1.1 = y)) Γ with
+      | none => {
+        simp_all
+      }
+      | some val => {
+        simp_all
+      }
+    }
+  }
+
+theorem lookup_mem_of_eq {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty}:
+  Env.lookupTy Γ x = τ → (x, τ) ∈ Γ := by {
+    unfold Env.lookupTy
+    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => simp_all
+    | some val => {
+      have b' : (List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ).isSome = true := by simp_all
+      have b'' := List.get_find?_mem b'
+      have b''' := List.find?_eq_some_iff_append.mp b
+      simp_all
+      have b'''' : val.1 = x := by simp_all
+      cases val with
+      | mk v₁ v₂ =>{
+        have h₁: v₁ = x := by simp_all
+        intro h₂
+        have h₃: v₂ = τ := by simp_all
+        rw[h₁] at b''
+        rw[h₃] at b''
+        exact b''
+      }
+    }
+  }
+
 theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
   (h₂: @Ty.TypeJudgment σ Δ Γ₁ e τ) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
@@ -410,7 +492,14 @@ theorem tyenvToProp_update_subset (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env
     simp at h
     have h₂ := h x' τ' h₁
     unfold PropSemantics.varToProp at hn₂ h₂
-    sorry
+    have h₃ : Env.lookupTy Γ x' = τ' := by {
+      unfold Env.lookupTy
+      sorry
+    }
+    have h₄ := lookup_update_other_preserve Γ x' x τ' τ h₃
+    rw[h₃] at hn₂
+    rw[h₄] at h₂
+    simp_all
 }
 
 theorem subtype_update_preserve
@@ -539,90 +628,6 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.
             }
           }
         }
-      }
-    }
-  }
-
-theorem eq_none_of_isSome_eq_false {α : Type _}
-    {o : Option α} (h : o.isSome = false) : o = none := by
-  cases o <;> simp_all
-
-lemma lookup_update_self_none (Γ: Env.TyEnv) (x: String) (τ: Ast.Ty) (h: Env.lookupTy Γ x = none):
-  Env.lookupTy (Env.updateTy Γ x τ) x = τ:= by {
-    unfold Env.lookupTy at h ⊢
-    unfold Env.updateTy
-    simp_all
-    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
-    | none => {
-      simp
-      rw[b]
-      simp_all
-    }
-    | some val => {
-      simp_all
-    }
-  }
-
-lemma lookup_update_ne (Γ: Env.TyEnv) (x y: String) (τ: Ast.Ty) (h: x ≠ y):
-  Env.lookupTy (Env.updateTy Γ x τ) y = Env.lookupTy Γ y := by
-  unfold Env.lookupTy Env.updateTy
-  simp
-  by_cases hx : (List.find? (fun p => decide (p.1 = x)) Γ).isSome
-  · simp [hx]
-  · simp [hx]
-    have h': (if x = y then some (x, τ) else none) = none := by simp_all
-    rw[h']
-    simp
-
-lemma lookup_update_ne_none (Γ: Env.TyEnv) (x y: String) (hne: x ≠ y) (h: Env.lookupTy Γ y = none) (τ: Ast.Ty):
-  Env.lookupTy (Env.updateTy Γ x τ) y = none := by {
-    unfold Env.lookupTy at h ⊢
-    unfold Env.updateTy
-    simp_all
-    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
-    | none => simp_all
-    | some val => simp_all
-  }
-
-lemma lookup_update_other_preserve (Γ: Env.TyEnv) (x y: String) (τ₁ τ₂: Ast.Ty) (h: Env.lookupTy Γ x = τ₁):
-  Env.lookupTy (Env.updateTy Γ y τ₂) x = τ₁ := by {
-    unfold Env.lookupTy at h ⊢
-    unfold Env.updateTy
-    simp_all
-    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
-    | none => simp_all
-    | some val => {
-      cases b': List.find? (fun x_1 ↦ decide (x_1.1 = y)) Γ with
-      | none => {
-        simp_all
-      }
-      | some val => {
-        simp_all
-      }
-    }
-  }
-
-
-
-theorem lookup_mem_of_eq {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty}:
-  Env.lookupTy Γ x = τ → (x, τ) ∈ Γ := by {
-    unfold Env.lookupTy
-    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
-    | none => simp_all
-    | some val => {
-      have b' : (List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ).isSome = true := by simp_all
-      have b'' := List.get_find?_mem b'
-      have b''' := List.find?_eq_some_iff_append.mp b
-      simp_all
-      have b'''' : val.1 = x := by simp_all
-      cases val with
-      | mk v₁ v₂ =>{
-        have h₁: v₁ = x := by simp_all
-        intro h₂
-        have h₃: v₂ = τ := by simp_all
-        rw[h₁] at b''
-        rw[h₃] at b''
-        exact b''
       }
     }
   }
