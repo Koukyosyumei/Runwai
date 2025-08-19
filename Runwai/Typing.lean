@@ -110,7 +110,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
 
   -- TE-ABS (function abstraction)
   | TE_Abs {Γ: Env.TyEnv} {x: String} {τ₁ τ₂: Ast.Ty} {e: Ast.Expr}:
-    Γ.find? (·.1 = x) = none → -- This should be (Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁)
+    Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁ →
     TypeJudgment (Env.updateTy Γ x τ₁) e (τ₂) →
     TypeJudgment Γ (Ast.Expr.lam x τ₁ e) ((Ast.Ty.func x τ₁ τ₂))
 
@@ -129,7 +129,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
 
   -- TE-LETIN
   | TE_LetIn {Γ: Env.TyEnv} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ : Ast.Ty}
-    (h₀: Env.lookupTy Γ x = none) -- This should be (Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁)
+    (h₀: Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁)
     (h₁: @TypeJudgment σ Δ Γ e₁ τ₁)
     (h₂: @TypeJudgment σ Δ (Env.updateTy Γ x τ₁) e₂ τ₂):
     TypeJudgment Γ (Ast.Expr.letIn x e₁ e₂) τ₂

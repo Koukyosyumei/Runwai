@@ -325,19 +325,9 @@ theorem ty_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e:
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_Abs
       have hu := @update_preserve_pointwise Γ' Γ₂ x₁' τ₁' h
-      unfold Env.lookupTy at h
-      have h' := h x₁'
-      rw[ih₀] at h'
-      simp at h'
-      have hn: List.find? (fun x ↦ decide (x.1 = x₁')) Γ₂ = none := by {
-        cases hf: List.find? (fun x ↦ decide (x.1 = x₁')) Γ₂ with
-        | none => rfl
-        | some val => {
-          rw[hf] at h'
-          simp at h'
-        }
-      }
-      exact hn
+      have h' := hu x₁'
+      rw[← h']
+      exact ih₀
       apply ih₂
       have hu := @update_preserve_pointwise Γ' Γ₂ x₁' τ₁' h
       exact hu
@@ -364,9 +354,10 @@ theorem ty_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e:
       rename_i Γ' x₁ e₁ e₂ τ₁ τ₂ h'
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_LetIn
-      have h'' := h x₁
-      rw[← h'']
-      exact h₁
+      have hu := @update_preserve_pointwise Γ' Γ₂ x₁ τ₁ h
+      have h' := hu x₁
+      rw[h₁] at h'
+      rw[← h']
       apply ih₂
       exact h
       apply h'
@@ -560,6 +551,34 @@ theorem eq_none_of_isSome_eq_false {α : Type _}
     {o : Option α} (h : o.isSome = false) : o = none := by
   cases o <;> simp_all
 
+lemma nonupdate (Γ: Env.TyEnv) (x: String) (τ: Ast.Ty) (h: Env.lookupTy Γ x = none):
+  Env.lookupTy (Env.updateTy Γ x τ) x = τ:= by {
+    unfold Env.lookupTy at h ⊢
+    unfold Env.updateTy
+    simp_all
+    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => {
+      simp
+      rw[b]
+      simp_all
+    }
+    | some val => {
+      simp_all
+    }
+  }
+
+lemma dif_lookup (Γ: Env.TyEnv) (x y: String) (τ: Ast.Ty) (h: x ≠ y):
+  Env.lookupTy (Env.updateTy Γ x τ) y = Env.lookupTy Γ y := by
+  unfold Env.lookupTy Env.updateTy
+  simp
+  by_cases hx : (List.find? (fun p => decide (p.1 = x)) Γ).isSome
+  · simp [hx]
+  · -- case: x not in Γ
+    simp [hx]
+    have h': (if x = y then some (x, τ) else none) = none := by simp_all
+    rw[h']
+    simp
+
 lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
   (x y inv : Expr)
   (u₁ u₂: String)
@@ -569,6 +588,8 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
   (hne₁: (Expr.var u₁) ≠ x)
   (hne₂: (Expr.var u₁) ≠ y)
   (hne₃: ¬ u₁ = u₂)
+  (hhf₁: Env.lookupTy Γ u₁ = none)
+  (hhf₂: Env.lookupTy Γ u₂ = none)
   (hf₁: ¬ (Γ.find? (·.1 = u₁)).isSome)
   (hf₂: ¬ (Γ.find? (·.1 = u₂)).isSome):
   @Ty.TypeJudgment σ Δ Γ
@@ -576,13 +597,8 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr x .mul y) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.const (exprEq y (.branch (.binRel x (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
     apply Ty.TypeJudgment.TE_LetIn
-    unfold Env.lookupTy
-    cases h' : List.find? (fun x ↦ decide (x.1 = u₁)) Γ with
-    | some p =>
-      rw[h'] at hf₁
-      simp at hf₁
-    | none =>
-      simp
+    apply nonupdate
+    exact hhf₁
     apply Ty.TypeJudgment.TE_Assert
     exact hty
     apply Ty.TypeJudgment.TE_BinOpField
@@ -593,33 +609,10 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
     exact htinv
     apply Ty.TypeJudgment.TE_ConstF
     apply Ty.TypeJudgment.TE_LetIn
-    unfold Env.updateTy Env.lookupTy
-    cases h' : List.find? (fun x ↦ decide (x.1 = u₁)) Γ with
-    | some p =>
-      rw[h'] at hf₁
-      simp at hf₁
-    | none =>
-      simp
-      have hdec : (if u₁ = u₂ then
-        some
-          (u₁,
-            Ty.unit.refin
-              (Predicate.const
-                (exprEq y
-                  ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr FieldOp.add
-                    (Expr.constF 1)))))
-      else none) = none := by {
-        simp_all
-      }
-      rw[hdec]
-      cases h'' : List.find? (fun x ↦ decide (x.1 = u₂)) Γ with
-      | none => {
-        simp
-      }
-      | some val => {
-        rw[h''] at hf₂
-        simp at hf₂
-      }
+    apply nonupdate
+    rw[← hhf₂]
+    apply dif_lookup
+    exact hne₃
     apply Ty.TypeJudgment.TE_Assert
     apply Ty.TypeJudgment.TE_BinOpField
     apply type_update_preserve
