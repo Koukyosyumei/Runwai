@@ -573,11 +573,20 @@ lemma dif_lookup (Γ: Env.TyEnv) (x y: String) (τ: Ast.Ty) (h: x ≠ y):
   simp
   by_cases hx : (List.find? (fun p => decide (p.1 = x)) Γ).isSome
   · simp [hx]
-  · -- case: x not in Γ
-    simp [hx]
+  · simp [hx]
     have h': (if x = y then some (x, τ) else none) = none := by simp_all
     rw[h']
     simp
+
+lemma non_update' (Γ: Env.TyEnv) (x y: String) (hne: x ≠ y) (h: Env.lookupTy Γ y = none) (τ: Ast.Ty):
+  Env.lookupTy (Env.updateTy Γ x τ) y = none := by {
+    unfold Env.lookupTy at h ⊢
+    unfold Env.updateTy
+    simp_all
+    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => simp_all
+    | some val => simp_all
+  }
 
 lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
   (x y inv : Expr)
@@ -585,8 +594,6 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
   (htx: @Ty.TypeJudgment σ Δ Γ x (Ty.refin Ast.Ty.field φ₁))
   (hty: @Ty.TypeJudgment σ Δ Γ y (Ty.refin Ast.Ty.field φ₂))
   (htinv: @Ty.TypeJudgment σ Δ Γ inv (Ty.refin Ast.Ty.field φ₃))
-  (hne₁: (Expr.var u₁) ≠ x)
-  (hne₂: (Expr.var u₁) ≠ y)
   (hne₃: ¬ u₁ = u₂)
   (hhf₁: Env.lookupTy Γ u₁ = none)
   (hhf₂: Env.lookupTy Γ u₂ = none)
@@ -638,17 +645,16 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
         unfold PropSemantics.exprToProp
         unfold PropSemantics.varToProp
         simp
-        unfold Env.lookupTy
-        unfold Env.updateTy
-        simp
         intro v h₁ h₂
         have h₃ := h₁ u₁ (Ty.unit.refin
               (Predicate.const
                 (exprEq y
                   ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr FieldOp.add
                     (Expr.constF 1)))))
+        unfold Env.lookupTy at h₃
+        unfold Env.updateTy at h₃
+        simp at h₃
         have h₄ : ¬ u₂ = u₁ := by exact ne_symm' hne₃
-        --simp
         have hf₃: (Γ.find? (·.1 = u₁)) = none := eq_none_of_isSome_eq_false (by simp [hf₁])
         rw [hf₃] at h₃
         simp_all
@@ -659,9 +665,8 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
     apply Ty.TypeJudgment.TE_SUB
     exact h_sub
     apply Ty.TypeJudgment.TE_VarEnv
-    unfold Env.updateTy Env.lookupTy
-    simp_all
-    have hf₅: (List.find? (fun x ↦ decide (x.1 = u₂)) Γ) = none := by sorry
-    rw[hf₅]
-    simp_all
+    apply nonupdate
+    apply non_update'
+    exact hne₃
+    exact hhf₂
 }
