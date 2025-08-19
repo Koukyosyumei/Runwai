@@ -492,14 +492,29 @@ theorem tyenvToProp_update_subset (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env
     simp at h
     have h₂ := h x' τ' h₁
     unfold PropSemantics.varToProp at hn₂ h₂
-    have h₃ : Env.lookupTy Γ x' = τ' := by {
-      unfold Env.lookupTy
-      sorry
+    cases ov: Env.lookupTy Γ x' with
+    | none => {
+      unfold Env.lookupTy at ov
+      cases b: List.find? (fun x ↦ decide (x.1 = x')) Γ with
+      | none => {
+        simp_all
+        have b' := b x' τ' hn₃
+        simp_all
+      }
+      | some val => {
+        rw[b] at ov
+        cases val with
+        | mk fst snd => {
+          simp at ov
+        }
+      }
     }
-    have h₄ := lookup_update_other_preserve Γ x' x τ' τ h₃
-    rw[h₃] at hn₂
-    rw[h₄] at h₂
-    simp_all
+    | some τ₁ => {
+      have h₄ := lookup_update_other_preserve Γ x' x τ₁ τ ov
+      rw[ov] at hn₂
+      rw[h₄] at h₂
+      simp_all
+    }
 }
 
 theorem subtype_update_preserve
