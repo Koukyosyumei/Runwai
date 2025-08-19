@@ -306,19 +306,36 @@ theorem ty_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e:
       exact h₃
     }
     | TE_Branch h₁ h₂ ih₁ ih₂ => {
-      sorry
+      intro Γ₂ h
+      apply Ty.TypeJudgment.TE_Branch
+      apply ih₁
+      exact h
+      apply ih₂
+      exact h
     }
     | TE_ConstF => {
-      sorry
+      intro Γ₂ h
+      apply Ty.TypeJudgment.TE_ConstF
     }
     | TE_ConstZ => {
-      sorry
+      intro Γ₂ h
+      apply Ty.TypeJudgment.TE_ConstZ
     }
     | TE_Assert h₁ h₂ ih₁ ih₂ => {
-      sorry
+      intro Γ₂ h
+      apply Ty.TypeJudgment.TE_Assert
+      apply ih₁
+      exact h
+      apply ih₂
+      exact h
     }
     | TE_BinOpField h₁ h₂ ih₁ ih₂ => {
-      sorry
+      intro Γ₂ h
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply ih₁
+      exact h
+      apply ih₂
+      exact h
     }
     | TE_Abs ih₀ ih₁ ih₂ => {
       rename_i Γ' x₁' τ₁' τ₂' e'
@@ -440,6 +457,7 @@ theorem type_update_preserve
       apply ih₁
     }
     | TE_LetIn h₁ h₂ ih₁ ih₂ => {
+      rename_i Γ' x' e₁ e₂ τ₁' τ₂' h
       apply Ty.TypeJudgment.TE_LetIn
       sorry
       sorry
