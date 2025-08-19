@@ -257,7 +257,6 @@ lemma lookup_update_self
       simp_all
     }
 
-/-- `Γ₁` と `Γ₂` が pointwise に等しいなら、同じ `(x, τ)` での `update` 後も pointwise に等しい -/
 lemma update_preserve_pointwise
   (Γ₁ Γ₂ : Env.TyEnv) (x : String) (τ : Ast.Ty)
   (h : ∀ y, Env.lookupTy Γ₁ y = Env.lookupTy Γ₂ y) :
@@ -265,17 +264,14 @@ lemma update_preserve_pointwise
   intro y
   by_cases hy : y = x
   · subst hy
-    -- 両辺で `lookup_update_self` を展開して、前提 `h x` で一致
     simp [lookup_update_self, h]
-  · -- `y ≠ x` では update が効かないので直ちに `h y` に帰着
-    simp [lookup_update_other _ _ _ _ hy, h y]
+  · simp [lookup_update_other _ _ _ _ hy, h y]
 
-theorem ty_preserve' (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
-  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x)
+theorem ty_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
   (h₂: @Ty.TypeJudgment σ Δ Γ₁ e τ) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
         @Ty.TypeJudgment σ Δ Γ₂ e τ := by {
-    induction h₂ generalizing Γ₂ with
+    induction h₂ with
     | TE_Var φ ha => {
       rename_i Γ' x' τ'
       intro Γ₂ h
@@ -285,17 +281,26 @@ theorem ty_preserve' (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e
       exact ha
     }
     | TE_VarEnv φ _ => {
-      sorry
+      rename_i Γ' x τ h₁
+      intro Γ₂ h₂
+      apply Ty.TypeJudgment.TE_VarEnv
+      have h₃ := h₂ x
+      rw[← h₃]
+      exact h₁
     }
     | TE_VarFunc _ => {
-      sorry
+      rename_i Γ' x₁ x₂ τ₁ τ₂ h
+      intro Γ₂ h'
+      apply Ty.TypeJudgment.TE_VarFunc
+      have h₃ := h' x₁
+      rw[← h₃]
+      exact h
     }
     | TE_ArrayIndex h₁ h₂ h₃ a_ih => {
-      rename_i Γ' e₁ e₂ τ' idx n φ h₅
+      rename_i e₁ e₂ τ' idx n φ h₅
       intro Γ₂ h₄
       apply Ty.TypeJudgment.TE_ArrayIndex
       apply a_ih
-      exact h₁
       exact h₄
       exact h₂
       exact h₃
@@ -336,126 +341,39 @@ theorem ty_preserve' (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e
       apply ih₂
       have hu := @update_preserve_pointwise Γ' Γ₂ x₁' τ₁' h
       exact hu
-      exact update_preserve_pointwise Γ' Γ₂ x₁' τ₁' h
     }
     | TE_App h₁ h₂ h₃ ih₁ ih₂ => {
-      rename_i Γ' e₁ e₂ x τ₁ τ₂ v₁ h₅
+      rename_i e₁ e₂ x τ₁ τ₂ v₁ h₅
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_App
       apply ih₁
-      exact h₁
       exact h
       exact h₂
       apply ih₂
-      exact h₁
       exact h
     }
     | TE_SUB h₀ ht ih => {
-      sorry
-    }
-    | TE_LetIn h₁ h₂ ih₁ ih₂ => {
-      rename_i Γ' x' e₁ e₂ τ₁ τ₂ h₃
+      rename_i Γ' e₁ τ₁ τ₂
       intro Γ₂ h
-      apply Ty.TypeJudgment.TE_LetIn
-      apply ih₁
-      exact h
-      exact h
-      apply ih₂
-      have hu := @update_preserve_pointwise Γ' Γ₂ x' τ₁ h
-      exact hu
-      exact @update_preserve_pointwise Γ' Γ₂ x' τ₁ h
-    }
-  }
-
-theorem ty_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁ Γ₂: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
-  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x)
-  (h₂: @Ty.TypeJudgment σ Δ Γ₁ e τ) :
-  @Ty.TypeJudgment σ Δ Γ₂ e τ := by {
-    induction h₂ with
-    | TE_Var φ ha => {
-      rename_i x' τ'
-      apply Ty.TypeJudgment.TE_Var
-      have h₁' := h₁ x'
-      rw[← h₁']
-      exact ha
-    }
-    | TE_VarEnv φ _ => {
-      rename_i x' τ' ha
-      apply Ty.TypeJudgment.TE_VarEnv
-      have h₁' := h₁ x'
-      rw[← h₁']
-      exact ha
-    }
-    | TE_VarFunc _ => {
-      rename_i Γ' f' x' τ₁' τ₂' h
-      apply Ty.TypeJudgment.TE_VarFunc
-      have h₂ := h₁ f'
-      rw[← h₂]
-      exact h
-    }
-    | TE_ArrayIndex h₁ h₂ h₃ a_ih => {
-      rename_i Γ' e₁ e₂ τ' idx n φ h₅
-      apply Ty.TypeJudgment.TE_ArrayIndex
-      apply a_ih
-      exact h₁
-      exact h₂
-      exact h₃
-    }
-    | TE_Branch h₁ h₂ ih₁ ih₂ => {
-      rename_i Γ'  c e₁ e₂ τ' h₃
-      apply Ty.TypeJudgment.TE_Branch
-      apply ih₁
-      exact h₁
-      apply ih₂
-      exact h₁
-    }
-    | TE_ConstF => {
-      apply Ty.TypeJudgment.TE_ConstF
-    }
-    | TE_ConstZ => {
-      apply Ty.TypeJudgment.TE_ConstZ
-    }
-    | TE_Assert h₁ h₂ ih₁ ih₂ => {
-      apply Ty.TypeJudgment.TE_Assert
-      apply ih₁
-      exact h₁
-      apply ih₂
-      exact h₁
-    }
-    | TE_BinOpField h₁ h₂ ih₁ ih₂ => {
-      apply Ty.TypeJudgment.TE_BinOpField
-      apply ih₁
-      exact h₁
-      apply ih₂
-      exact h₁
-    }
-    | TE_Abs ih₁ ih₂ => {
-      rename_i Γ' x₁' τ₁' τ₂' e'
-      apply Ty.TypeJudgment.TE_Abs
-      sorry
-    }
-    | TE_App h₁ h₂ h₃ ih₁ ih₂ => {
-      apply Ty.TypeJudgment.TE_App
-      apply ih₁
-      exact h₁
-      exact h₂
-      apply ih₂
-      exact h₁
-    }
-    | TE_SUB h₀ ht ih => {
       apply Ty.TypeJudgment.TE_SUB
       sorry
       apply ih
-      exact h₁
+      exact h
     }
     | TE_LetIn h₁ h₂ ih₁ ih₂ => {
+      rename_i Γ' x₁ e₁ e₂ τ₁ τ₂ h'
+      intro Γ₂ h
       apply Ty.TypeJudgment.TE_LetIn
-      apply ih₁
+      have h'' := h x₁
+      rw[← h'']
       exact h₁
-      sorry
+      apply ih₂
+      exact h
+      apply h'
+      have hu := @update_preserve_pointwise Γ' Γ₂ x₁ τ₁ h
+      exact hu
     }
   }
-
 
 theorem ty_swap_preserve (Γ: Env.TyEnv) (x₁ x₂: String) (τ₁ τ₂: Ast.Ty) (hne: x₁ ≠ x₂)
   (h: @Ty.TypeJudgment σ Δ (Env.updateTy (Env.updateTy Γ x₁ τ₁) x₂ τ₂) e τ₁):
@@ -509,13 +427,14 @@ theorem type_update_preserve
       apply ih₅ τ₂
     }
     | TE_Abs ih₁ ih₂ => {
-      rename_i Γ' x' τ₁' τ₂' e'
+      rename_i Γ' x' τ₁' τ₂' e' h
       apply Ty.TypeJudgment.TE_Abs
-      have h := ih₂ τ₂
       by_cases b: x = x'
       . simp_all
+        intro a b h₂
         sorry
       . sorry
+      sorry
       --unfold Env.updateTy at h ⊢
       --simp_all
     }
@@ -532,7 +451,9 @@ theorem type_update_preserve
     }
     | TE_LetIn h₁ h₂ ih₁ ih₂ => {
       apply Ty.TypeJudgment.TE_LetIn
-      apply ih₁
+      sorry
+      sorry
+      sorry
       sorry
     }
   }
@@ -655,6 +576,13 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr x .mul y) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.const (exprEq y (.branch (.binRel x (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
     apply Ty.TypeJudgment.TE_LetIn
+    unfold Env.lookupTy
+    cases h' : List.find? (fun x ↦ decide (x.1 = u₁)) Γ with
+    | some p =>
+      rw[h'] at hf₁
+      simp at hf₁
+    | none =>
+      simp
     apply Ty.TypeJudgment.TE_Assert
     exact hty
     apply Ty.TypeJudgment.TE_BinOpField
@@ -665,6 +593,33 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
     exact htinv
     apply Ty.TypeJudgment.TE_ConstF
     apply Ty.TypeJudgment.TE_LetIn
+    unfold Env.updateTy Env.lookupTy
+    cases h' : List.find? (fun x ↦ decide (x.1 = u₁)) Γ with
+    | some p =>
+      rw[h'] at hf₁
+      simp at hf₁
+    | none =>
+      simp
+      have hdec : (if u₁ = u₂ then
+        some
+          (u₁,
+            Ty.unit.refin
+              (Predicate.const
+                (exprEq y
+                  ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr FieldOp.add
+                    (Expr.constF 1)))))
+      else none) = none := by {
+        simp_all
+      }
+      rw[hdec]
+      cases h'' : List.find? (fun x ↦ decide (x.1 = u₂)) Γ with
+      | none => {
+        simp
+      }
+      | some val => {
+        rw[h''] at hf₂
+        simp at hf₂
+      }
     apply Ty.TypeJudgment.TE_Assert
     apply Ty.TypeJudgment.TE_BinOpField
     apply type_update_preserve
