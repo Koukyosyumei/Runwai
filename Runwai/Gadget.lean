@@ -588,6 +588,49 @@ lemma non_update' (Γ: Env.TyEnv) (x y: String) (hne: x ≠ y) (h: Env.lookupTy 
     | some val => simp_all
   }
 
+lemma non_update'' (Γ: Env.TyEnv) (x y: String) (τ₁ τ₂: Ast.Ty) (h: Env.lookupTy Γ x = τ₁):
+  Env.lookupTy (Env.updateTy Γ y τ₂) x = τ₁ := by {
+    unfold Env.lookupTy at h ⊢
+    unfold Env.updateTy
+    simp_all
+    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => simp_all
+    | some val => {
+      cases b': List.find? (fun x_1 ↦ decide (x_1.1 = y)) Γ with
+      | none => {
+        simp_all
+      }
+      | some val => {
+        simp_all
+      }
+    }
+  }
+
+
+
+theorem lookup_mem {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty}:
+  Env.lookupTy Γ x = τ → (x, τ) ∈ Γ := by {
+    unfold Env.lookupTy
+    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => simp_all
+    | some val => {
+      have b' : (List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ).isSome = true := by simp_all
+      have b'' := List.get_find?_mem b'
+      have b''' := List.find?_eq_some_iff_append.mp b
+      simp_all
+      have b'''' : val.1 = x := by simp_all
+      cases val with
+      | mk v₁ v₂ =>{
+        have h₁: v₁ = x := by simp_all
+        intro h₂
+        have h₃: v₂ = τ := by simp_all
+        rw[h₁] at b''
+        rw[h₃] at b''
+        exact b''
+      }
+    }
+  }
+
 lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
   (x y inv : Expr)
   (u₁ u₂: String)
@@ -596,9 +639,7 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
   (htinv: @Ty.TypeJudgment σ Δ Γ inv (Ty.refin Ast.Ty.field φ₃))
   (hne₃: ¬ u₁ = u₂)
   (hhf₁: Env.lookupTy Γ u₁ = none)
-  (hhf₂: Env.lookupTy Γ u₂ = none)
-  (hf₁: ¬ (Γ.find? (·.1 = u₁)).isSome)
-  (hf₂: ¬ (Γ.find? (·.1 = u₂)).isSome):
+  (hhf₂: Env.lookupTy Γ u₂ = none):
   @Ty.TypeJudgment σ Δ Γ
     (Ast.Expr.letIn u₁ (.assertE y (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub x) .mul inv) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr x .mul y) (.constF 0)) (.var u₂)))
@@ -646,21 +687,24 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
         unfold PropSemantics.varToProp
         simp
         intro v h₁ h₂
-        have h₃ := h₁ u₁ (Ty.unit.refin
-              (Predicate.const
-                (exprEq y
-                  ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr FieldOp.add
-                    (Expr.constF 1)))))
-        unfold Env.lookupTy at h₃
-        unfold Env.updateTy at h₃
-        simp at h₃
-        have h₄ : ¬ u₂ = u₁ := by exact ne_symm' hne₃
-        have hf₃: (Γ.find? (·.1 = u₁)) = none := eq_none_of_isSome_eq_false (by simp [hf₁])
-        rw [hf₃] at h₃
-        simp_all
-        unfold PropSemantics.predToProp at h₃
-        unfold PropSemantics.exprToProp at h₃
-        apply isZero_eval_eq_branch_semantics h₃ h₂
+        set φ₁ := (Predicate.const
+          (exprEq y
+            ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr FieldOp.add
+              (Expr.constF 1))))
+        set φ₂ := (Predicate.const (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)))
+        have h₃ := h₁ u₁ (Ty.unit.refin φ₁)
+        have h₄: Env.lookupTy (Env.updateTy (Env.updateTy Γ u₁ (Ty.unit.refin φ₁)) u₂ (Ty.unit.refin φ₂)) u₁ = (Ty.unit.refin φ₁) := by {
+          apply non_update''
+          apply nonupdate
+          exact hhf₁
+        }
+        have h₅ := lookup_mem h₄
+        have h₆ := h₃ h₅
+        rw[h₄] at h₆
+        simp at h₆
+        unfold PropSemantics.predToProp at h₆
+        unfold PropSemantics.exprToProp at h₆
+        apply isZero_eval_eq_branch_semantics h₆ h₂
       }
     apply Ty.TypeJudgment.TE_SUB
     exact h_sub
