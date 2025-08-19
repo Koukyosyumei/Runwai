@@ -26,34 +26,34 @@ namespace Ty
   under valuation `σ`, circuits `Δ`, type env `Γ`, and fuel.
 -/
 inductive SubtypeJudgment :
-  Env.ValEnv → Env.CircuitEnv → Env.TyEnv → Option Ast.Ty → Option Ast.Ty → Prop where
+  Env.ValEnv → Env.CircuitEnv → Env.TyEnv → Ast.Ty → Ast.Ty → Prop where
   /-- TSUB-REFL: Reflexivity -/
   | TSub_Refl {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {τ : Ast.Ty} :
-      SubtypeJudgment σ Δ Γ (pure τ) (pure τ)
+      SubtypeJudgment σ Δ Γ τ τ
 
   /-- TSUB-TRANS: Transitivity -/
   | TSub_Trans {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {τ₁ τ₂ τ₃ : Ast.Ty} :
-      SubtypeJudgment σ Δ Γ (pure τ₁) (pure τ₂) →
-      SubtypeJudgment σ Δ Γ (pure τ₂) (pure τ₃) →
-      SubtypeJudgment σ Δ Γ (pure τ₁) (pure τ₃)
+      SubtypeJudgment σ Δ Γ τ₁ τ₂ →
+      SubtypeJudgment σ Δ Γ τ₂ τ₃ →
+      SubtypeJudgment σ Δ Γ τ₁ τ₃
 
   /-- TSUB-REFINE: Refinement subtyping -/
   | TSub_Refine {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} :
-      SubtypeJudgment σ Δ Γ (pure T₁) (pure T₂) →
+      SubtypeJudgment σ Δ Γ T₁ T₂ →
       (∀ v: Ast.Expr, PropSemantics.tyenvToProp σ Δ Γ → (PropSemantics.predToProp σ Δ φ₁ v → PropSemantics.predToProp σ Δ φ₂ v)) →
-      SubtypeJudgment σ Δ Γ (pure (Ast.Ty.refin T₁ φ₁)) (pure (Ast.Ty.refin T₂ φ₂))
+      SubtypeJudgment σ Δ Γ (Ast.Ty.refin T₁ φ₁) (Ast.Ty.refin T₂ φ₂)
 
   /-- TSUB-FUN: Function subtyping -/
   | TSub_Fun {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {x y : String} {z : Ast.Value} {τx τy τr τs : Ast.Ty} :
-      SubtypeJudgment σ Δ Γ (pure τy) (pure τx) →
+      SubtypeJudgment σ Δ Γ τy τx →
       -- Using a fresh variable z to avoid capture
-      SubtypeJudgment (Env.updateVal (Env.updateVal σ x z) y z) Δ Γ (pure τr) (pure τs) →
-      SubtypeJudgment σ Δ Γ (pure (Ast.Ty.func x τx τr)) (pure (Ast.Ty.func y τy τs))
+      SubtypeJudgment (Env.updateVal (Env.updateVal σ x z) y z) Δ Γ τr τs →
+      SubtypeJudgment σ Δ Γ (Ast.Ty.func x τx τr) (Ast.Ty.func y τy τs)
 
   /-- TSUB-ARR: Array subtyping -/
   | TSub_Arr {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {n: Int} :
-      SubtypeJudgment σ Δ Γ (pure T₁) (pure T₂) →
-      SubtypeJudgment σ Δ Γ (pure (Ast.Ty.arr T₁ n)) (pure (Ast.Ty.arr T₂ n))
+      SubtypeJudgment σ Δ Γ T₁ T₂ →
+      SubtypeJudgment σ Δ Γ (Ast.Ty.arr T₁ n) (Ast.Ty.arr T₂ n)
 
 /--
   Typing judgment `Γ ⊢ e : τ`: expression `e` has type `τ`
@@ -123,7 +123,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
 
   -- TE_SUB
   | TE_SUB {Γ: Env.TyEnv} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
-    (h₀ : @SubtypeJudgment σ Δ Γ (some τ₁) (some τ₂))
+    (h₀ : @SubtypeJudgment σ Δ Γ τ₁ τ₂)
     (ht : @TypeJudgment σ Δ Γ e τ₁) :
     TypeJudgment Γ e τ₂
 
