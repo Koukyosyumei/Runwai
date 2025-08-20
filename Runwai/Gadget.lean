@@ -576,17 +576,14 @@ theorem tyenvToProp_update_subset (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env
     simp at hn
     obtain ⟨x', hn₁, hn₂⟩ := hn
     obtain ⟨τ', hn₃⟩ := hn₁
-    have h₁ := mem_update_preserve Γ x' x τ' τ hn₃
-    simp at h
-    have h₂ := h x' τ' h₁
+    have hn₄ := lookup_update_other_preserve Γ x' x τ' τ hn₃
+    have h₂ := h x' τ' hn₄
     unfold PropSemantics.varToProp at hn₂ h₂
     cases ov: Env.lookupTy Γ x' with
     | none => {
       unfold Env.lookupTy at ov
       cases b: List.find? (fun x ↦ decide (x.1 = x')) Γ with
       | none => {
-        simp_all
-        have b' := b x' τ' hn₃
         simp_all
       }
       | some val => {
@@ -806,12 +803,13 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
           exact hhf₁
         }
         have h₅ := lookup_mem_of_eq h₄
-        have h₆ := h₃ h₅
-        rw[h₄] at h₆
-        simp at h₆
-        unfold PropSemantics.predToProp at h₆
-        unfold PropSemantics.exprToProp at h₆
-        apply isZero_eval_eq_branch_semantics h₆ h₂
+        rw[h₄] at h₃
+        simp at h₃
+        unfold PropSemantics.predToProp at h₃
+        unfold PropSemantics.exprToProp at h₃
+        unfold φ₁ at h₃
+        simp at h₃
+        apply isZero_eval_eq_branch_semantics h₃ h₂
       }
     apply Ty.TypeJudgment.TE_SUB
     exact h_sub

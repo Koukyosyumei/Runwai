@@ -197,9 +197,7 @@ lemma tyenvToProp_implies_varToProp
   (hmt : PropSemantics.tyenvToProp σ Δ Γ) :
   PropSemantics.varToProp σ Δ Γ x := by
   dsimp [PropSemantics.tyenvToProp] at hmt
-  have hmem : (x, Ast.Ty.refin τ φ) ∈ Γ := lookupTy_mem Γ x τ φ hΓx
-  apply hmt at hmem
-  simp at hmem
-  exact hmem
+  apply hmt
+  exact hΓx
 
 end Ty
