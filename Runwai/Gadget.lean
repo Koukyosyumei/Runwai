@@ -6,23 +6,9 @@ import Runwai.Typing
 
 open Ast
 
-theorem evalprop_var_deterministic
-  {σ : Env.ValEnv} {Δ : Env.CircuitEnv} {x : String} :
-  ∀ {v₁ v₂}, Eval.EvalProp σ Δ (Expr.var x) v₁ → Eval.EvalProp σ Δ (Expr.var x) v₂ → v₁ = v₂ := by {
-    intro v₁ v₂ h₁ h₂
-    cases h₁
-    cases h₂
-    simp_all
-  }
-
 theorem length_eq_zero {α : Type} {xs : List α} :
   xs.length = 0 → xs = [] := by
-  cases xs with
-  | nil =>
-    intro _; rfl
-  | cons x xs' =>
-    intro h
-    simp at h
+  cases xs <;> simp
 
 lemma ne_imp_exists_diff {α: Type} {xs ys : List α}
     (hlen : xs.length = ys.length) (hne : xs ≠ ys) :
@@ -61,15 +47,9 @@ theorem evalprop_deterministic
   ∀ {v₁ v₂}, Eval.EvalProp σ Δ e v₁ → Eval.EvalProp σ Δ e v₂ → v₁ = v₂ := by
   intro v₁ v₂ h₁ h₂
   induction h₁ generalizing v₂ with
-  | ConstF =>
-    cases h₂
-    case ConstF => rfl
-  | ConstZ =>
-    cases h₂
-    case ConstZ => rfl
-  | ConstBool =>
-    cases h₂
-    case ConstBool => rfl
+  | ConstF => cases h₂; rfl
+  | ConstZ => cases h₂; rfl
+  | ConstBool => cases h₂; rfl
   | ConstArr h_length h_forall in_det =>
     rename_i es xs
     cases h₂
@@ -400,23 +380,17 @@ theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ�
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
     Ty.SubtypeJudgment σ Δ Γ₂ τ₁ τ₂ := by {
       induction h₂ with
-      | TSub_Refl => {
-        intro Γ₂ h
-        apply Ty.SubtypeJudgment.TSub_Refl
-      }
+      | TSub_Refl => intros; constructor
       | TSub_Trans h₁ h₂ ih₁ ih₂ => {
         intro Γ₂ h
         apply Ty.SubtypeJudgment.TSub_Trans
-        apply ih₁
-        exact h
-        apply ih₂
-        exact h
+        apply ih₁; exact h
+        apply ih₂; exact h
       }
       | TSub_Refine h₁ ih₁ ih₂ => {
         intro Γ₂ h
         apply Ty.SubtypeJudgment.TSub_Refine
-        apply ih₂
-        exact h
+        apply ih₂; exact h
         intro v h'₁ h'₂
         apply ih₁
         rename_i σ' Δ' Γ' τ₁' τ₂' φ₁' φ₂'
@@ -426,16 +400,12 @@ theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ�
       | TSub_Fun h₁ h₂ ih₁ ih₂ => {
         intro Γ₂ h
         apply Ty.SubtypeJudgment.TSub_Fun
-        apply ih₁
-        exact h
-        apply ih₂
-        exact h
+        apply ih₁; exact h
+        apply ih₂; exact h
       }
       | TSub_Arr h₁ ih => {
         intro Γ₂ h
-        apply Ty.SubtypeJudgment.TSub_Arr
-        apply ih
-        exact h
+        apply Ty.SubtypeJudgment.TSub_Arr; apply ih; assumption
       }
     }
 
@@ -444,102 +414,35 @@ theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: 
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
         @Ty.TypeJudgment σ Δ Γ₂ e τ := by {
     induction h₂ with
-    | TE_Var φ ha => {
-      rename_i Γ' x' τ'
-      intro Γ₂ h
-      apply Ty.TypeJudgment.TE_Var
-      have h₁' := h x'
-      rw[← h₁']
-      exact ha
-    }
-    | TE_VarEnv φ _ => {
-      rename_i Γ' x τ h₁
-      intro Γ₂ h₂
-      apply Ty.TypeJudgment.TE_VarEnv
-      have h₃ := h₂ x
-      rw[← h₃]
-      exact h₁
-    }
-    | TE_VarFunc _ => {
+    | TE_Var _ ha => intro Γ₂ h; apply Ty.TypeJudgment.TE_Var; rwa [← h]
+    | TE_VarEnv _ h₁ => intro Γ₂ h; apply Ty.TypeJudgment.TE_VarEnv; rwa [← h]
+    | TE_VarFunc _ =>
       rename_i Γ' x₁ x₂ τ₁ τ₂ h
       intro Γ₂ h'
       apply Ty.TypeJudgment.TE_VarFunc
       have h₃ := h' x₁
       rw[← h₃]
       exact h
-    }
-    | TE_ArrayIndex h₁ h₂ h₃ a_ih => {
-      rename_i e₁ e₂ τ' idx n φ h₅
-      intro Γ₂ h₄
-      apply Ty.TypeJudgment.TE_ArrayIndex
-      apply a_ih
-      exact h₄
-      exact h₂
-      exact h₃
-    }
-    | TE_Branch h₁ h₂ ih₁ ih₂ => {
-      intro Γ₂ h
-      apply Ty.TypeJudgment.TE_Branch
-      apply ih₁
-      exact h
-      apply ih₂
-      exact h
-    }
-    | TE_ConstF => {
-      intro Γ₂ h
-      apply Ty.TypeJudgment.TE_ConstF
-    }
-    | TE_ConstZ => {
-      intro Γ₂ h
-      apply Ty.TypeJudgment.TE_ConstZ
-    }
-    | TE_Assert h₁ h₂ ih₁ ih₂ => {
-      intro Γ₂ h
-      apply Ty.TypeJudgment.TE_Assert
-      apply ih₁
-      exact h
-      apply ih₂
-      exact h
-    }
-    | TE_BinOpField h₁ h₂ ih₁ ih₂ => {
-      intro Γ₂ h
-      apply Ty.TypeJudgment.TE_BinOpField
-      apply ih₁
-      exact h
-      apply ih₂
-      exact h
-    }
-    | TE_Abs ih₀ ih₁ ih₂ => {
-      rename_i Γ' x₁' τ₁' τ₂' e'
+    | TE_ArrayIndex _ h₂ h₃ a_ih => intro Γ₂ h; apply Ty.TypeJudgment.TE_ArrayIndex (a_ih Γ₂ h) h₂ h₃
+    | TE_Branch _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Branch (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_ConstF => intros; constructor
+    | TE_ConstZ => intros; constructor
+    | TE_Assert _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Assert (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_BinOpField _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpField (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_Abs ih₀ _ ih₂ =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_Abs
-      have hu := @update_preserve_pointwise Γ' Γ₂ x₁' τ₁' h
-      have h' := hu x₁'
-      rw[← h']
-      exact ih₀
-      apply ih₂
-      have hu := @update_preserve_pointwise Γ' Γ₂ x₁' τ₁' h
-      exact hu
-    }
-    | TE_App h₁ h₂ h₃ ih₁ ih₂ => {
-      rename_i e₁ e₂ x τ₁ τ₂ v₁ h₅
+      · rwa [← update_preserve_pointwise _ _ _ _ h]
+      · apply ih₂; exact update_preserve_pointwise _ _ _ _ h
+    | TE_App _ h₂ _ ih₁ ih₂ =>
       intro Γ₂ h
-      apply Ty.TypeJudgment.TE_App
-      apply ih₁
-      exact h
-      exact h₂
-      apply ih₂
-      exact h
-    }
-    | TE_SUB h₀ ht ih => {
-      rename_i Γ' e₁ τ₁ τ₂
+      apply Ty.TypeJudgment.TE_App (ih₁ Γ₂ h) h₂ (ih₂ Γ₂ h)
+    | TE_SUB h₀ _ ih =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_SUB
-      exact subtyping_pointwise_preserve σ Δ Γ' τ₁ τ₂ h₀ Γ₂ h
-      apply ih
-      exact h
-    }
-    | TE_LetIn h₁ h₂ ih₁ ih₂ => {
+      · exact subtyping_pointwise_preserve σ Δ _ _ _ h₀ Γ₂ h
+      · apply ih; assumption
+    | TE_LetIn h₁ h₂ ih₁ ih₂ =>
       rename_i Γ' x₁ e₁ e₂ τ₁ τ₂ h'
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_LetIn
@@ -552,23 +455,14 @@ theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: 
       apply h'
       have hu := @update_preserve_pointwise Γ' Γ₂ x₁ τ₁ h
       exact hu
-    }
   }
 
 lemma mem_update_preserve (Γ: Env.TyEnv) (x x': String) (τ τ': Ty) (h: (x, τ) ∈ Γ):
-  (x, τ) ∈ (Env.updateTy Γ x' τ') := by {
-    unfold Env.updateTy
-    simp_all
-    cases b: (List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ).isSome
-    . simp_all
-      cases b': (List.find? (fun x ↦ decide (x.1 = x')) Γ).isSome
-      . simp_all
-      . simp_all
-    . simp_all
-      cases b': (List.find? (fun x ↦ decide (x.1 = x')) Γ).isSome
-      . simp_all
-      . simp_all
-  }
+  (x, τ) ∈ (Env.updateTy Γ x' τ') := by
+  unfold Env.updateTy
+  by_cases hx : (Γ.find? (fun p => p.1 = x')).isSome
+  · simp_all
+  · simp [hx, h]
 
 theorem tyenvToProp_update_subset (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (x: String) (τ: Ty)
   (h: PropSemantics.tyenvToProp σ Δ (Env.updateTy Γ x τ)):
@@ -609,130 +503,61 @@ theorem subtype_update_preserve
   (h: Ty.SubtypeJudgment σ Δ Γ τ₁ τ₂):
   Ty.SubtypeJudgment σ Δ (Env.updateTy Γ x τ₃) τ₁ τ₂ := by {
     induction h generalizing τ₃ with
-    | TSub_Refl => {
-      apply Ty.SubtypeJudgment.TSub_Refl
-    }
-    | TSub_Trans hs₁ hs₂ ih₁ ih₂ => {
-      apply Ty.SubtypeJudgment.TSub_Trans
-      apply ih₁ τ₃
-      apply ih₂ τ₃
-    }
-    | TSub_Refine hs ih₁ ih₂ => {
-      apply Ty.SubtypeJudgment.TSub_Refine
-      apply ih₂ τ₃
-      intro hv₁ hv₂
-      apply ih₁
-      apply tyenvToProp_update_subset
-      exact hv₂
-    }
-    | TSub_Fun hs₁ hs₂ ih₁ ih₂ => {
-      apply Ty.SubtypeJudgment.TSub_Fun
-      apply ih₁
-      apply ih₂
-    }
-    | TSub_Arr h ih => {
-      apply Ty.SubtypeJudgment.TSub_Arr
-      apply ih
-    }
+    | TSub_Refl => constructor
+    | TSub_Trans _ _ ih₁ ih₂ => apply Ty.SubtypeJudgment.TSub_Trans; apply ih₁; apply ih₂
+    | TSub_Refine _ ih₁ ih₂ =>
+      apply Ty.SubtypeJudgment.TSub_Refine (ih₂ τ₃)
+      intro v hv₁ hv₂
+      apply ih₁; apply tyenvToProp_update_subset; exact hv₁; exact hv₂
+    | TSub_Fun _ _ ih₁ ih₂ => apply Ty.SubtypeJudgment.TSub_Fun; apply ih₁; apply ih₂
+    | TSub_Arr _ ih => apply Ty.SubtypeJudgment.TSub_Arr; apply ih
   }
 
 lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.CircuitEnv}
-  (h₁: Eval.EvalProp σ Δ (exprEq y ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr
+  (h₁ : Eval.EvalProp σ Δ (exprEq y ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr
                   FieldOp.add (Expr.constF 1))) (Value.vBool true))
-  (h₂: Eval.EvalProp σ Δ (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)) (Value.vBool true)) :
+  (h₂ : Eval.EvalProp σ Δ (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)) (Value.vBool true))
+  (hx : Eval.EvalProp σ Δ x xv) (hy : Eval.EvalProp σ Δ y yv) (hinv : Eval.EvalProp σ Δ inv invv) :
   Eval.EvalProp σ Δ (exprEq y (.branch (x.binRel RelOp.eq (Expr.constF 0)) (Expr.constF 1) (Expr.constF 0))) (Value.vBool true) := by {
-    cases h₁ with
-    | Rel ih₁ ih₂ r₁ => {
-      rename_i v₁ v₂
-      cases ih₂ with
-      | FBinOp ih₃ ih₄ r₂ => {
-        rename_i i₁ i₂
-        cases ih₃ with
-        | FBinOp ih₅ ih₆ r₃ => {
-          rename_i i₃ i₄
-          cases ih₅ with
-          | FBinOp ih₇ ih₈ r₄ => {
-            rename_i i₅ i₆
-            cases h₂ with
-            | Rel ih₉ ih₁₀ r₅ => {
-              rename_i i₇ i₈
-              cases ih₄
-              cases ih₇
-              cases ih₁₀
-              cases ih₉ with
-              | FBinOp ih₁₁ ih₁₂ r₆ => {
-                rename_i i₉ i₁₀
-                unfold Eval.evalFieldOp at r₂ r₃ r₄ r₆
-                simp_all
-                cases v₁ with
-                | vF xv₁ => {
-                  cases v₂ with
-                  | vF xv₂ => {
-                    cases i₇ with
-                    | vF xv₃ => {
-                      simp at r₁ r₅
-                      simp_all
-                      have h₁ := evalprop_deterministic ih₈ ih₁₁
-                      have h₂ := evalprop_deterministic ih₁ ih₁₂
-                      simp_all
-                      set inv_val := i₄
-                      set x_val := i₉
-                      set y_val := i₁₀
-                      rw[← r₄] at r₃
-                      rw[← r₃] at r₂
-                      unfold exprEq
-                      apply Eval.EvalProp.Rel
-                      exact ih₁₂
-                      have h₃: x_val = 0 → Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 1) := by {
-                        intro h
-                        apply Eval.EvalProp.IfTrue
-                        apply Eval.EvalProp.Rel
-                        exact ih₁₁
-                        apply Eval.EvalProp.ConstF
-                        unfold Eval.evalRelOp
-                        simp_all
-                        apply Eval.EvalProp.ConstF
-                      }
-                      have h₄: x_val ≠ 0 → Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 0) := by {
-                        intro h
-                        apply Eval.EvalProp.IfFalse
-                        apply Eval.EvalProp.Rel
-                        exact ih₁₁
-                        apply Eval.EvalProp.ConstF
-                        unfold Eval.evalRelOp
-                        simp_all
-                        apply Eval.EvalProp.ConstF
-                      }
-                      have h₅: Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (if x_val = 0 then (Value.vF 1) else (Value.vF 0)) := by {
-                        by_cases hz : x_val = 0
-                        . simp_all
-                        . simp_all
-                      }
-                      exact h₅
-                      by_cases hz: x_val = 0
-                      . simp_all
-                        rw[← r₃] at r₄
-                        rw[← r₄] at r₂
-                        rw [neg_zero, zero_mul, zero_add] at r₂
-                        rw[r₂]
-                      . simp_all
-                    }
-                    | _ => simp_all
-                  }
-                  | _ => simp_all
-                }
-                | vZ => {
-                  cases v₂ with
-                  | _ => simp_all
-                }
-                | _ => simp_all
-              }
-            }
-          }
-        }
-      }
-    }
+  cases h₁; cases h₂; rename_i v₁ v₂ ih₁ ih₂ r v₃ v₄ ih₃ ih₄ ih₅
+  cases ih₂; cases ih₃; cases ih₄; rename_i v₅ v₆ ih₂ ih₃ ih₄ i₃ i₄ ih₆ ih₇ ih₈
+  cases ih₂; cases ih₃; rename_i i₅ i₆ ih₂ ih₃ ih₉
+  cases ih₂; rename_i i₁ i₂ ih₂ ihh₁ ihh₂
+  cases ih₂
+  have he₁ := evalprop_deterministic hy ih₁
+  have he₂ := evalprop_deterministic hx ih₆
+  have he₃ := evalprop_deterministic hinv ih₃
+  have he₄ := evalprop_deterministic hy ih₇
+  cases ih₈; simp at ih₅; cases ih₉; simp at ih₄; cases ihh₂; simp at ih₄
+  set x_val := i₃; set y_val := i₄; set inv_val := i₆
+  have he₅ := evalprop_deterministic ih₆ ihh₁
+  simp at r
+  rw[he₄] at he₁; rw[← ih₄, ← he₁] at r
+  simp_all
+  rw[← he₅] at ih₅ r
+  unfold exprEq; apply Eval.EvalProp.Rel; exact ih₁
+  have h₃: x_val = 0 → Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 1) := by {
+    intro h
+    apply Eval.EvalProp.IfTrue; apply Eval.EvalProp.Rel; exact ihh₁
+    apply Eval.EvalProp.ConstF; unfold Eval.evalRelOp
+    simp_all; apply Eval.EvalProp.ConstF
   }
+  have h₄: x_val ≠ 0 → Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 0) := by {
+    intro h
+    apply Eval.EvalProp.IfFalse; apply Eval.EvalProp.Rel; exact ihh₁
+    apply Eval.EvalProp.ConstF; unfold Eval.evalRelOp
+    simp_all; apply Eval.EvalProp.ConstF
+  }
+  have h₅: Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (if x_val = 0 then (Value.vF 1) else (Value.vF 0)) := by {
+    by_cases h : x_val = 0
+    . simp_all
+    . simp_all
+  }
+  exact h₅
+  by_cases hz: x_val = 0
+  . simp_all; rw[← he₅] at ih₄; rw [zero_mul, neg_zero, zero_add] at ih₄; rw[← ih₄]; simp
+  . simp_all; rw[← ih₄]; simp
+}
 
 lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
   (x y inv u₁ u₂: String)
@@ -746,30 +571,15 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.const (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
-    apply Ty.TypeJudgment.TE_LetIn
-    apply lookup_update_self_none
-    exact hhf₁
-    apply Ty.TypeJudgment.TE_Assert
-    apply Ty.TypeJudgment.TE_VarEnv
-    exact hty
-    apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_ConstF
-    apply Ty.TypeJudgment.TE_VarEnv
-    exact htx
-    exact htinv
-    apply Ty.TypeJudgment.TE_ConstF
-    apply Ty.TypeJudgment.TE_LetIn
-    apply lookup_update_self_none
+    apply Ty.TypeJudgment.TE_LetIn; apply lookup_update_self_none; exact hhf₁
+    apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_VarEnv; exact hty
+    repeat apply Ty.TypeJudgment.TE_BinOpField
+    apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_VarEnv; exact htx; exact htinv
+    apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_LetIn; apply lookup_update_self_none
     rw[← hhf₂]
-    apply lookup_update_ne
-    exact hne₃
-    apply Ty.TypeJudgment.TE_Assert
-    apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_other_preserve
-    exact htx
+    apply lookup_update_ne; exact hne₃
+    apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_BinOpField; apply Ty.TypeJudgment.TE_VarEnv
+    apply lookup_update_other_preserve; exact htx
     apply Ty.TypeJudgment.TE_VarEnv
     apply lookup_update_other_preserve
     . exact hty
@@ -787,10 +597,7 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
         (Predicate.const (exprEq (Expr.var y) (((Expr.var x).binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0))))) := by {
         apply Ty.SubtypeJudgment.TSub_Refine
         apply Ty.SubtypeJudgment.TSub_Refl
-        unfold PropSemantics.tyenvToProp
-        unfold PropSemantics.predToProp
-        unfold PropSemantics.exprToProp
-        unfold PropSemantics.varToProp
+        unfold PropSemantics.tyenvToProp PropSemantics.predToProp PropSemantics.exprToProp PropSemantics.varToProp
         simp
         intro v h₁ h₂
         set φ₁ := (Predicate.const
@@ -807,14 +614,12 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
         have h₅ := lookup_mem_of_eq h₄
         rw[h₄] at h₃
         simp at h₃
-        unfold PropSemantics.predToProp at h₃
-        unfold PropSemantics.exprToProp at h₃
-        unfold φ₁ at h₃
+        unfold PropSemantics.predToProp PropSemantics.exprToProp φ₁ at h₃
         simp at h₃
         apply isZero_eval_eq_branch_semantics h₃ h₂
+        repeat apply Eval.EvalProp.Var; rfl
       }
-    apply Ty.TypeJudgment.TE_SUB
-    exact h_sub
+    apply Ty.TypeJudgment.TE_SUB h_sub
     apply Ty.TypeJudgment.TE_VarEnv
     apply lookup_update_self_none
     apply lookup_update_ne_none

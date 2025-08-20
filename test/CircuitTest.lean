@@ -15,52 +15,24 @@ def assertCircuit : Ast.Circuit := {
 
 def Δ : Env.CircuitEnv := [("assert", assertCircuit)]
 
-theorem assertCircuit_correct : (Ty.circuitCorrect Δ assertCircuit 1) := by
+theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
   unfold Ty.circuitCorrect
-  unfold assertCircuit
-  simp_all
   intro x i height hs hi ht hσ
-  set envs := Ty.makeEnvs assertCircuit x (Ast.Value.vZ i) height
-  set σ := envs.1
-  set Γ := envs.2
+  let envs := Ty.makeEnvs assertCircuit x (Ast.Value.vZ i) height
+  let σ := envs.1
+  let Γ := envs.2
   apply Ty.TypeJudgment.TE_LetIn
-  apply lookup_update_self_none
-  unfold Ty.makeEnvs
-  simp
-  apply lookup_update_ne_none
-  simp
-  apply lookup_update_ne_none
-  simp
-  exact lookup_empty_none "u"
-  apply Ty.TypeJudgment.TE_Assert
-  apply Ty.TypeJudgment.TE_ArrayIndex
-  apply Ty.TypeJudgment.TE_ArrayIndex
-  apply Ty.TypeJudgment.TE_Var
-  unfold Ty.makeEnvs
-  unfold Env.updateTy
-  unfold Env.lookupTy
-  simp_all
-  constructor
-  . constructor
-    . constructor
-      . constructor
-        . rfl
-        . rfl
-      . rfl
-    . rfl
-  . rfl
-  apply Eval.EvalProp.Var
-  unfold Ty.makeEnvs
-  unfold Env.lookupVal
-  unfold Env.updateVal
-  simp_all
-  rfl
-  simp_all
-  apply Eval.EvalProp.ConstZ
-  simp_all
-  apply Ty.TypeJudgment.TE_ConstF
-  apply Ty.TypeJudgment.TE_VarEnv
-  unfold Env.updateTy
-  unfold Env.lookupTy
-  simp_all
-  rfl
+  · apply lookup_update_self_none; apply lookup_update_ne
+    simp
+  · apply Ty.TypeJudgment.TE_Assert
+    · apply Ty.TypeJudgment.TE_ArrayIndex; apply Ty.TypeJudgment.TE_ArrayIndex; apply Ty.TypeJudgment.TE_Var
+      apply lookup_update_other
+      simp
+      apply Eval.EvalProp.Var; exact rfl
+      simp
+      exact hi
+      apply Eval.EvalProp.ConstZ
+      simp
+    . apply Ty.TypeJudgment.TE_ConstF
+  . apply Ty.TypeJudgment.TE_VarEnv; apply lookup_update_self_none; apply lookup_update_other
+    simp
