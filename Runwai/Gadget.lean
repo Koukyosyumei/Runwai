@@ -349,6 +349,49 @@ theorem lookup_mem_of_eq {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty}:
     }
   }
 
+theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (τ₁ τ₂: Ast.Ty)
+  (h₂: Ty.SubtypeJudgment σ Δ Γ₁ τ₁ τ₂) :
+  ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
+    Ty.SubtypeJudgment σ Δ Γ₂ τ₁ τ₂ := by {
+      induction h₂ with
+      | TSub_Refl => {
+        intro Γ₂ h
+        apply Ty.SubtypeJudgment.TSub_Refl
+      }
+      | TSub_Trans h₁ h₂ ih₁ ih₂ => {
+        intro Γ₂ h
+        apply Ty.SubtypeJudgment.TSub_Trans
+        apply ih₁
+        exact h
+        apply ih₂
+        exact h
+      }
+      | TSub_Refine h₁ ih₁ ih₂ => {
+        intro Γ₂ h
+        apply Ty.SubtypeJudgment.TSub_Refine
+        apply ih₂
+        exact h
+        intro v h'₁ h'₂
+        apply ih₁
+        sorry
+        exact h'₂
+      }
+      | TSub_Fun h₁ h₂ ih₁ ih₂ => {
+        intro Γ₂ h
+        apply Ty.SubtypeJudgment.TSub_Fun
+        apply ih₁
+        exact h
+        apply ih₂
+        exact h
+      }
+      | TSub_Arr h₁ ih => {
+        intro Γ₂ h
+        apply Ty.SubtypeJudgment.TSub_Arr
+        apply ih
+        exact h
+      }
+    }
+
 theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
   (h₂: @Ty.TypeJudgment σ Δ Γ₁ e τ) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
@@ -445,7 +488,7 @@ theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: 
       rename_i Γ' e₁ τ₁ τ₂
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_SUB
-      sorry
+      exact subtyping_pointwise_preserve σ Δ Γ' τ₁ τ₂ h₀ Γ₂ h
       apply ih
       exact h
     }
