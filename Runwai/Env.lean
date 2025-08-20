@@ -91,12 +91,10 @@ theorem lookup_preserve (Γ: TyEnv) (x y: String) (τ₁ τ₂: Ast.Ty)
   by_cases b₁: (Γ.find? (fun (x₁, _) => x₁ = x)).isSome
   by_cases b₂: (Γ.find? (fun (x₂, _) => x₂ = y)).isSome
   . simp_all
-  . simp_all
-    by_cases b₃: y = x
+  . by_cases b₃: y = x
     . simp_all
     . simp_all
-  . simp_all
-    by_cases b₄: (List.find? (fun x ↦ decide (x.1 = y)) Γ).isSome
+  . by_cases b₄: (List.find? (fun x ↦ decide (x.1 = y)) Γ).isSome
     . simp_all
     . simp_all
       by_cases b₅: y = x
