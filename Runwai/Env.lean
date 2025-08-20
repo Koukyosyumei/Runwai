@@ -31,7 +31,9 @@ def lookupVal (σ : ValEnv) (ident : String) : Ast.Value :=
 
 @[inline]
 def updateVal (σ : ValEnv) (ident : String) (val : Ast.Value) : ValEnv :=
-  (ident, val) :: σ
+  if (σ.find? (fun (x, _) => x = ident)).isSome
+  then σ
+  else σ ++ [(ident, val)]
 
 /-- A circuit environment: maps circuit names to their `Circuit`. -/
 abbrev CircuitEnv := List (String × Ast.Circuit)

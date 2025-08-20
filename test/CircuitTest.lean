@@ -13,7 +13,22 @@ def assertCircuit : Ast.Circuit := {
             (Ast.Expr.var "u"))
 }
 
-def Δ : Env.CircuitEnv := [("assert", assertCircuit)]
+@[simp]
+def iszeroCircuit : Ast.Circuit := {
+  name   := "iszero",
+  width  := 3,
+  goal   := (Ast.exprEq (.var "y") (.branch (.binRel (.var "x") (.eq) (.constF 0)) (.constF 1) (.constF 0)))
+  body   := (Ast.Expr.letIn "x" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
+              (Ast.Expr.letIn "y" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
+                (Ast.Expr.letIn "inv" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 2))
+                  (Ast.Expr.letIn "u₁" (.assertE (.var "y") (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var "x")) .mul (.var "inv")) (.add) (.constF 1)))
+                    (Ast.Expr.letIn "u₂" (.assertE (.fieldExpr (.var "x") .mul (.var "y")) (.constF 0)) (.var "u₂")))
+                )
+              )
+            )
+}
+
+def Δ : Env.CircuitEnv := [("assert", assertCircuit), ("iszero", iszeroCircuit)]
 
 theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
   unfold Ty.circuitCorrect
@@ -36,3 +51,68 @@ theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
     . apply Ty.TypeJudgment.TE_ConstF
   . apply Ty.TypeJudgment.TE_VarEnv; apply lookup_update_self_none; apply lookup_update_other
     simp
+
+theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
+  unfold Ty.circuitCorrect
+  intro x i height hs hi ht hσ
+  let envs := Ty.makeEnvs iszeroCircuit x (Ast.Value.vZ i) height
+  let σ := envs.1
+  let Γ := envs.2
+  apply Ty.TypeJudgment.TE_LetIn
+  · apply lookup_update_self_none; apply lookup_update_ne
+    simp
+  · apply Ty.TypeJudgment.TE_ArrayIndex
+    apply Ty.TypeJudgment.TE_ArrayIndex
+    apply Ty.TypeJudgment.TE_Var
+    apply lookup_update_ne
+    simp
+    apply Eval.EvalProp.Var
+    unfold Env.lookupVal
+    unfold Env.updateVal
+    simp
+    rfl
+    simp
+    exact hi
+    apply Eval.EvalProp.ConstZ
+    simp
+  . apply Ty.TypeJudgment.TE_LetIn
+    . apply lookup_update_self_none; apply lookup_update_ne
+      simp
+    · apply Ty.TypeJudgment.TE_ArrayIndex
+      apply Ty.TypeJudgment.TE_ArrayIndex
+      apply Ty.TypeJudgment.TE_Var
+      apply lookup_update_ne
+      simp
+      apply Eval.EvalProp.Var
+      unfold Env.lookupVal
+      unfold Env.updateVal
+      simp
+      rfl
+      simp
+      exact hi
+      apply Eval.EvalProp.ConstZ
+      simp
+    . apply Ty.TypeJudgment.TE_LetIn
+      . apply lookup_update_self_none; apply lookup_update_ne
+        simp
+      · apply Ty.TypeJudgment.TE_ArrayIndex
+        apply Ty.TypeJudgment.TE_ArrayIndex
+        apply Ty.TypeJudgment.TE_Var
+        apply lookup_update_ne
+        simp
+        apply Eval.EvalProp.Var
+        unfold Env.lookupVal
+        unfold Env.updateVal
+        simp
+        rfl
+        simp
+        exact hi
+        apply Eval.EvalProp.ConstZ
+        simp
+      . apply isZero_typing_soundness
+        apply lookup_update_ne; simp
+        apply lookup_update_ne; simp
+        apply Ty.TypeJudgment.TE_VarEnv
+        apply lookup_update_self_none
+        apply lookup_update_ne; simp; simp; apply lookup_update_ne
+        simp; apply lookup_update_ne; simp
