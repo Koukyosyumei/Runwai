@@ -388,9 +388,11 @@ theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ
   (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.tyenvToProp σ Δ Γ₁):
   PropSemantics.tyenvToProp σ Δ Γ₂ := by {
     unfold PropSemantics.tyenvToProp at h₂ ⊢
-    intro e h'₂
-    have h'₃ := h₂ e
-    sorry
+    intro x τ h₃
+    have h₄ := h₁ x
+    rw[← h₄] at h₃
+    have h₅ := h₂ x τ h₃
+    exact varToProp_pointwise_preserve σ Δ Γ₁ Γ₂ x h₁ h₅
   }
 
 theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (τ₁ τ₂: Ast.Ty)
