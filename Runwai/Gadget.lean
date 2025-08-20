@@ -349,7 +349,19 @@ theorem lookup_mem_of_eq {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty}:
     }
   }
 
-lemma lookupTy_symm (Γ₁ Γ₂: Env.TyEnv)
+theorem lookup_mem_impl_some {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty} (hmem: (x, τ) ∈ Γ):
+  (Env.lookupTy Γ x).isSome  := by {
+    unfold Env.lookupTy
+    cases b: List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ with
+    | none => {
+      simp at b
+      have b' := b x τ hmem
+      simp at b'
+    }
+    | some val => simp
+  }
+
+lemma lookupTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)
   (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x):
   ∀ x, Env.lookupTy Γ₂ x = Env.lookupTy Γ₁ x := by {
     intro x
@@ -400,7 +412,7 @@ theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ�
         intro v h'₁ h'₂
         apply ih₁
         rename_i σ' Δ' Γ' τ₁' τ₂' φ₁' φ₂'
-        exact tyenvToProp_pointwise_preserve σ' Δ' Γ₂ Γ' (lookupTy_symm Γ' Γ₂ h) h'₁
+        exact tyenvToProp_pointwise_preserve σ' Δ' Γ₂ Γ' (lookupTy_pointwise_symm Γ' Γ₂ h) h'₁
         exact h'₂
       }
       | TSub_Fun h₁ h₂ ih₁ ih₂ => {
