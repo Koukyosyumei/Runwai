@@ -349,6 +349,32 @@ theorem lookup_mem_of_eq {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty}:
     }
   }
 
+lemma lookupTy_symm (Γ₁ Γ₂: Env.TyEnv)
+  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x):
+  ∀ x, Env.lookupTy Γ₂ x = Env.lookupTy Γ₁ x := by {
+    intro x
+    have h₂ := h₁ x
+    exact Eq.symm h₂
+  }
+
+theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁ Γ₂: Env.TyEnv) (ident: String)
+  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.varToProp σ Δ Γ₁ ident):
+  PropSemantics.varToProp σ Δ Γ₂ ident := by {
+    unfold PropSemantics.varToProp at h₂ ⊢
+    have h₁' := h₁ ident
+    rw[← h₁']
+    exact h₂
+  }
+
+theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁ Γ₂: Env.TyEnv)
+  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.tyenvToProp σ Δ Γ₁):
+  PropSemantics.tyenvToProp σ Δ Γ₂ := by {
+    unfold PropSemantics.tyenvToProp at h₂ ⊢
+    intro e h'₂
+    have h'₃ := h₂ e
+    sorry
+  }
+
 theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (τ₁ τ₂: Ast.Ty)
   (h₂: Ty.SubtypeJudgment σ Δ Γ₁ τ₁ τ₂) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
@@ -373,7 +399,8 @@ theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ�
         exact h
         intro v h'₁ h'₂
         apply ih₁
-        sorry
+        rename_i σ' Δ' Γ' τ₁' τ₂' φ₁' φ₂'
+        exact tyenvToProp_pointwise_preserve σ' Δ' Γ₂ Γ' (lookupTy_symm Γ' Γ₂ h) h'₁
         exact h'₂
       }
       | TSub_Fun h₁ h₂ ih₁ ih₂ => {
