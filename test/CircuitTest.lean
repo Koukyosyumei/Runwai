@@ -1,31 +1,37 @@
 import Runwai.Typing
+import Runwai.Gadget
 
 @[simp]
 def assertCircuit : Ast.Circuit := {
   name   := "assert",
-  inputs := ("trace", Ast.Ty.refin (Ast.Ty.arr (Ast.Ty.refin (Ast.Ty.arr (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.const (Ast.Expr.constBool true))) 2) (Ast.Predicate.const (Ast.Expr.constBool True))) 2) (Ast.Predicate.const (Ast.Expr.constBool true))),
-  output := ("u", Ast.Ty.refin (Ast.Ty.unit)
-                      (Ast.Predicate.const (Ast.Expr.binRel
-                        (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constF 1)) (Ast.Expr.constF 0))
-                        Ast.RelOp.eq
-                        (Ast.Expr.constF 2)))),
+  width  := 2,
+  goal   := Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
+              Ast.RelOp.eq (Ast.Expr.constF 2),
   body   := (Ast.Expr.letIn "u" (Ast.Expr.assertE
-              (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constF 1)) (Ast.Expr.constF 0))
+              (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
               (Ast.Expr.constF 2))
             (Ast.Expr.var "u"))
 }
 
 def Δ : Env.CircuitEnv := [("assert", assertCircuit)]
 
-theorem assertCircuit_correct : (Ty.circuitCorrect Δ assertCircuit) := by
+theorem assertCircuit_correct : (Ty.circuitCorrect Δ assertCircuit 1) := by
   unfold Ty.circuitCorrect
   unfold assertCircuit
   simp_all
-  intro x hs hi hσ
-  set envs := Ty.makeEnvs assertCircuit x
+  intro x i height hs hi ht hσ
+  set envs := Ty.makeEnvs assertCircuit x (Ast.Value.vZ i) height
   set σ := envs.1
   set Γ := envs.2
   apply Ty.TypeJudgment.TE_LetIn
+  apply lookup_update_self_none
+  unfold Ty.makeEnvs
+  simp
+  apply lookup_update_ne_none
+  simp
+  apply lookup_update_ne_none
+  simp
+  exact lookup_empty_none "u"
   apply Ty.TypeJudgment.TE_Assert
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_ArrayIndex
@@ -43,14 +49,18 @@ theorem assertCircuit_correct : (Ty.circuitCorrect Δ assertCircuit) := by
       . rfl
     . rfl
   . rfl
-  apply Eval.EvalProp.ConstF
+  apply Eval.EvalProp.Var
+  unfold Ty.makeEnvs
+  unfold Env.lookupVal
+  unfold Env.updateVal
   simp_all
-  apply Eval.EvalProp.ConstF
+  rfl
+  simp_all
+  apply Eval.EvalProp.ConstZ
   simp_all
   apply Ty.TypeJudgment.TE_ConstF
   apply Ty.TypeJudgment.TE_VarEnv
   unfold Env.updateTy
   unfold Env.lookupTy
   simp_all
-  unfold Ast.exprEq
   rfl

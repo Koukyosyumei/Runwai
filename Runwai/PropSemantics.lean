@@ -42,6 +42,6 @@ match Env.lookupTy Γ ident with
 | _ => False
 
 def tyenvToProp (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv): Prop :=
-  ∀ e ∈ Γ, varToProp σ Δ Γ e.1
+  ∀ (x: String) (τ: Ast.Ty), Env.lookupTy Γ x = some τ → varToProp σ Δ Γ x
 
 end PropSemantics

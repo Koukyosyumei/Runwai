@@ -1,6 +1,7 @@
+import Mathlib.Data.List.Forall2
+
 import Runwai.Ast
 import Runwai.Env
-import Mathlib.Data.List.Forall2
 
 open Ast
 open Env
@@ -36,6 +37,11 @@ def evalRelOp (op: RelOp) : Value → Value → Option Bool
     | RelOp.eq => i = j
     | RelOp.lt => i.val % p < j.val % p
     | RelOp.le => i.val % p ≤ j.val % p
+  | Value.vZ i, Value.vZ j =>
+    some $ match op with
+    | RelOp.eq => i = j
+    | RelOp.lt => i < j
+    | RelOp.le => i ≤ j
   | _, _ => none
 
 /-- Evaluate a boolean operator `op` on two `Value.bool` arguments. -/
@@ -51,9 +57,10 @@ mutual
   inductive EvalProp : ValEnv → CircuitEnv → Expr → Value → Prop
     -- E‑VALUE
     | ConstF        {σ Δ v} : EvalProp σ Δ (Expr.constF v) (Value.vF v)
+    | ConstZ        {σ Δ v} : EvalProp σ Δ (Expr.constZ v) (Value.vZ v)
     | ConstBool     {σ Δ b} : EvalProp σ Δ (Expr.constBool b) (Value.vBool b)
-    | ConstArr  {σ Δ xs es} (ih : ∀ xe ∈ List.zip xs es, EvalProp σ Δ xe.fst xe.snd) :
-      EvalProp σ Δ (Expr.arr xs) (Value.vArr es)
+    | ConstArr  {σ Δ xs es} (ilength: xs.length = es.length) (ih : ∀ xe ∈ List.zip xs es, EvalProp σ Δ xe.fst xe.snd) :
+        EvalProp σ Δ (Expr.arr xs) (Value.vArr es)
 
     -- E‑VAR
     | Var         {σ Δ x v} : lookupVal σ x = v → EvalProp σ Δ (Expr.var x) v
@@ -88,6 +95,13 @@ mutual
         (bv  : evalBoolOp op (Value.vBool b₁) (Value.vBool b₂) = some b) :
         EvalProp σ Δ (Expr.boolExpr e₁ op e₂) (Value.vBool b)
 
+    -- E‑REL
+    | Rel      {σ Δ e₁ e₂ op v₁ v₂ b}
+        (ih₁ : EvalProp σ Δ e₁ v₁)
+        (ih₂ : EvalProp σ Δ e₂ v₂)
+        (r   : evalRelOp op v₁ v₂ = some b) :
+        EvalProp σ Δ (Expr.binRel e₁ op e₂) (Value.vBool b)
+
     -- E-BRANCH
     | IfTrue {σ Δ c e₁ e₂ v₁}
         (ihc : EvalProp σ Δ c (Value.vBool true))
@@ -109,16 +123,18 @@ mutual
     -- E‑ARRIDX
     | ArrIdx {σ Δ a i vs j v}
         (iha : EvalProp σ Δ a (Value.vArr vs))
-        (ihi : EvalProp σ Δ i (Value.vF j))
-        (idx : vs[j.toNat]? = some v) :
+        (ihi : EvalProp σ Δ i (Value.vZ j))
+        (idx : vs[j]? = some v) :
         EvalProp σ Δ (Expr.arrIdx a i) v
 
+    /-
     -- E‑CREF
     | CircRef  {σ Δ name arg v c out}
         (iha : EvalProp σ Δ arg v)
         (ic  : lookupCircuit Δ name = c)
         (ihb : EvalProp (updateVal σ name v) Δ c.body out) :
         EvalProp σ Δ (Expr.circRef name arg) out
+    -/
 end
 
 end Eval
