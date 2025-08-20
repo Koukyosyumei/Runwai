@@ -1,4 +1,5 @@
 import Runwai.Typing
+import Runwai.Gadget
 
 @[simp]
 def assertCircuit : Ast.Circuit := {
@@ -23,6 +24,14 @@ theorem assertCircuit_correct : (Ty.circuitCorrect Δ assertCircuit 1) := by
   set σ := envs.1
   set Γ := envs.2
   apply Ty.TypeJudgment.TE_LetIn
+  apply lookup_update_self_none
+  unfold Ty.makeEnvs
+  simp
+  apply lookup_update_ne_none
+  simp
+  apply lookup_update_ne_none
+  simp
+  exact lookup_empty_none "u"
   apply Ty.TypeJudgment.TE_Assert
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_ArrayIndex

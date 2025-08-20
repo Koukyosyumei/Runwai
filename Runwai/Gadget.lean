@@ -308,6 +308,12 @@ lemma lookup_update_ne_none (Γ: Env.TyEnv) (x y: String) (hne: x ≠ y) (h: Env
     | some val => simp_all
   }
 
+lemma lookup_empty_none (x: String):
+  Env.lookupTy [] x = none := by {
+    unfold Env.lookupTy
+    simp
+  }
+
 lemma lookup_update_other_preserve (Γ: Env.TyEnv) (x y: String) (τ₁ τ₂: Ast.Ty) (h: Env.lookupTy Γ x = τ₁):
   Env.lookupTy (Env.updateTy Γ y τ₂) x = τ₁ := by {
     unfold Env.lookupTy at h ⊢

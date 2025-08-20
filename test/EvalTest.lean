@@ -22,6 +22,7 @@ example: Eval.EvalProp σ₀ Δ₀ (.constF 42) (.vF 42) := Eval.EvalProp.ConstF
 example: Eval.EvalProp σ₀ Δ₀ (.constBool false) (.vBool false) := Eval.EvalProp.ConstBool
 example: Eval.EvalProp σ₀ Δ₀ (.arr [.constF 42, .constF 43]) (.vArr [.vF 42, .vF 43]) := by
   apply Eval.EvalProp.ConstArr
+  rfl
   intro xe hx
   cases hx with
 | head =>
