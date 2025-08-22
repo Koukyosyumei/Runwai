@@ -49,10 +49,52 @@ theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
       apply Eval.EvalProp.ConstZ
       simp
     . apply Ty.TypeJudgment.TE_ConstF
-  . apply Ty.TypeJudgment.TE_VarEnv; apply lookup_update_self_none; apply lookup_update_other
+  . constructor;
+    apply lookup_update_self_none; apply lookup_update_other
     simp
 
+syntax "auto_judgment" : tactic
+macro_rules
+| `(tactic| auto_judgment) => `(tactic|
+    {
+      repeat constructor
+      simp_all
+      constructor;
+      simp_all
+    }
+  )
+
+syntax "lookup_recent_update" : tactic
+macro_rules
+| `(tactic| lookup_recent_update) => `(tactic|
+    {
+      apply lookup_update_self_none; apply lookup_update_ne
+      simp
+    }
+  )
+
 theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
+  unfold Ty.circuitCorrect
+  intro x i height hs hi ht hσ
+  let envs := Ty.makeEnvs iszeroCircuit x (Ast.Value.vZ i) height
+  let σ := envs.1
+  let Γ := envs.2
+  apply Ty.TypeJudgment.TE_LetIn
+  · lookup_recent_update
+  · auto_judgment
+  . apply Ty.TypeJudgment.TE_LetIn
+    . lookup_recent_update
+    · auto_judgment
+    . apply Ty.TypeJudgment.TE_LetIn
+      . lookup_recent_update
+      · auto_judgment
+      . apply isZero_typing_soundness
+        repeat apply lookup_update_ne; simp
+        apply Ty.TypeJudgment.TE_VarEnv
+        lookup_recent_update; simp;
+        repeat apply lookup_update_ne; simp
+
+theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   unfold Ty.circuitCorrect
   intro x i height hs hi ht hσ
   let envs := Ty.makeEnvs iszeroCircuit x (Ast.Value.vZ i) height
