@@ -58,16 +58,16 @@ Developing zero-knowledge (ZK) circuits is notoriously challenging. Standard app
 
 Runwai addresses these challenges by providing a **refinement-typed, high-level DSL for AIR circuits**. Here’s why Runwai stands out:
 
-* **High-level abstraction for AIR constraints**
+* 🏗️ **High-level abstraction for AIR constraints**
   Runwai lets you express constraints over execution traces directly, without manually handling low-level matrix operations. This makes programs easier to write, read, and maintain.
 
-* **Refinement types for correctness guarantees**
+* ✅ **Refinement types for correctness guarantees**
   Runwai’s type system allows developers to formally specify and statically verify circuit properties. This reduces the risk of subtle bugs that could compromise the security of ZK proofs.
 
-* **Concise and readable syntax**
+* 📚 **Concise and readable syntax**
   Compared to traditional AIR implementations, Runwai programs are shorter, more expressive, and easier to understand. For example, a Fibonacci circuit in Runwai clearly encodes the intended constraints without verbose row-slice manipulations.
 
-* **Safer and more secure circuits**
+* 🛡️ **Safer and more secure circuits**
   By catching constraint violations at compile-time, Runwai helps prevent exploitable errors in ZK applications, enhancing both reliability and security.
 
 * **Symbolic reasoning support**
