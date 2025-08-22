@@ -70,7 +70,7 @@ Runwai addresses these challenges by providing a **refinement-typed, high-level 
 * 🛡️ **Safer and more secure circuits**
   By catching constraint violations at compile-time, Runwai helps prevent exploitable errors in ZK applications, enhancing both reliability and security.
 
-* **Symbolic reasoning support**
+* 🔍 **Symbolic reasoning support**
   Runwai supports symbolic row indices and matrix dimensions, enabling verification of circuits even when certain parameters are unknown at compile time.
 
 In short, Runwai allows ZK developers to **write correct, secure, and maintainable AIR circuits efficiently**, while benefiting from the guarantees of a strong, refinement-based type system.
