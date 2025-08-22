@@ -32,8 +32,24 @@ circuit IsZeroAir
 ```lean
 theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   unfold Ty.circuitCorrect
-  .
-  .
+  intro x i height hs hi ht hσ
+  let envs := Ty.makeEnvs iszeroCircuit x (Ast.Value.vZ i) height
+  let σ := envs.1
+  let Γ := envs.2
+  apply Ty.TypeJudgment.TE_LetIn
+  · lookup_recent_update
+  · auto_judgment
+  . apply Ty.TypeJudgment.TE_LetIn
+    . lookup_recent_update
+    · auto_judgment
+    . apply Ty.TypeJudgment.TE_LetIn
+      . lookup_recent_update
+      · auto_judgment
+      . apply isZero_typing_soundness
+        repeat apply lookup_update_ne; simp
+        apply Ty.TypeJudgment.TE_VarEnv
+        lookup_recent_update; simp;
+        repeat apply lookup_update_ne; simp
 ```
 
 ## Why use Runwai?
