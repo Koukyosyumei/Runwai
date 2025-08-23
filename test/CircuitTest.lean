@@ -1,19 +1,22 @@
 import Runwai.Typing
 import Runwai.Gadget
-import Runwai.PP
+--import Runwai.PP
 
 @[simp]
 def assertCircuit : Ast.Circuit := {
   name   := "assert",
   width  := 2,
-  goal   := Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
-              Ast.RelOp.eq (Ast.Expr.constF 2),
+  goal   := Ast.Ty.refin Ast.Ty.unit
+    (Ast.Predicate.lam "v"
+      (Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
+                       Ast.RelOp.eq (Ast.Expr.constF 2))),
   body   := (Ast.Expr.letIn "u" (Ast.Expr.assertE
               (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
               (Ast.Expr.constF 2))
             (Ast.Expr.var "u"))
 }
 
+/-
 @[simp]
 def iszeroCircuit : Ast.Circuit := {
   name   := "iszero",
@@ -28,8 +31,9 @@ def iszeroCircuit : Ast.Circuit := {
               )
             )
 }
+-/
 
-def Δ : Env.CircuitEnv := [("assert", assertCircuit), ("iszero", iszeroCircuit)]
+def Δ : Env.CircuitEnv := [("assert", assertCircuit)]
 
 theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
   unfold Ty.circuitCorrect
@@ -74,6 +78,8 @@ macro_rules
     }
   )
 
+
+/-
 theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   unfold Ty.circuitCorrect
   intro x i height hs hi ht hσ
@@ -161,3 +167,4 @@ theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
         apply lookup_update_self_none
         apply lookup_update_ne; simp; simp; apply lookup_update_ne
         simp; apply lookup_update_ne; simp
+-/

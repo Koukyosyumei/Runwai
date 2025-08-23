@@ -27,15 +27,14 @@ namespace PropSemantics
 def exprToProp (σ : Env.ValEnv) (Δ : Env.CircuitEnv) (e: Ast.Expr): Prop :=
   Eval.EvalProp σ Δ e (Ast.Value.vBool true)
 
-def predToProp (σ: Env.ValEnv) (Δ: Env.CircuitEnv): Ast.Predicate → (Ast.Expr → Prop)
-| Ast.Predicate.const e => fun _ => exprToProp σ Δ e
-| Ast.Predicate.eq e    => fun v => exprToProp σ Δ (Ast.exprEq v e)
+def predToProp (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (τ: Ast.Ty): Ast.Predicate → (Ast.Expr → Prop)
+ | Ast.Predicate.lam ident body => fun v => exprToProp σ Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
 
 def varToProp (σ : Env.ValEnv) (Δ : Env.CircuitEnv) (Γ : Env.TyEnv) (ident : String): Prop :=
 match Env.lookupTy Γ ident with
 -- refinement types: check base-type match and predicate
-| Ast.Ty.refin _ pred =>
-  predToProp σ Δ pred (Ast.Expr.var ident)
+| Ast.Ty.refin τ pred =>
+  predToProp σ Δ τ pred (Ast.Expr.var ident)
 -- bare field and boolean types
 | Ast.Ty.field        => True
 | Ast.Ty.bool         => True

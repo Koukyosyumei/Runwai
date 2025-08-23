@@ -70,6 +70,10 @@ mutual
     | lookup      : (name: String) → (arg: Expr) → Expr                  -- #C e₁ ... eₙ
     deriving Lean.ToExpr
 
+  inductive Predicate where
+    | lam : (ident: String) → (body: Expr) → Predicate
+  deriving Lean.ToExpr
+
   /-- Runtime values in Runwai. -/
   inductive Value where
     | vF       : (x: F) → Value
@@ -80,11 +84,6 @@ mutual
     | vClosure : (param: String) → (body: Expr) → (σ: List (String × Value)) → Value
     deriving Lean.ToExpr
 
-  inductive Predicate where
-    | const    : Expr → Predicate
-    | eq       : Expr → Predicate
-    deriving Lean.ToExpr
-
   /-- Basic Types in Runwai. -/
   inductive Ty where
     | unknown  : Ty
@@ -93,7 +92,7 @@ mutual
     | int      : Ty
     | bool     : Ty                                               -- Bool
     | arr      : (ty: Ty) → Int → Ty                              -- [T; n]
-    | refin    : (ty: Ty) → (prop: Predicate) → Ty                -- {ν : T | ϕ}
+    | refin    : (ty: Ty) → (pred: Predicate) → Ty                -- {ν : T | ϕ}
     | func     : (param: String) → (dom: Ty) → (cond: Ty) → Ty    -- x: τ₁ → τ₂
     deriving Lean.ToExpr
 end
@@ -116,12 +115,15 @@ instance : BEq Value where
 def exprEq (e₁ e₂: Expr): Expr :=
   Expr.binRel e₁ RelOp.eq e₂
 
+def constTruePred : Predicate :=
+  Predicate.lam "v" (Ast.Expr.constBool true)
+
 def v: Expr := Expr.var ".v"
 
 structure Circuit where
   name   : String
   width  : ℤ
-  goal   : Ast.Expr
+  goal   : Ast.Ty
   body   : Ast.Expr
 deriving Lean.ToExpr
 
@@ -167,9 +169,9 @@ mutual
     | Expr.letIn n v b       => s!"let {n} = {exprToString v} in {exprToString b}"
     | Expr.lookup name arg  => s!"#{name} {exprToString arg}"
 
+
   partial def predicateToString : Predicate → String
-    | Predicate.const e => exprToString e
-    | Predicate.eq    e => s!"v = {exprToString e}"
+    | Predicate.lam ident body => s!"{ident} = {exprToString body}"
 
   partial def tyToString : Ty → String
     | Ty.unknown        => "unknown"
@@ -185,8 +187,10 @@ end
 instance : Repr Expr where
   reprPrec e _ := Format.text (exprToString e)
 
+/-
 instance : Repr Predicate where
   reprPrec e _ := Format.text (predicateToString e)
+-/
 
 instance : Repr Ty where
   reprPrec e _ := Format.text (tyToString e)
@@ -218,7 +222,7 @@ instance : Repr Circuit where
 def DefaultCircuit : Circuit := {
     name   := "dummy"
     width  := 0
-    goal   := Ast.Expr.constBool true
+    goal   := Ty.refin Ty.unit constTruePred
     body   := Expr.assertE (Expr.constF 1) (Expr.constF 1)
   }
 
