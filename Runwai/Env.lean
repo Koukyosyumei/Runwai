@@ -27,7 +27,7 @@ abbrev ValEnv := List (String × Ast.Value)
 def lookupVal (σ : ValEnv) (ident : String) : Ast.Value :=
   match σ.find? (·.1 = ident) with
   | some (_, v) => v
-  | none        => Ast.Value.vStar
+  | none        => Ast.Value.vUnit
 
 @[inline]
 def updateVal (σ : ValEnv) (ident : String) (val : Ast.Value) : ValEnv :=

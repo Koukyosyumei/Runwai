@@ -115,9 +115,9 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
     TypeJudgment Γ (Ast.Expr.lam x τ₁ e) ((Ast.Ty.func x τ₁ τ₂))
 
   -- TE-APP
-  | TE_App {Γ: Env.TyEnv} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂: Ast.Ty} {v: Ast.Value}:
+  | TE_App {Γ: Env.TyEnv} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂: Ast.Ty} {x₂_v: Ast.Value}:
     TypeJudgment Γ x₁ (Ast.Ty.func s τ₁ τ₂) →
-    Eval.EvalProp σ Δ x₂ v →
+    Eval.EvalProp σ Δ x₂ x₂_v →
     TypeJudgment Γ x₂ τ₁ →
     TypeJudgment Γ (Ast.Expr.app x₁ x₂) τ₂
 

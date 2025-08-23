@@ -78,7 +78,7 @@ mutual
   inductive Value where
     | vF       : (x: F) → Value
     | vZ       : (x: ℕ) -> Value
-    | vStar    : Value
+    | vUnit    : Value
     | vBool    : (b: Bool) → Value
     | vArr     : (elems: List Value) → Value
     | vClosure : (param: String) → (body: Expr) → (σ: List (String × Value)) → Value
@@ -199,7 +199,7 @@ instance : Repr Ty where
 def valueToString : Value → String
   | Value.vF x        => s!"F {x.val}"
   | Value.vZ x        => s!"{x}"
-  | Value.vStar       => "*"
+  | Value.vUnit       => "*"
   | Value.vBool b     => toString b
   | Value.vArr vs     =>
     let elems := vs.map valueToString

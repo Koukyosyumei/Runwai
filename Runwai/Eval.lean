@@ -78,7 +78,8 @@ mutual
     | App      {σ Δ f a x body σ' va vb}
         (ih_f : EvalProp σ Δ f (Value.vClosure x body σ'))
         (ih_a : EvalProp σ Δ a va)
-        (ih_b : EvalProp (updateVal σ' x va) Δ body vb) :
+        --(ih_b : EvalProp (updateVal σ' x va) Δ body vb) :
+        (ih_b : EvalProp σ' Δ body vb) :
         EvalProp σ Δ (Expr.app f a) vb
 
     -- E‑FBINOP
@@ -118,7 +119,7 @@ mutual
         (ih₁ : EvalProp σ Δ e₁ v₁)
         (ih₂ : EvalProp σ Δ e₂ v₂)
         (ok  : evalRelOp RelOp.eq v₁ v₂ = some b) :
-        EvalProp σ Δ (Expr.assertE e₁ e₂) (Value.vBool b)
+        EvalProp σ Δ (Expr.assertE e₁ e₂) (Value.vUnit)
 
     -- E‑ARRIDX
     | ArrIdx {σ Δ a i vs j v}
