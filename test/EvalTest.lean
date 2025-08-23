@@ -39,7 +39,7 @@ example: Eval.EvalProp σ₀ Δ₀ (.arr [.constF 42, .constF 43]) (.vArr [.vF 4
 def σ₁ := Env.updateVal σ₀ "y" (Ast.Value.vF 99)
 example: Eval.EvalProp σ₁ Δ₀ (.var "y") (.vF 99) := by
   apply Eval.EvalProp.Var
-  simp [σ₁]
+  simp [σ₁, σ₀]
   unfold Env.updateVal Env.lookupVal
   simp_all
 
