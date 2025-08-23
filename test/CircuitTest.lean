@@ -1,5 +1,6 @@
 import Runwai.Typing
 import Runwai.Gadget
+import Runwai.PP
 
 @[simp]
 def assertCircuit : Ast.Circuit := {
@@ -79,6 +80,7 @@ theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   let envs := Ty.makeEnvs iszeroCircuit x (Ast.Value.vZ i) height
   let σ := envs.1
   let Γ := envs.2
+  --unfold iszeroCircuit
   apply Ty.TypeJudgment.TE_LetIn
   · lookup_recent_update
   · auto_judgment
@@ -100,6 +102,7 @@ theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   let envs := Ty.makeEnvs iszeroCircuit x (Ast.Value.vZ i) height
   let σ := envs.1
   let Γ := envs.2
+  unfold iszeroCircuit; simp
   apply Ty.TypeJudgment.TE_LetIn
   · apply lookup_update_self_none; apply lookup_update_ne
     simp
