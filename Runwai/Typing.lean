@@ -147,7 +147,7 @@ def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℕ):
   let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] "trace" trace) "i" i
   let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] "trace"
     (.refin (.arr (.refin (.arr (.refin .field
-      (.const (.constBool true))) c.width) (.const (.constBool True))) height) (.const (.constBool true))))
+      (.const (.constBool true))) c.width) (.const (.constBool true))) height) (.const (.constBool true))))
     "i" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.const (Ast.Expr.binRel (Ast.Expr.var "i") Ast.RelOp.lt (Ast.Expr.constZ height))))
   (σ, Γ)
 
