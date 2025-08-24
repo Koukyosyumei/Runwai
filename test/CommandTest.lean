@@ -5,6 +5,10 @@ import Runwai.Command
 #runwai_register circuit Assert1(2) -> {Unit| trace [i][1] == Fp 2} {let u = assert trace [i][1] = Fp 2 in u}
 #runwai_check Assert1
 
+#runwai_register circuit IsZero(3) -> {Unit| trace [i][1] == if trace [i][0] == 0 then {1} else {0}} {
+  let x = trace [i][0] in x
+}
+
 #runwai_prove Assert1 := by {
   rename_i Δ h_delta x i height hs hi ht hty hσ σ Γ
   apply Ty.TypeJudgment.TE_LetIn

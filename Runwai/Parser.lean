@@ -70,7 +70,7 @@ syntax runwai_expr "<"  runwai_expr                  : runwai_expr
 syntax runwai_expr "<=" runwai_expr                  : runwai_expr
 
 -- Branch: if c {e₁} else {e₂}
-syntax "if" runwai_expr "{" runwai_expr "}" "else" "{" runwai_expr "}" : runwai_expr
+syntax "if" runwai_expr "then" "{" runwai_expr "}" "else" "{" runwai_expr "}" : runwai_expr
 
 -- Assert: “assert e₁ = e₂”
 syntax "assert" runwai_expr "=" runwai_expr          : runwai_expr
@@ -173,7 +173,7 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
   | `(runwai_expr| $x:ident) => pure (Ast.Expr.var x.getId.toString)
 
   -- if c {e₁} else {e₂}
-  | `(runwai_expr| if $c {$e₁} else {$e₂}) => do
+  | `(runwai_expr| if $c then {$e₁} else {$e₂}) => do
     let c' ← elaborateExpr c
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
