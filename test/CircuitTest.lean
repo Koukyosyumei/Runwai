@@ -42,11 +42,10 @@ theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
   let σ := envs.1
   let Γ := envs.2
   apply Ty.TypeJudgment.TE_LetIn
-  · apply lookup_update_self_none; apply lookup_update_ne
-    simp
+  · apply lookup_update_self
   · apply Ty.TypeJudgment.TE_Assert
     · apply Ty.TypeJudgment.TE_ArrayIndex; apply Ty.TypeJudgment.TE_ArrayIndex; apply Ty.TypeJudgment.TE_Var
-      apply lookup_update_other
+      apply lookup_update_ne
       simp
       apply Eval.EvalProp.Var; exact rfl
       simp
@@ -55,8 +54,7 @@ theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
       simp
     . apply Ty.TypeJudgment.TE_ConstF
   . constructor;
-    apply lookup_update_self_none; apply lookup_update_other
-    simp
+    apply lookup_update_self
 
 syntax "auto_judgment" : tactic
 macro_rules
