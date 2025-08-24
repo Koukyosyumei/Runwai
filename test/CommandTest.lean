@@ -31,3 +31,8 @@ import Runwai.Command
   . constructor;
     apply lookup_update_self
 }
+
+#runwai_prove IsZero := by {
+  rename_i Δ h_delta x i height hs hi ht hty hσ σ Γ
+  sorry
+}

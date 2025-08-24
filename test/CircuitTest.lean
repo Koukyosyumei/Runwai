@@ -1,6 +1,6 @@
 import Runwai.Typing
 import Runwai.Gadget
---import Runwai.PP
+import Runwai.PP
 
 @[simp]
 def assertCircuit : Ast.Circuit := {
