@@ -17,16 +17,18 @@ open Lean Meta
 --------------- Declare Types ---------------
 ---------------------------------------------
 declare_syntax_cat runwai_ty
+declare_syntax_cat runwai_expr
 
 -- Basic types
 syntax "Field"                                 : runwai_ty
 syntax "Bool"                                  : runwai_ty
+syntax "Unit"                                  : runwai_ty
 
 -- Array types: “[T: n]”
 syntax "[" runwai_ty ":" num "]"                         : runwai_ty
 
 -- Refinement types: “{ x : T | φ }”
-syntax "{" runwai_ty "|" term "}"      : runwai_ty
+syntax "{" runwai_ty "|" runwai_expr "}"      : runwai_ty
 
 -- Function‐type arrow: “(x : T1) → T2”
 syntax "(" ident ":" runwai_ty ")" "→" runwai_ty   : runwai_ty
@@ -34,7 +36,6 @@ syntax "(" ident ":" runwai_ty ")" "→" runwai_ty   : runwai_ty
 ---------------------------------------------------
 --------------- Declare Expressions ---------------
 ---------------------------------------------------
-declare_syntax_cat runwai_expr
 
 -- Constants:
 syntax num                                       : runwai_expr
@@ -190,6 +191,7 @@ unsafe def elaborateProp (stx : Syntax) : MetaM Ast.Expr := do
 
   | _ => throwError "unsupported proposition syntax: {stx}"
 
+mutual
 /-- Given a `Syntax` of category `runwai_ty`, return the corresponding `Ast.Ty`. -/
 unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
   match stx with
@@ -197,6 +199,7 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
   -- Field and Bool
   | `(runwai_ty| Field)      => pure (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constBool True)))
   | `(runwai_ty| Bool)       => pure Ast.Ty.bool
+  | `(runwai_ty| Unit)       => pure Ast.Ty.unit
 
   -- Array type: “[T]”
   | `(runwai_ty| [ $t:runwai_ty : $n:num ]) => do
@@ -204,14 +207,15 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
       pure (Ast.Ty.arr t' n.getNat)
 
   -- Refinement: “{ x : T | φ }”
-  | `(runwai_ty| { $T:runwai_ty | $φ:term } ) => do
+  | `(runwai_ty| { $T:runwai_ty | $φ:runwai_expr } ) => do
       let T' ← match T with
       --| `(runwai_ty| Int) => pure Ast.Ty.int
       | `(runwai_ty| Field) => pure Ast.Ty.field
       | `(runwai_ty| Bool) => pure Ast.Ty.bool
+      | `(runwai_ty| Unit) => pure Ast.Ty.unit
       | _ => throwError "unsupported type syntax: {stx}"
       -- We want to turn `φ` (a Lean `term`) into an `Ast.Expr` (of Boolean sort).
-      let φ' ← elaborateProp φ
+      let φ' ← elaborateExpr φ
       pure (Ast.Ty.refin T' (Ast.Predicate.ind φ'))
 
   -- Function type: “(x : T1) → T2”
@@ -357,6 +361,7 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
 
   -- Catch‐all
   | _ => throwError "unsupported expression syntax: {stx}"
+end
 
 /-- Helper: elaborate a single parameter syntax `(x : T)` into `(String × Ast.Ty)`. -/
 unsafe def elaborateParam (stx : Syntax) : MetaM (String × Ast.Ty) := do
