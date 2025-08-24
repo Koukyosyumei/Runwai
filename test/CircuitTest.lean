@@ -7,7 +7,7 @@ def assertCircuit : Ast.Circuit := {
   name   := "assert",
   width  := 2,
   goal   := Ast.Ty.refin Ast.Ty.unit
-    (Ast.Predicate.lam "v"
+    (Ast.Predicate.ind
       (Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
                        Ast.RelOp.eq (Ast.Expr.constF 2))),
   body   := (Ast.Expr.letIn "u" (Ast.Expr.assertE
@@ -21,7 +21,7 @@ def iszeroCircuit : Ast.Circuit := {
   name   := "iszero",
   width  := 3,
   goal   := Ast.Ty.refin Ast.Ty.unit
-    (Ast.Predicate.lam "v"
+    (Ast.Predicate.ind
       (Ast.exprEq (.var "y") (.branch (.binRel (.var "x") (.eq) (.constF 0)) (.constF 1) (.constF 0))))
   body   := (Ast.Expr.letIn "x" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
               (Ast.Expr.letIn "y" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
