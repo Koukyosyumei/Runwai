@@ -2,11 +2,15 @@ import Runwai.Typing
 import Runwai.Gadget
 import Runwai.Command
 
-#runwai_register circuit Assert1(2) -> {Unit| trace [i][1] == Fp 2} {let u = assert trace [i][1] = Fp 2 in u}
+#runwai_register circuit Assert1(2) -> {Unit| trace [i][1] == Fp 2} {let u = assert_eq(trace [i][1], Fp 2) in u}
 #runwai_check Assert1
 
 #runwai_register circuit IsZero(3) -> {Unit| trace [i][1] == if trace [i][0] == 0 then {1} else {0}} {
-  let x = trace [i][0] in x
+  let x = trace [i][0] in
+    let y = trace [i][0] in
+      let inv = trace [i][2] in
+        let u₁ = assert_eq(y, (Fp 0 - inv) + 1) in
+          let u₂ = assert_eq(x*y, 0) in u₂
 }
 
 #runwai_prove Assert1 := by {

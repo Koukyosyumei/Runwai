@@ -158,7 +158,7 @@ mutual
     | Expr.constZ x          => toString x
     | Expr.constBool b       => toString b
     | Expr.var name          => name
-    | Expr.assertE l r       => s!"assert {exprToString l} = {exprToString r}"
+    | Expr.assertE l r       => s!"assert_eq({exprToString l}, {exprToString r})"
     | Expr.boolExpr l op r   => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.fieldExpr l op r  => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.binRel l op r     => s!"({exprToString l} {repr op} {exprToString r})"
@@ -182,7 +182,7 @@ mutual
     | Ty.int            => "int"
     | Ty.bool           => "Bool"
     | Ty.arr t n        => s!"[{tyToString t}; {n}]"
-    | Ty.refin t p      => s!"{tyToString t} | {predicateToString p}"
+    | Ty.refin t p      => "{" ++ s!"{tyToString t} | {predicateToString p}" ++ "}"
     | Ty.func x d c     => s!"({x} : {tyToString d}) → {tyToString c}"
 end
 
