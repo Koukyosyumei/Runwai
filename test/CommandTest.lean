@@ -5,15 +5,6 @@ import Runwai.Command
 #runwai_register circuit Assert1(2) -> {Unit| trace [i][1] == Fp 2} {let u = assert trace [i][1] = Fp 2 in u}
 #runwai_check Assert1
 
-syntax "lookup_recent_update" : tactic
-macro_rules
-| `(tactic| lookup_recent_update) => `(tactic|
-    {
-      apply lookup_update_self_none; apply lookup_update_ne
-      simp
-    }
-  )
-
 #runwai_prove Assert1 := by {
   rename_i Δ h_delta x i height hs hi ht hty hσ σ Γ
   apply Ty.TypeJudgment.TE_LetIn
