@@ -102,7 +102,7 @@ declare_syntax_cat runwai_circuit
 
 -- circuit A (x1, x2, …, xn) -> T {body}
 -- syntax "circuit" ident "(" sepBy(runwai_param, ",") ")" "->" runwai_ty "{" runwai_expr "}" : runwai_circuit
-syntax "circuit" ident "(" num ")" "->" runwai_expr "{" runwai_expr "}" : runwai_circuit
+syntax "circuit" ident "(" num ")" "->" runwai_ty "{" runwai_expr "}" : runwai_circuit
 
 ---------------------------------------------------
 --------------- Declare File ----------------------
@@ -195,7 +195,7 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
   match stx with
 
   -- Field and Bool
-  | `(runwai_ty| Field)      => pure (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.const (Ast.Expr.constBool True)))
+  | `(runwai_ty| Field)      => pure (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constBool True)))
   | `(runwai_ty| Bool)       => pure Ast.Ty.bool
 
   -- Array type: “[T]”
@@ -212,7 +212,7 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
       | _ => throwError "unsupported type syntax: {stx}"
       -- We want to turn `φ` (a Lean `term`) into an `Ast.Expr` (of Boolean sort).
       let φ' ← elaborateProp φ
-      pure (Ast.Ty.refin T' (Ast.Predicate.eq φ'))
+      pure (Ast.Ty.refin T' (Ast.Predicate.ind φ'))
 
   -- Function type: “(x : T1) → T2”
   | `(runwai_ty| ( $x:ident : $Tdom:runwai_ty ) → $Tcod:runwai_ty ) => do
@@ -371,10 +371,10 @@ unsafe def elaborateParam (stx : Syntax) : MetaM (String × Ast.Ty) := do
 /-- Given a single `runwai_circuit` syntax, produce an `Ast.Circuit`. -/
 unsafe def elaborateCircuit (stx : Syntax) : MetaM Ast.Circuit := do
   match stx with
-  | `(runwai_circuit| circuit $name:ident ( $width:num ) -> $goal:runwai_expr { $body:runwai_expr } ) => do
+  | `(runwai_circuit| circuit $name:ident ( $width:num ) -> $goal:runwai_ty { $body:runwai_expr } ) => do
       let nameStr  := name.getId.toString
       let width'   := width.getNat
-      let goal'    ← elaborateExpr goal
+      let goal'    ← elaborateType goal
       let body'    ← elaborateExpr body
       pure {
         name  := nameStr,
