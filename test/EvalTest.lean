@@ -3,6 +3,7 @@ import Mathlib.Tactic.NormNum.Core
 import Runwai.Ast
 import Runwai.Env
 import Runwai.Eval
+import Runwai.Gadget
 
 -- --------------------------------------------------
 -- evalRelOp tests
@@ -56,3 +57,18 @@ example: Eval.EvalProp σ₀ Δ₀
   unfold Eval.evalFieldOp
   simp_all
   rfl
+
+/-
+def σ₂ := Env.updateVal σ₁ "z" (Ast.Value.vF 123)
+example: Eval.EvalProp σ₂ Δ₀
+  (.app (.lam "x" Ast.Ty.field (Ast.Expr.fieldExpr (Ast.Expr.var "x") Ast.FieldOp.add (Ast.Expr.constF 12))) (Ast.Expr.var "y"))
+  (.vF 111) := by
+  apply Eval.EvalProp.App
+  apply Eval.EvalProp.Lam
+  apply Eval.EvalProp.Var
+  unfold σ₂ σ₁ σ₀
+  unfold Env.lookupVal Env.updateVal
+  simp
+  rfl
+  apply Eval.Eval
+-/

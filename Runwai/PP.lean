@@ -101,17 +101,15 @@ def unexpLet : Unexpander
     `($f₀ $id = $v $f₁ $body)
   | _ => throw ()
 
-@[app_unexpander Ast.Predicate.const]
-def unexpPredConst : Unexpander
+@[app_unexpander Ast.Predicate.ind]
+def unexpPredInd : Unexpander
   | `($_ $e) => `($e)
   | _        => throw ()
 
-@[app_unexpander Ast.Predicate.eq]
-def unexpPredEq : Unexpander
-  | `($_ $e) =>
-    let v := mkIdent (Name.mkSimple "v")
-    `($v = $e)
-  | _ => throw ()
+@[app_unexpander Ast.Predicate.dep]
+def unexpPredDep : Unexpander
+  | `($_ $e) => `($e)
+  | _        => throw ()
 
 @[app_unexpander Ast.Ty.unknown]
 def unexpTyUnknown : Unexpander
@@ -181,9 +179,9 @@ def unexpBinRel : Unexpander
 #check Ast.Expr.constBool true
 #check Ast.Expr.constBool false
 #check Ast.Ty.arr Ast.Ty.field 2
-#check Ast.Ty.refin Ast.Ty.field (Ast.Predicate.eq (Ast.Expr.constF 12))
-#check Ast.Ty.refin Ast.Ty.field (Ast.Predicate.const (Ast.Expr.constBool true))
-#check Ast.Ty.refin Ast.Ty.field (Ast.Predicate.const (Ast.Expr.constBool True))
+#check Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constF 12))
+#check Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constBool true))
+#check Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constBool True))
 #check Ast.Expr.fieldExpr (Ast.Expr.constF 3) (Ast.FieldOp.add) (Ast.Expr.constF 4)
 #check Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constZ 2)
 #check Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")

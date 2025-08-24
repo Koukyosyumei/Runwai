@@ -27,7 +27,7 @@ abbrev ValEnv := List (String × Ast.Value)
 def lookupVal (σ : ValEnv) (ident : String) : Ast.Value :=
   match σ.find? (·.1 = ident) with
   | some (_, v) => v
-  | none        => Ast.Value.vStar
+  | none        => Ast.Value.vUnit
 
 @[inline]
 def updateVal (σ : ValEnv) (ident : String) (val : Ast.Value) : ValEnv :=
@@ -74,39 +74,16 @@ abbrev TyEnv := List (String × Ast.Ty)
 
 @[inline]
 def updateTy (Γ: TyEnv) (ident: String) (τ: Ast.Ty) : TyEnv :=
-  if (Γ.find? (fun (x, _) => x = ident)).isSome
-  then Γ
-  else Γ ++ [(ident, τ)]
+  (ident, τ) :: Γ
+
+--@[inline]
+--def unsafe_updateTy (Γ: TyEnv) (ident: String) (τ: Ast.Ty) : TyEnv :=
+--  (ident, τ) :: Γ
 
 @[inline]
 def lookupTy (Γ : TyEnv) (ident : String) : Option Ast.Ty :=
   match Γ.find? (·.1 = ident) with
   | some (_, τ) => some τ
   | none        => none
-
-theorem lookup_preserve (Γ: TyEnv) (x y: String) (τ₁ τ₂: Ast.Ty)
-  (h: lookupTy Γ x = τ₁):
-  lookupTy (updateTy Γ y τ₂) x = τ₁ := by
-  unfold lookupTy at h ⊢
-  unfold updateTy
-  simp_all
-  by_cases b₁: (Γ.find? (fun (x₁, _) => x₁ = x)).isSome
-  by_cases b₂: (Γ.find? (fun (x₂, _) => x₂ = y)).isSome
-  . simp_all
-  . by_cases b₃: y = x
-    . simp_all
-    . simp_all
-  . by_cases b₄: (List.find? (fun x ↦ decide (x.1 = y)) Γ).isSome
-    . simp_all
-    . simp_all
-      by_cases b₅: y = x
-      . simp_all
-        by_cases b₆: (List.find? (fun x_1 ↦ decide (x_1.1 = x)) Γ).isSome
-        . simp_all
-        . simp_all
-          cases hfind : List.find? (fun x_1 => decide (x_1.1 = x)) Γ
-          . simp_all
-          . simp_all
-      . simp_all
 
 end Env

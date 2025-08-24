@@ -17,16 +17,18 @@ open Lean Meta
 --------------- Declare Types ---------------
 ---------------------------------------------
 declare_syntax_cat runwai_ty
+declare_syntax_cat runwai_expr
 
 -- Basic types
 syntax "Field"                                 : runwai_ty
 syntax "Bool"                                  : runwai_ty
+syntax "Unit"                                  : runwai_ty
 
 -- Array types: “[T: n]”
 syntax "[" runwai_ty ":" num "]"                         : runwai_ty
 
 -- Refinement types: “{ x : T | φ }”
-syntax "{" runwai_ty "|" term "}"      : runwai_ty
+syntax "{" runwai_ty "|" runwai_expr "}"      : runwai_ty
 
 -- Function‐type arrow: “(x : T1) → T2”
 syntax "(" ident ":" runwai_ty ")" "→" runwai_ty   : runwai_ty
@@ -34,7 +36,6 @@ syntax "(" ident ":" runwai_ty ")" "→" runwai_ty   : runwai_ty
 ---------------------------------------------------
 --------------- Declare Expressions ---------------
 ---------------------------------------------------
-declare_syntax_cat runwai_expr
 
 -- Constants:
 syntax num                                       : runwai_expr
@@ -102,7 +103,7 @@ declare_syntax_cat runwai_circuit
 
 -- circuit A (x1, x2, …, xn) -> T {body}
 -- syntax "circuit" ident "(" sepBy(runwai_param, ",") ")" "->" runwai_ty "{" runwai_expr "}" : runwai_circuit
-syntax "circuit" ident "(" num ")" "->" runwai_expr "{" runwai_expr "}" : runwai_circuit
+syntax "circuit" ident "(" num ")" "->" runwai_ty "{" runwai_expr "}" : runwai_circuit
 
 ---------------------------------------------------
 --------------- Declare File ----------------------
@@ -113,90 +114,15 @@ syntax (runwai_circuit)+ : runwai_file
 
 namespace Frontend
 
-unsafe def elaborateProp (stx : Syntax) : MetaM Ast.Expr := do
-  match stx with
-  | `(term| $n:num) => do
-      let v := n.getNat
-      pure (Ast.Expr.constZ v)
-
-  | `(term| "Fp" $n:num) => do
-      let v := n.getNat
-      let v' := (v: F)
-      pure (Ast.Expr.constF v')
-
-  -- Boolean literals
-  | `(term| True)  => pure (Ast.Expr.constBool True)
-  | `(term| False) => pure (Ast.Expr.constBool False)
-
-  -- Boolean variables (identifiers)  — we treat `p` as a Bool var
-  | `(term| $x:ident) => pure (Ast.Expr.var x.getId.toString)
-
-  -- ¬ φ
-  | `(term| ! $φ:term) => do
-      let φ' ← elaborateProp φ
-      -- We could encode “¬ φ” as `boolExpr φ Not φ`, but we don’t currently have a `UnaryOp`.
-      -- For now, we can say “(φ == false)”
-      pure (Ast.Expr.binRel φ' Ast.RelOp.eq (Ast.Expr.constBool False))
-
-  | `(term| $e₁:term + $e₂:term) => do
-      let e₁' ← elaborateProp e₁
-      let e₂' ← elaborateProp e₂
-      pure (Ast.Expr.fieldExpr e₁' Ast.FieldOp.add e₂')
-
-  | `(term| $e₁:term * $e₂:term) => do
-      let e₁' ← elaborateProp e₁
-      let e₂' ← elaborateProp e₂
-      pure (Ast.Expr.fieldExpr e₁' Ast.FieldOp.mul e₂')
-
-  -- φ && ψ  or φ ∧ ψ
-  | `(term| $φ:term && $ψ:term) => do
-      let φ' ← elaborateProp φ
-      let ψ' ← elaborateProp ψ
-      pure (Ast.Expr.boolExpr φ' Ast.BooleanOp.and ψ')
-
-  | `(term| $φ:term "and" $ψ:term) => do
-      let φ' ← elaborateProp φ
-      let ψ' ← elaborateProp ψ
-      pure (Ast.Expr.boolExpr φ' Ast.BooleanOp.and ψ')
-
-  -- φ || ψ  or φ ∨ ψ
-  | `(term| $φ:term || $ψ:term) => do
-      let φ' ← elaborateProp φ
-      let ψ' ← elaborateProp ψ
-      pure (Ast.Expr.boolExpr φ' Ast.BooleanOp.or ψ')
-
-  | `(term| $φ:term "or" $ψ:term) => do
-      let φ' ← elaborateProp φ
-      let ψ' ← elaborateProp ψ
-      pure (Ast.Expr.boolExpr φ' Ast.BooleanOp.or ψ')
-
-  -- φ == ψ
-  | `(term| $φ:term == $ψ:term) => do
-      let φ' ← elaborateProp φ
-      let ψ' ← elaborateProp ψ
-      pure (Ast.Expr.binRel φ' Ast.RelOp.eq ψ')
-
-  -- φ < ψ
-  | `(term| $φ:term < $ψ:term) => do
-      let φ' ← elaborateProp φ
-      let ψ' ← elaborateProp ψ
-      pure (Ast.Expr.binRel φ' Ast.RelOp.lt ψ')
-
-  -- φ <= ψ
-  | `(term| $φ:term <= $ψ:term) => do
-      let φ' ← elaborateProp φ
-      let ψ' ← elaborateProp ψ
-      pure (Ast.Expr.binRel φ' Ast.RelOp.le ψ')
-
-  | _ => throwError "unsupported proposition syntax: {stx}"
-
+mutual
 /-- Given a `Syntax` of category `runwai_ty`, return the corresponding `Ast.Ty`. -/
 unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
   match stx with
 
   -- Field and Bool
-  | `(runwai_ty| Field)      => pure (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.const (Ast.Expr.constBool True)))
+  | `(runwai_ty| Field)      => pure (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constBool True)))
   | `(runwai_ty| Bool)       => pure Ast.Ty.bool
+  | `(runwai_ty| Unit)       => pure Ast.Ty.unit
 
   -- Array type: “[T]”
   | `(runwai_ty| [ $t:runwai_ty : $n:num ]) => do
@@ -204,15 +130,16 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
       pure (Ast.Ty.arr t' n.getNat)
 
   -- Refinement: “{ x : T | φ }”
-  | `(runwai_ty| { $T:runwai_ty | $φ:term } ) => do
+  | `(runwai_ty| { $T:runwai_ty | $φ:runwai_expr } ) => do
       let T' ← match T with
       --| `(runwai_ty| Int) => pure Ast.Ty.int
       | `(runwai_ty| Field) => pure Ast.Ty.field
       | `(runwai_ty| Bool) => pure Ast.Ty.bool
+      | `(runwai_ty| Unit) => pure Ast.Ty.unit
       | _ => throwError "unsupported type syntax: {stx}"
       -- We want to turn `φ` (a Lean `term`) into an `Ast.Expr` (of Boolean sort).
-      let φ' ← elaborateProp φ
-      pure (Ast.Ty.refin T' (Ast.Predicate.eq φ'))
+      let φ' ← elaborateExpr φ
+      pure (Ast.Ty.refin T' (Ast.Predicate.ind φ'))
 
   -- Function type: “(x : T1) → T2”
   | `(runwai_ty| ( $x:ident : $Tdom:runwai_ty ) → $Tcod:runwai_ty ) => do
@@ -357,6 +284,7 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
 
   -- Catch‐all
   | _ => throwError "unsupported expression syntax: {stx}"
+end
 
 /-- Helper: elaborate a single parameter syntax `(x : T)` into `(String × Ast.Ty)`. -/
 unsafe def elaborateParam (stx : Syntax) : MetaM (String × Ast.Ty) := do
@@ -371,10 +299,10 @@ unsafe def elaborateParam (stx : Syntax) : MetaM (String × Ast.Ty) := do
 /-- Given a single `runwai_circuit` syntax, produce an `Ast.Circuit`. -/
 unsafe def elaborateCircuit (stx : Syntax) : MetaM Ast.Circuit := do
   match stx with
-  | `(runwai_circuit| circuit $name:ident ( $width:num ) -> $goal:runwai_expr { $body:runwai_expr } ) => do
+  | `(runwai_circuit| circuit $name:ident ( $width:num ) -> $goal:runwai_ty { $body:runwai_expr } ) => do
       let nameStr  := name.getId.toString
       let width'   := width.getNat
-      let goal'    ← elaborateExpr goal
+      let goal'    ← elaborateType goal
       let body'    ← elaborateExpr body
       pure {
         name  := nameStr,
