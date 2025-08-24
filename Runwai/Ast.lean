@@ -71,7 +71,8 @@ mutual
     deriving Lean.ToExpr
 
   inductive Predicate where
-    | lam : (ident: String) → (body: Expr) → Predicate
+    | dep : (ident: String) → (body: Expr) → Predicate
+    | ind : (body: Expr) → Predicate
   deriving Lean.ToExpr
 
   /-- Runtime values in Runwai. -/
@@ -116,7 +117,7 @@ def exprEq (e₁ e₂: Expr): Expr :=
   Expr.binRel e₁ RelOp.eq e₂
 
 def constTruePred : Predicate :=
-  Predicate.lam "v" (Ast.Expr.constBool true)
+  Predicate.ind (Ast.Expr.constBool true)
 
 def v: Expr := Expr.var ".v"
 
@@ -171,7 +172,8 @@ mutual
 
 
   partial def predicateToString : Predicate → String
-    | Predicate.lam ident body => s!"{ident} = {exprToString body}"
+    | Predicate.dep ident body => s!"{ident} = {exprToString body}"
+    | Predicate.ind body => exprToString body
 
   partial def tyToString : Ty → String
     | Ty.unknown        => "unknown"

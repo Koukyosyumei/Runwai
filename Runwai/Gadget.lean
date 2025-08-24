@@ -420,7 +420,7 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
   @Ty.TypeJudgment σ Δ Γ
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
-    (Ty.refin Ast.Ty.unit (Ast.Predicate.lam "v" (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
+    (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
     apply Ty.TypeJudgment.TE_LetIn; apply lookup_update_self;
     apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_VarEnv; exact hty
     repeat apply Ty.TypeJudgment.TE_BinOpField
@@ -434,24 +434,24 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
     have h_sub : @Ty.SubtypeJudgment σ Δ (Env.updateTy
       (Env.updateTy Γ u₁
         (Ty.unit.refin
-          (Ast.Predicate.lam "v"
+          (Ast.Predicate.ind
             (exprEq (Expr.var y)
               ((((Expr.constF 0).fieldExpr FieldOp.sub (.var x)).fieldExpr FieldOp.mul (Expr.var inv)).fieldExpr FieldOp.add
                 (Expr.constF 1))))))
-      u₂ (Ty.unit.refin (Ast.Predicate.lam "v" (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))))
-      (Ty.unit.refin (Ast.Predicate.lam "v" (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0))))
+      u₂ (Ty.unit.refin (Ast.Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))))
+      (Ty.unit.refin (Ast.Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0))))
       (Ty.unit.refin
-        (Ast.Predicate.lam "v" (exprEq (Expr.var y) (((Expr.var x).binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0))))) := by {
+        (Ast.Predicate.ind (exprEq (Expr.var y) (((Expr.var x).binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0))))) := by {
         apply Ty.SubtypeJudgment.TSub_Refine
         apply Ty.SubtypeJudgment.TSub_Refl
         unfold PropSemantics.tyenvToProp PropSemantics.predToProp PropSemantics.exprToProp PropSemantics.varToProp
         simp
         intro v h₁ h₂
-        set φ₁ := (Ast.Predicate.lam "v"
+        set φ₁ := (Ast.Predicate.ind
           (exprEq (Expr.var y)
             ((((Expr.constF 0).fieldExpr FieldOp.sub (Expr.var x)).fieldExpr FieldOp.mul (Expr.var inv)).fieldExpr FieldOp.add
               (Expr.constF 1))))
-        set φ₂ := (Ast.Predicate.lam "v" (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))
+        set φ₂ := (Ast.Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))
         have h₃ := h₁ u₁ (Ty.unit.refin φ₁)
         have h₄: Env.lookupTy (Env.updateTy (Env.updateTy Γ u₁ (Ty.unit.refin φ₁)) u₂ (Ty.unit.refin φ₂)) u₁ = (Ty.unit.refin φ₁) := by {
           apply lookup_update_ne_of_lookup
@@ -463,16 +463,7 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
         simp at h₃
         unfold PropSemantics.predToProp PropSemantics.exprToProp φ₁ at h₃
         simp at h₃
-        cases h₂
-        rename_i x₂ body₂ σ₂ va₂ hh₁ hh₂ hh₃
-        cases hh₁
-        cases h₃
-        rename_i x₃ body₃ σ₃ va₃ hh₄ hh₅ hh₆
-        cases hh₄
-        apply Eval.EvalProp.App
-        apply Eval.EvalProp.Lam
-        exact hh₂
-        apply isZero_eval_eq_branch_semantics hh₆ hh₃
+        apply isZero_eval_eq_branch_semantics h₃ h₂
         repeat apply Eval.EvalProp.Var; rfl
       }
     apply Ty.TypeJudgment.TE_SUB h_sub

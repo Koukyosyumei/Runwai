@@ -64,7 +64,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
   -- TE-VAR
   | TE_Var {Γ: Env.TyEnv} {x : String} {T: Ast.Ty}:
     ∀ φ: Ast.Predicate, Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
-    TypeJudgment Γ (Ast.Expr.var x) (Ast.Ty.refin T (Ast.Predicate.lam "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.var x))))
+    TypeJudgment Γ (Ast.Expr.var x) (Ast.Ty.refin T (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.var x))))
 
   | TE_VarEnv {Γ: Env.TyEnv} {x : String} {T: Ast.Ty}:
     ∀ φ: Ast.Predicate, Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
@@ -90,23 +90,23 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
 
   -- TE-CONSTF
   | TE_ConstF {Γ: Env.TyEnv} {f: F} :
-    TypeJudgment Γ (Ast.Expr.constF f) (Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.lam "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constF f))))
+    TypeJudgment Γ (Ast.Expr.constF f) (Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constF f))))
 
   -- TE-CONSTZ
   | TE_ConstZ {Γ: Env.TyEnv} {f: ℕ} :
-    TypeJudgment Γ (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.lam "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constZ f))))
+    TypeJudgment Γ (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constZ f))))
 
   -- TE-ASSERT
   | TE_Assert {Γ: Env.TyEnv} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate}:
     TypeJudgment Γ e₁ (Ast.Ty.refin (Ast.Ty.field) φ₁) →
     TypeJudgment Γ e₂ (Ast.Ty.refin (Ast.Ty.field) φ₂) →
-    TypeJudgment Γ (Ast.Expr.assertE e₁ e₂) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.lam "v" (Ast.exprEq e₁ e₂)))
+    TypeJudgment Γ (Ast.Expr.assertE e₁ e₂) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq e₁ e₂)))
 
   -- TE-BINOPFIELD
   | TE_BinOpField {Γ: Env.TyEnv} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.FieldOp}:
     TypeJudgment Γ e₁ (Ast.Ty.refin (Ast.Ty.field) φ₁) →
     TypeJudgment Γ e₂ (Ast.Ty.refin (Ast.Ty.field) φ₂) →
-  TypeJudgment Γ (Ast.Expr.fieldExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.lam "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.fieldExpr e₁ op e₂)))))
+  TypeJudgment Γ (Ast.Expr.fieldExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.fieldExpr e₁ op e₂)))))
 
   -- TE-ABS (function abstraction)
   | TE_Abs {Γ: Env.TyEnv} {x: String} {τ₁ τ₂: Ast.Ty} {e: Ast.Expr}:
@@ -150,7 +150,7 @@ def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℕ):
   let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] "trace"
     (.refin (.arr (.refin (.arr (.refin .field
       Ast.constTruePred) c.width) Ast.constTruePred) height) Ast.constTruePred))
-    "i" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.lam "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ height))))
+    "i" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ height))))
   (σ, Γ)
 
 def checkInputsTrace (c: Ast.Circuit) (trace : Ast.Value) (height: ℕ): Prop :=
