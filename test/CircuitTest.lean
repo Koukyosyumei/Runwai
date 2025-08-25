@@ -63,20 +63,15 @@ theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   let envs := Ty.makeEnvs iszeroCircuit x (Ast.Value.vZ i) height
   let σ := envs.1
   let Γ := envs.2
-  apply Ty.TypeJudgment.TE_LetIn
-  · apply lookup_update_self
-  · auto_judgment
-  . apply Ty.TypeJudgment.TE_LetIn
-    . apply lookup_update_self
-    · auto_judgment
-    . apply Ty.TypeJudgment.TE_LetIn
-      . apply lookup_update_self
-      · auto_judgment
-      . apply isZero_typing_soundness
-        repeat apply lookup_update_ne; simp
-        apply Ty.TypeJudgment.TE_VarEnv
-        apply lookup_update_self;
-        repeat decide
+  repeat
+    apply Ty.TypeJudgment.TE_LetIn;
+    · apply lookup_update_self;
+    · auto_judgment;
+  apply isZero_typing_soundness
+  repeat apply lookup_update_ne; simp
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_self;
+  repeat decide
 
 theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   unfold Ty.circuitCorrect

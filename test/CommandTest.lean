@@ -34,21 +34,13 @@ import Runwai.Tactic
 }
 
 #runwai_prove IsZero := by {
-  rename_i Δ h_delta x i height hs hi ht hty hσ σ Γ
-  simp_all
-  rw[← h_delta] at hty
-  apply Ty.TypeJudgment.TE_LetIn
-  · apply lookup_update_self
-  · auto_judgment
-  . apply Ty.TypeJudgment.TE_LetIn
-    . apply lookup_update_self
-    · auto_judgment
-    . apply Ty.TypeJudgment.TE_LetIn
-      . apply lookup_update_self
-      · auto_judgment
-      . apply isZero_typing_soundness
-        repeat apply lookup_update_ne; simp
-        apply Ty.TypeJudgment.TE_VarEnv
-        apply lookup_update_self;
-        repeat decide
+  repeat
+    apply Ty.TypeJudgment.TE_LetIn;
+    · apply lookup_update_self;
+    · auto_judgment;
+  apply isZero_typing_soundness
+  repeat apply lookup_update_ne; simp
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_self;
+  repeat decide
 }
