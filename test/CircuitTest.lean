@@ -1,6 +1,7 @@
 import Runwai.Typing
 import Runwai.Gadget
---import Runwai.PP
+import Runwai.PP
+import Runwai.Tactic
 
 @[simp]
 def assertCircuit : Ast.Circuit := {
@@ -55,17 +56,6 @@ theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
     . apply Ty.TypeJudgment.TE_ConstF
   . constructor;
     apply lookup_update_self
-
-syntax "auto_judgment" : tactic
-macro_rules
-| `(tactic| auto_judgment) => `(tactic|
-    {
-      repeat constructor
-      simp_all
-      constructor;
-      simp_all
-    }
-  )
 
 theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   unfold Ty.circuitCorrect

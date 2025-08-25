@@ -78,7 +78,7 @@ def unexpBinRel : Unexpander
 
 @[app_unexpander Ast.Expr.assertE]
 def unexpAssert : Unexpander
-  | `($_ $lhs $rhs) => `(assert $lhs = $rhs)
+  | `($_ $lhs $rhs) => `(assert_eq ($lhs, $rhs))
   | _ => throw ()
 
 @[app_unexpander Ast.Expr.branch]

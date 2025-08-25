@@ -15,41 +15,38 @@ Runwai — yes, that’s Runwai, not a typo 😉 — is a refinement-typed DSL f
 
 - AIR Constraint
 
-```haskell
-circuit IsZeroAir
-  ( trace : {[[F; 3]; n] | true } , i: {Z | 0 <= v < n})
-  -> {Unit | trace[i][1] = if trace[i][0] == 0 then 1 else 0} {
-    let x = trace[i][0] in
-      let y = trace[i][1] in
-        let inv = trace[i][2] in
-          let u₁ = assert_eq(y, -x * inv + 1) in
-            let u₂ = assert_eq(x * y, 0) in u₂             
+```lean
+#runwai_register circuit IsZero(3) -> {Unit| y == if x == Fp 0 then {Fp 1} else {Fp 0}} {
+  let x = trace [i][0] in
+    let y = trace [i][1] in
+      let inv = trace [i][2] in
+        let u₁ = assert_eq(y, ((Fp 0 - x) * inv) + Fp 1) in
+          let u₂ = assert_eq(x*y, Fp 0) in u₂
 }
 ```
 
 - Theorem
 
 ```lean
-theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
-  unfold Ty.circuitCorrect
-  intro x i height hs hi ht hσ
-  let envs := Ty.makeEnvs iszeroCircuit x (Ast.Value.vZ i) height
-  let σ := envs.1
-  let Γ := envs.2
+#runwai_prove IsZero := by {
+  rename_i Δ h_delta x i height hs hi ht hty hσ σ Γ
+  simp_all
+  rw[← h_delta] at hty
   apply Ty.TypeJudgment.TE_LetIn
-  · lookup_recent_update
+  · apply lookup_update_self
   · auto_judgment
   . apply Ty.TypeJudgment.TE_LetIn
-    . lookup_recent_update
+    . apply lookup_update_self
     · auto_judgment
     . apply Ty.TypeJudgment.TE_LetIn
-      . lookup_recent_update
+      . apply lookup_update_self
       · auto_judgment
       . apply isZero_typing_soundness
         repeat apply lookup_update_ne; simp
         apply Ty.TypeJudgment.TE_VarEnv
-        lookup_recent_update; simp;
-        repeat apply lookup_update_ne; simp
+        apply lookup_update_self;
+        repeat decide
+}
 ```
 
 ## Why use Runwai?

@@ -70,10 +70,10 @@ syntax runwai_expr "<"  runwai_expr                  : runwai_expr
 syntax runwai_expr "<=" runwai_expr                  : runwai_expr
 
 -- Branch: if c {e₁} else {e₂}
-syntax "if" runwai_expr "{" runwai_expr "}" "else" "{" runwai_expr "}" : runwai_expr
+syntax "if" runwai_expr "then" "{" runwai_expr "}" "else" "{" runwai_expr "}" : runwai_expr
 
 -- Assert: “assert e₁ = e₂”
-syntax "assert" runwai_expr "=" runwai_expr          : runwai_expr
+syntax "assert_eq" "(" runwai_expr "," runwai_expr ")"         : runwai_expr
 
 -- Circuit reference:  “#Name (e₁, e₂, … ,eₙ)”
 -- syntax "#" ident "(" sepBy1(runwai_expr, ",") ")"  : runwai_expr
@@ -89,6 +89,8 @@ syntax runwai_expr "(" runwai_expr ")"               : runwai_expr
 
 -- Let‐binding: “let x = e₁ in e₂”
 syntax "let" ident "=" runwai_expr "in" runwai_expr  : runwai_expr
+
+syntax "(" runwai_expr ")" : runwai_expr
 
 ---------------------------------------------------
 --------------- Declare Param ---------------------
@@ -173,14 +175,14 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
   | `(runwai_expr| $x:ident) => pure (Ast.Expr.var x.getId.toString)
 
   -- if c {e₁} else {e₂}
-  | `(runwai_expr| if $c {$e₁} else {$e₂}) => do
+  | `(runwai_expr| if $c then {$e₁} else {$e₂}) => do
     let c' ← elaborateExpr c
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
     pure (Ast.Expr.branch c' e₁' e₂')
 
   -- assert e₁ = e₂
-  | `(runwai_expr| assert $e₁ = $e₂) => do
+  | `(runwai_expr| assert_eq ($e₁, $e₂)) => do
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
     pure (Ast.Expr.assertE e₁' e₂')
@@ -281,6 +283,9 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let v' ← elaborateExpr v
     let b' ← elaborateExpr body
     pure (Ast.Expr.letIn x.getId.toString v' b')
+
+  | `(runwai_expr| ($e)) => do
+    elaborateExpr e
 
   -- Catch‐all
   | _ => throwError "unsupported expression syntax: {stx}"
