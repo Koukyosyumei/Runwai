@@ -122,10 +122,12 @@ def constTruePred : Predicate :=
 def v: Expr := Expr.var ".v"
 
 structure Circuit where
-  name   : String
-  width  : ℤ
-  goal   : Ast.Ty
-  body   : Ast.Expr
+  name    : String
+  ident_t : String
+  ident_i : String
+  width   : ℤ
+  goal    : Ast.Ty
+  body    : Ast.Expr
 deriving Lean.ToExpr
 
 instance : Repr BooleanOp where
@@ -215,17 +217,21 @@ instance : Repr Circuit where
   reprPrec c _ :=
     Format.text s!
 "Circuit \{
-  name   := \"{c.name}\",
-  width  := {c.width},
-  goal   := {repr c.goal},
-  body   := {repr c.body}
+  name    := \"{c.name}\",
+  ident_t := {c.ident_t},
+  ident_i := {c.ident_i},
+  width   := {c.width},
+  goal    := {repr c.goal},
+  body    := {repr c.body}
 }"
 
 def DefaultCircuit : Circuit := {
-    name   := "dummy"
-    width  := 0
-    goal   := Ty.refin Ty.unit constTruePred
-    body   := Expr.assertE (Expr.constF 1) (Expr.constF 1)
+    name    := "dummy"
+    ident_t := "trace"
+    ident_i := "i"
+    width   := 0
+    goal    := Ty.refin Ty.unit constTruePred
+    body    := Expr.assertE (Expr.constF 1) (Expr.constF 1)
   }
 
 instance : Inhabited Circuit where

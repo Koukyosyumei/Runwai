@@ -146,8 +146,8 @@ axiom typeJudgmentRefinementSound {σ : Env.ValEnv} {Δ : Env.CircuitEnv}
 -/
 
 def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): Env.ValEnv × Env.TyEnv :=
-  let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] "trace" trace) "i" i
-  let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] "trace"
+  let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] c.ident_t trace) c.ident_i i
+  let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] c.ident_t
     (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.ind (Ast.Expr.constBool true))))
     "i" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ height))))
