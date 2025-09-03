@@ -15,7 +15,7 @@ Runwai — yes, that’s Runwai, not a typo 😉 — is a refinement-typed DSL f
 
 - AIR Constraint
 
-```lean
+```haskell
 #runwai_register circuit IsZero(3) -> {Unit| y == if x == Fp 0 then {Fp 1} else {Fp 0}} {
   let x = trace [i][0] in
     let y = trace [i][1] in
@@ -27,7 +27,7 @@ Runwai — yes, that’s Runwai, not a typo 😉 — is a refinement-typed DSL f
 
 - Theorem
 
-```lean
+```haskell
 #runwai_prove IsZero := by {
   repeat
     apply Ty.TypeJudgment.TE_LetIn;
