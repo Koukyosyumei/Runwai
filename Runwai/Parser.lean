@@ -103,9 +103,9 @@ syntax ident ":" runwai_ty : runwai_param
 ---------------------------------------------------
 declare_syntax_cat runwai_circuit
 
--- circuit A (x1, x2, …, xn) -> T {body}
+-- circuit A (trace, i, width) -> T {body}
 -- syntax "circuit" ident "(" sepBy(runwai_param, ",") ")" "->" runwai_ty "{" runwai_expr "}" : runwai_circuit
-syntax "circuit" ident "(" num ")" "->" runwai_ty "{" runwai_expr "}" : runwai_circuit
+syntax "circuit" ident "(" ident "," ident "," num ")" "->" runwai_ty "{" runwai_expr "}" : runwai_circuit
 
 ---------------------------------------------------
 --------------- Declare File ----------------------
@@ -304,16 +304,16 @@ unsafe def elaborateParam (stx : Syntax) : MetaM (String × Ast.Ty) := do
 /-- Given a single `runwai_circuit` syntax, produce an `Ast.Circuit`. -/
 unsafe def elaborateCircuit (stx : Syntax) : MetaM Ast.Circuit := do
   match stx with
-  | `(runwai_circuit| circuit $name:ident ( $width:num ) -> $goal:runwai_ty { $body:runwai_expr } ) => do
-      let nameStr  := name.getId.toString
-      let width'   := width.getNat
+  | `(runwai_circuit| circuit $name:ident ( $ident_t:ident, $ident_i:ident, $width:num ) -> $goal:runwai_ty { $body:runwai_expr } ) => do
       let goal'    ← elaborateType goal
       let body'    ← elaborateExpr body
       pure {
-        name  := nameStr,
-        width := width'
-        goal  := goal'
-        body  := body'
+        name    := name.getId.toString,
+        ident_t := ident_t.getId.toString
+        ident_i := ident_i.getId.toString
+        width   := width.getNat
+        goal    := goal'
+        body    := body'
       }
   | _ => throwError "invalid `circuit …` syntax: {stx}"
 

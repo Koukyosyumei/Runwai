@@ -5,13 +5,15 @@ import Runwai.Tactic
 
 @[simp]
 def assertCircuit : Ast.Circuit := {
-  name   := "assert",
-  width  := 2,
-  goal   := Ast.Ty.refin Ast.Ty.unit
+  name    := "assert",
+  ident_t := "trace",
+  ident_i := "i",
+  width   := 2,
+  goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
       (Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
                        Ast.RelOp.eq (Ast.Expr.constF 2))),
-  body   := (Ast.Expr.letIn "u" (Ast.Expr.assertE
+  body    := (Ast.Expr.letIn "u" (Ast.Expr.assertE
               (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
               (Ast.Expr.constF 2))
             (Ast.Expr.var "u"))
@@ -19,12 +21,14 @@ def assertCircuit : Ast.Circuit := {
 
 @[simp]
 def iszeroCircuit : Ast.Circuit := {
-  name   := "iszero",
-  width  := 3,
-  goal   := Ast.Ty.refin Ast.Ty.unit
+  name    := "iszero",
+  ident_t := "trace",
+  ident_i := "i",
+  width   := 3,
+  goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
       (Ast.exprEq (.var "y") (.branch (.binRel (.var "x") (.eq) (.constF 0)) (.constF 1) (.constF 0))))
-  body   := (Ast.Expr.letIn "x" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
+  body    := (Ast.Expr.letIn "x" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
               (Ast.Expr.letIn "y" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
                 (Ast.Expr.letIn "inv" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 2))
                   (Ast.Expr.letIn "u₁" (.assertE (.var "y") (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var "x")) .mul (.var "inv")) (.add) (.constF 1)))

@@ -3,10 +3,10 @@ import Runwai.Gadget
 import Runwai.Command
 import Runwai.Tactic
 
-#runwai_register circuit Assert1(2) -> {Unit| trace [i][1] == Fp 2} {let u = assert_eq(trace [i][1], Fp 2) in u}
+#runwai_register circuit Assert1(trace, i, 2) -> {Unit| trace [i][1] == Fp 2} {let u = assert_eq(trace [i][1], Fp 2) in u}
 #runwai_check Assert1
 
-#runwai_register circuit IsZero(3) -> {Unit| y == if x == Fp 0 then {Fp 1} else {Fp 0}} {
+#runwai_register circuit IsZero(trace, i, 3) -> {Unit| y == if x == Fp 0 then {Fp 1} else {Fp 0}} {
   let x = trace [i][0] in
     let y = trace [i][1] in
       let inv = trace [i][2] in
