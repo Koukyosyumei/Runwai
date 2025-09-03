@@ -19,15 +19,7 @@ import Runwai.Tactic
   apply Ty.TypeJudgment.TE_LetIn
   · apply lookup_update_self
   · apply Ty.TypeJudgment.TE_Assert
-    · apply Ty.TypeJudgment.TE_ArrayIndex; apply Ty.TypeJudgment.TE_ArrayIndex; apply Ty.TypeJudgment.TE_Var
-      apply lookup_update_ne_of_lookup
-      simp
-      apply lookup_update_self
-      apply Eval.EvalProp.Var; exact rfl
-      simp
-      exact hi
-      apply Eval.EvalProp.ConstZ
-      simp
+    · auto_judgment
     . apply Ty.TypeJudgment.TE_ConstF
   . constructor;
     apply lookup_update_self
