@@ -9,7 +9,7 @@
 
 <h3>🛬 Where zk Proofs Take Flight 🛫</h3>
 
-Runwai — yes, that’s Runwai, not a typo 😉 — is a refinement-typed DSL for certified AIR constraints in zero-knowledge proof systems.
+Runwai is a refinement-typed DSL for certified AIR constraints in zero-knowledge proof systems.
 
 ## Quickstart
 
