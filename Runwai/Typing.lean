@@ -134,6 +134,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Η: Env.UsedNames}
     (h₂: @TypeJudgment σ Δ Η (Env.updateTy Γ x τ₁) e₂ τ₂):
     TypeJudgment Γ (Ast.Expr.letIn x e₁ e₂) τ₂
 
+  -- TE-LOOKUP
   | TE_LookUp {Γ: Env.TyEnv} {x : String} {args: List (Ast.Expr × Ast.Expr)} {c: Ast.Circuit} {φ: Ast.Predicate} {φ': Ast.Predicate}
     (hc: c = Env.lookupCircuit Δ x)
     (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ)
