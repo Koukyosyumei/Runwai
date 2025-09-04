@@ -128,14 +128,9 @@ mutual
         (idx : vs[j]? = some v) :
         EvalProp σ Δ (Expr.arrIdx a i) v
 
-    /-
-    -- E‑CREF
-    | CircRef  {σ Δ name arg v c out}
-        (iha : EvalProp σ Δ arg v)
-        (ic  : lookupCircuit Δ name = c)
-        (ihb : EvalProp (updateVal σ name v) Δ c.body out) :
-        EvalProp σ Δ (Expr.circRef name arg) out
-    -/
+    -- E-LOOKUP
+    | LookUp {σ Δ name args}:
+      EvalProp σ Δ (Expr.lookup name args) (Value.vUnit)
 end
 
 end Eval

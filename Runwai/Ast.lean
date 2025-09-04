@@ -67,7 +67,7 @@ mutual
     | lam         : (param: String) → (τ: Ty) → (body: Expr) → Expr      -- λx : τ. e
     | app         : (f: Expr) → (arg: Expr) → Expr                       -- e₁ e₂
     | letIn       : (name: String) → (val: Expr) → (body: Expr) → Expr   -- let x = e₁ in e₂
-    | lookup      : (name: String) → (arg: Expr) → Expr                  -- #C e₁ ... eₙ
+    | lookup      : (name: String) → (args: List (Expr × Expr)) → Expr
     deriving Lean.ToExpr
 
   inductive Predicate where
@@ -97,6 +97,38 @@ mutual
     | func     : (param: String) → (dom: Ty) → (cond: Ty) → Ty    -- x: τ₁ → τ₂
     deriving Lean.ToExpr
 end
+
+partial def renameVar (e : Expr) (oldName newName : String) : Expr :=
+  match e with
+  | Expr.constF x      => Expr.constF x
+  | Expr.constZ x      => Expr.constZ x
+  | Expr.constBool b   => Expr.constBool b
+  | Expr.arr elems     => Expr.arr (elems.map (fun e => renameVar e oldName newName))
+  | Expr.var n         => if n = oldName then Expr.var newName else e
+  | Expr.assertE l r   => Expr.assertE (renameVar l oldName newName) (renameVar r oldName newName)
+  | Expr.boolExpr l o r => Expr.boolExpr (renameVar l oldName newName) o (renameVar r oldName newName)
+  | Expr.fieldExpr l o r => Expr.fieldExpr (renameVar l oldName newName) o (renameVar r oldName newName)
+  | Expr.binRel l o r  => Expr.binRel (renameVar l oldName newName) o (renameVar r oldName newName)
+  | Expr.arrIdx a i    => Expr.arrIdx (renameVar a oldName newName) (renameVar i oldName newName)
+  | Expr.branch c t e  => Expr.branch (renameVar c oldName newName) (renameVar t oldName newName) (renameVar e oldName newName)
+  | Expr.lam p τ b     =>
+      if p = oldName then
+        e
+      else
+        Expr.lam p τ (renameVar b oldName newName)
+  | Expr.app f a       => Expr.app (renameVar f oldName newName) (renameVar a oldName newName)
+  | Expr.letIn n v b   =>
+      if n = oldName then
+        Expr.letIn n (renameVar v oldName newName) b
+      else
+        Expr.letIn n (renameVar v oldName newName) (renameVar b oldName newName)
+  | Expr.lookup n args =>
+      Expr.lookup n (args.map (fun (a, b) => (renameVar a oldName newName, renameVar b oldName newName)))
+
+def renameVarinPred (p: Predicate) (oldName newName : String) : Predicate :=
+  match p with
+  | Predicate.dep ident body => if ident = oldName then p else Predicate.dep ident (renameVar body oldName newName)
+  | Predicate.ind body => Predicate.ind (renameVar body oldName newName)
 
 /-- Test for equality of two `Value`s. -/
 partial def valueEq : Value → Value → Bool
@@ -170,7 +202,7 @@ mutual
     | Expr.lam param τ body  => s!"λ{param} : {tyToString τ}. {exprToString body}"
     | Expr.app f arg         => s!"{exprToString f} {exprToString arg}"
     | Expr.letIn n v b       => s!"let {n} = {exprToString v} in {exprToString b}"
-    | Expr.lookup name arg  => s!"#{name} {exprToString arg}"
+    | Expr.lookup name args  => s!"#{name}" ++ String.intercalate ", " (args.map fun xy => (exprToString xy.fst) ++ ": " ++ exprToString xy.snd)
 
 
   partial def predicateToString : Predicate → String

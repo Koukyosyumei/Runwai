@@ -59,7 +59,7 @@ inductive SubtypeJudgment :
   Typing judgment `Γ ⊢ e : τ`: expression `e` has type `τ`
   under type environment `Γ`, valuation `σ`, circuits `Δ`, and fuel.
 -/
-inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
+inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Η: Env.UsedNames}:
   Env.TyEnv → Ast.Expr → Ast.Ty → Prop where
   -- TE-VAR
   | TE_Var {Γ: Env.TyEnv} {x : String} {T: Ast.Ty}:
@@ -124,15 +124,20 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
   -- TE_SUB
   | TE_SUB {Γ: Env.TyEnv} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
     (h₀ : @SubtypeJudgment σ Δ Γ τ₁ τ₂)
-    (ht : @TypeJudgment σ Δ Γ e τ₁) :
+    (ht : @TypeJudgment σ Δ Η Γ e τ₁) :
     TypeJudgment Γ e τ₂
 
   -- TE-LETIN
   | TE_LetIn {Γ: Env.TyEnv} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ : Ast.Ty}
     (h₀: Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁)
-    (h₁: @TypeJudgment σ Δ Γ e₁ τ₁)
-    (h₂: @TypeJudgment σ Δ (Env.updateTy Γ x τ₁) e₂ τ₂):
+    (h₁: @TypeJudgment σ Δ Η Γ e₁ τ₁)
+    (h₂: @TypeJudgment σ Δ Η (Env.updateTy Γ x τ₁) e₂ τ₂):
     TypeJudgment Γ (Ast.Expr.letIn x e₁ e₂) τ₂
+
+  | TE_LookUp {Γ: Env.TyEnv} {x : String} {args: List (Ast.Expr × Ast.Expr)} {c: Ast.Circuit} {φ: Ast.Predicate}
+    (hc: c = Env.lookupCircuit Δ x)
+    (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ):
+    TypeJudgment Γ (Ast.Expr.lookup x args) (Ast.Ty.refin Ast.Ty.unit (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t)))
 
 /-
 /--
@@ -172,9 +177,10 @@ def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) (minimum_height: ℕ)
     minimum_height ≤ height →
     i ≤ height →
     let (σ, Γ) := makeEnvs c trace (Ast.Value.vZ i) height
+    let Η := []
     checkInputsTrace c trace height →
     PropSemantics.tyenvToProp σ Δ Γ →
-    @TypeJudgment σ Δ Γ c.body c.goal
+    @TypeJudgment σ Δ Η Γ c.body c.goal
 
 lemma lookupTy_mem (Γ: Env.TyEnv) (x: String) (τ :Ast.Ty) (φ: Ast.Predicate)
   (h : Env.lookupTy Γ x = Ast.Ty.refin τ φ) :

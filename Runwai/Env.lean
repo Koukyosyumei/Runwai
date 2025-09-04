@@ -86,4 +86,10 @@ def lookupTy (Γ : TyEnv) (ident : String) : Option Ast.Ty :=
   | some (_, τ) => some τ
   | none        => none
 
+abbrev UsedNames := List String
+
+@[inline]
+def freshName (Η: UsedNames) (ident: String) : String :=
+  if List.contains Η ident then ident ++ "'" else ident
+
 end Env
