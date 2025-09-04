@@ -30,6 +30,7 @@ def exprToProp (σ : Env.ValEnv) (Δ : Env.CircuitEnv) (e: Ast.Expr): Prop :=
 def predToProp (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (τ: Ast.Ty): Ast.Predicate → (Ast.Expr → Prop)
  | Ast.Predicate.dep ident body => fun v => exprToProp σ Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
  | Ast.Predicate.ind body => fun _ => exprToProp σ Δ body
+ | Ast.Predicate.and left right => fun v => (predToProp σ Δ τ left v) ∧ (predToProp σ Δ τ right v)
 
 def varToProp (σ : Env.ValEnv) (Δ : Env.CircuitEnv) (Γ : Env.TyEnv) (ident : String): Prop :=
 match Env.lookupTy Γ ident with

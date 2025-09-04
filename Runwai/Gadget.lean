@@ -458,7 +458,6 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env.Use
         apply Ty.SubtypeJudgment.TSub_Refine
         apply Ty.SubtypeJudgment.TSub_Refl
         unfold PropSemantics.tyenvToProp PropSemantics.predToProp PropSemantics.exprToProp PropSemantics.varToProp
-        simp
         intro v h₁ h₂
         set φ₁ := (Ast.Predicate.ind
           (exprEq (Expr.var y)
@@ -473,8 +472,6 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env.Use
         }
         have h₅ := lookup_mem_of_eq h₄
         rw[h₄] at h₃
-        simp at h₃
-        unfold PropSemantics.predToProp PropSemantics.exprToProp φ₁ at h₃
         simp at h₃
         apply isZero_eval_eq_branch_semantics h₃ h₂
         repeat apply Eval.EvalProp.Var; rfl
