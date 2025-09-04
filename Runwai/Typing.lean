@@ -79,7 +79,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Η: Env.UsedNames}
   | TE_ArrayIndex {Γ: Env.TyEnv} {e idx: Ast.Expr} {τ: Ast.Ty} {n: Int} {i: ℕ} {φ: Ast.Predicate}:
     TypeJudgment Γ e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
     Eval.EvalProp σ Δ idx (Ast.Value.vZ i) →
-    i ≤ n →
+    i < n →
     TypeJudgment Γ (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
@@ -181,7 +181,8 @@ def checkInputsTrace (c: Ast.Circuit) (trace : Ast.Value) (height: ℕ): Prop :=
 def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) (minimum_height: ℕ) : Prop :=
   ∀ (trace: List Ast.Value) (i: ℕ),
     minimum_height ≤ trace.length →
-    i ≤ trace.length →
+    i < trace.length →
+    (∃ row: List Ast.Value, (trace.get? i = some (Ast.Value.vArr row))) →
     let (σ, Γ) := makeEnvs c (Ast.Value.vArr trace) (Ast.Value.vZ i) trace.length
     let Η := [c.ident_t, c.ident_i]
     checkInputsTrace c (Ast.Value.vArr trace) trace.length →

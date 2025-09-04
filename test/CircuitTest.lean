@@ -42,7 +42,7 @@ def Δ : Env.CircuitEnv := [("assert", assertCircuit)]
 
 theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
   unfold Ty.circuitCorrect
-  intro x i hs hi ht hσ
+  intro x i hs hi hrow ht hσ
   let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
@@ -63,7 +63,7 @@ theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
 
 theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   unfold Ty.circuitCorrect
-  intro x i height hs hi ht
+  intro x i height hs hi hrow ht
   let envs := Ty.makeEnvs iszeroCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
@@ -79,7 +79,7 @@ theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
 
 theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   unfold Ty.circuitCorrect
-  intro x i height hs hi ht
+  intro x i height hs hi hrow ht
   let envs := Ty.makeEnvs iszeroCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
