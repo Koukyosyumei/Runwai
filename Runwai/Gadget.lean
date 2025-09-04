@@ -360,11 +360,12 @@ theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env
       have hu := @update_preserve_pointwise Γ' Γ₂ x₁ τ₁ h
       exact hu
     | TE_LookUp h₁ h₂ => {
-      rename_i Γ' x args c φ
+      rename_i Γ' x args c h₃
       intro Γ₂ x₁
       apply Ty.TypeJudgment.TE_LookUp
       exact h₁
       exact h₂
+      exact h₃
     }
   }
 

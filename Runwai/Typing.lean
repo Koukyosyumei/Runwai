@@ -134,10 +134,11 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Η: Env.UsedNames}
     (h₂: @TypeJudgment σ Δ Η (Env.updateTy Γ x τ₁) e₂ τ₂):
     TypeJudgment Γ (Ast.Expr.letIn x e₁ e₂) τ₂
 
-  | TE_LookUp {Γ: Env.TyEnv} {x : String} {args: List (Ast.Expr × Ast.Expr)} {c: Ast.Circuit} {φ: Ast.Predicate}
+  | TE_LookUp {Γ: Env.TyEnv} {x : String} {args: List (Ast.Expr × Ast.Expr)} {c: Ast.Circuit} {φ: Ast.Predicate} {φ': Ast.Predicate}
     (hc: c = Env.lookupCircuit Δ x)
-    (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ):
-    TypeJudgment Γ (Ast.Expr.lookup x args) (Ast.Ty.refin Ast.Ty.unit (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t)))
+    (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ)
+    (hn: φ' = (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))):
+    TypeJudgment Γ (Ast.Expr.lookup x args) (Ast.Ty.refin Ast.Ty.unit φ')
 
 /-
 /--
@@ -177,7 +178,7 @@ def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) (minimum_height: ℕ)
     minimum_height ≤ height →
     i ≤ height →
     let (σ, Γ) := makeEnvs c trace (Ast.Value.vZ i) height
-    let Η := []
+    let Η := [c.ident_t, c.ident_i]
     checkInputsTrace c trace height →
     PropSemantics.tyenvToProp σ Δ Γ →
     @TypeJudgment σ Δ Η Γ c.body c.goal
