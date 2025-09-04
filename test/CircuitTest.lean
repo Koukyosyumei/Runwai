@@ -42,8 +42,8 @@ def Δ : Env.CircuitEnv := [("assert", assertCircuit)]
 
 theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
   unfold Ty.circuitCorrect
-  intro x i height hs hi ht hσ
-  let envs := Ty.makeEnvs assertCircuit x (Ast.Value.vZ i) height
+  intro x i hs hi ht hσ
+  let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
   apply Ty.TypeJudgment.TE_LetIn
@@ -63,8 +63,8 @@ theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
 
 theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   unfold Ty.circuitCorrect
-  intro x i height hs hi ht hσ
-  let envs := Ty.makeEnvs iszeroCircuit x (Ast.Value.vZ i) height
+  intro x i height hs hi ht
+  let envs := Ty.makeEnvs iszeroCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
   repeat
@@ -79,8 +79,8 @@ theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
 
 theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   unfold Ty.circuitCorrect
-  intro x i height hs hi ht hσ
-  let envs := Ty.makeEnvs iszeroCircuit x (Ast.Value.vZ i) height
+  intro x i height hs hi ht
+  let envs := Ty.makeEnvs iszeroCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
   unfold iszeroCircuit; simp
@@ -97,7 +97,7 @@ theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
     simp
     rfl
     simp
-    exact hi
+    exact hs
     apply Eval.EvalProp.ConstZ
     simp
   . apply Ty.TypeJudgment.TE_LetIn
@@ -113,7 +113,7 @@ theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
       simp
       rfl
       simp
-      exact hi
+      exact hs
       apply Eval.EvalProp.ConstZ
       simp
     . apply Ty.TypeJudgment.TE_LetIn
@@ -129,7 +129,7 @@ theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
         simp
         rfl
         simp
-        exact hi
+        exact hs
         apply Eval.EvalProp.ConstZ
         simp
       . apply isZero_typing_soundness

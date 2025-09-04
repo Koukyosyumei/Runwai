@@ -161,7 +161,7 @@ def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℕ):
   let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] c.ident_t
     (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.ind (Ast.Expr.constBool true))))
-    "i" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ height))))
+    c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ height))))
   (σ, Γ)
 
 def checkInputsTrace (c: Ast.Circuit) (trace : Ast.Value) (height: ℕ): Prop :=
@@ -179,12 +179,12 @@ def checkInputsTrace (c: Ast.Circuit) (trace : Ast.Value) (height: ℕ): Prop :=
   yields a value satisfying the output refinement.
 -/
 def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) (minimum_height: ℕ) : Prop :=
-  ∀ (trace: Ast.Value) (i height: ℕ),
-    minimum_height ≤ height →
-    i ≤ height →
-    let (σ, Γ) := makeEnvs c trace (Ast.Value.vZ i) height
+  ∀ (trace: List Ast.Value) (i: ℕ),
+    minimum_height ≤ trace.length →
+    i ≤ trace.length →
+    let (σ, Γ) := makeEnvs c (Ast.Value.vArr trace) (Ast.Value.vZ i) trace.length
     let Η := [c.ident_t, c.ident_i]
-    checkInputsTrace c trace height →
+    checkInputsTrace c (Ast.Value.vArr trace) trace.length →
     PropSemantics.tyenvToProp σ Δ Γ →
     @TypeJudgment σ Δ Η Γ c.body c.goal
 
