@@ -138,7 +138,11 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Η: Env.UsedNames}
   | TE_LookUp {Γ: Env.TyEnv} {x : String} {args: List (Ast.Expr × Ast.Expr)} {c: Ast.Circuit} {φ: Ast.Predicate} {φ': Ast.Predicate}
     (hc: c = Env.lookupCircuit Δ x)
     (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ)
-    (hn: φ' = (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))):
+    (hn: φ' =
+      args.foldl
+        (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst y.snd)))
+        (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))
+                             c.ident_i (Env.freshName Η c.ident_i))):
     TypeJudgment Γ (Ast.Expr.lookup x args) (Ast.Ty.refin Ast.Ty.unit φ')
 
 /-
