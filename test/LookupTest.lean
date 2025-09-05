@@ -42,18 +42,15 @@ def σ : Env.ValEnv := []
 def Δ : Env.CircuitEnv := [("assert", assertCircuit), ("lookup", lookupCircuit)]
 
 theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
-  unfold Ty.circuitCorrect
+  unfold Ty.circuitCorrect lookupCircuit
   intro x i hs hi hrow ht
   let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
-  unfold lookupCircuit
   simp_all
   intro h
-  apply Ty.TypeJudgment.TE_LetIn
-  rfl
-  apply Ty.TypeJudgment.TE_LookUp
-  repeat rfl
+  apply Ty.TypeJudgment.TE_LetIn; rfl
+  apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   let τ' := (Ast.Ty.unit.refin
       (Ty.lookup_pred
         [(((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 0),
@@ -83,14 +80,21 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
       intro v h₁ h₂
       unfold PropSemantics.tyenvToProp at h₁
       have h₃ := h₁ "u"
-      unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' Env.lookupCircuit Δ Ty.lookup_pred Env.freshName at h₃
+      unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' at h₃
+      simp at h₃
+      unfold Ty.lookup_pred at h₃
+      have hat : (Env.lookupCircuit Δ "assert").ident_t = "trace" := by {
+        unfold Env.lookupCircuit Δ; simp }
+      have hai : (Env.lookupCircuit Δ "assert").ident_i = "i" := by {
+        unfold Env.lookupCircuit Δ; simp }
+      rw[hat, hai] at h₃
+      unfold Env.freshName at h₃
       simp at h₃
       repeat unfold Ast.renameVarinPred at h₃
       repeat unfold Ast.renameVar at h₃; simp at h₃
       unfold PropSemantics.predToProp at h₃
       obtain ⟨h₄,h₅⟩ := h₃
-      unfold PropSemantics.predToProp PropSemantics.exprToProp at h₄ h₅
-      unfold Δ assertCircuit lookupCircuit PropSemantics.predToProp PropSemantics.exprToProp
+      unfold PropSemantics.predToProp PropSemantics.exprToProp at h₄ h₅ ⊢
       apply evalProp_eq_symm at h₅
       apply evalProp_eq_trans h₅ h₄
         }
