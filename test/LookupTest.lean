@@ -23,7 +23,7 @@ def lookupCircuit : Ast.Circuit := {
   width   := 2,
   goal    := Ast.Ty.refin Ast.Ty.unit
               (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 2))),
-  body    := Ast.Expr.letIn "u" (Ast.Expr.lookup "assert" [((Ast.trace_i_j "trace" "i" 0), (Ast.trace_i_j "trace" "i" 1))]) (Ast.Expr.var "u")
+  body    := Ast.Expr.lookup "u" "assert" [((Ast.trace_i_j "trace" "i" 0), (Ast.trace_i_j "trace" "i" 1))] (Ast.Expr.var "u")
 }
 
 def σ : Env.ValEnv := []
@@ -37,7 +37,6 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
   let Γ := envs.2
   simp_all
   intro h
-  apply Ty.TypeJudgment.TE_LetIn; rfl
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   let τ' := (Ast.Ty.unit.refin
       (Ty.lookup_pred
