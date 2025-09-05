@@ -67,7 +67,8 @@ mutual
     | lam         : (param: String) → (τ: Ty) → (body: Expr) → Expr      -- λx : τ. e
     | app         : (f: Expr) → (arg: Expr) → Expr                       -- e₁ e₂
     | letIn       : (name: String) → (val: Expr) → (body: Expr) → Expr   -- let x = e₁ in e₂
-    | lookup      : (name: String) → (args: List (Expr × Expr)) → Expr
+    | lookup      : (vname cname: String) →
+                      (args: List (Expr × Expr)) → (body: Expr) → Expr   -- let x = lookup(c, (f₁:t₁, ⋯ fκ:tκ)) in e
     deriving Lean.ToExpr
 
   inductive Predicate where
@@ -124,8 +125,8 @@ def renameVar (e : Expr) (oldName newName : String) (cnt: ℕ): Expr :=
           Expr.letIn n (renameVar v oldName newName (cnt - 1)) b
         else
           Expr.letIn n (renameVar v oldName newName (cnt - 1)) (renameVar b oldName newName (cnt - 1))
-    | Expr.lookup n args =>
-        Expr.lookup n (args.map (fun (a, b) => (renameVar a oldName newName (cnt - 1), renameVar b oldName newName (cnt - 1))))
+    | Expr.lookup n c args e =>
+        Expr.lookup n c (args.map (fun (a, b) => (renameVar a oldName newName (cnt - 1), renameVar b oldName newName (cnt - 1)))) (renameVar e oldName newName (cnt - 1))
   else e
 
 def renameVarinPred (p: Predicate) (oldName newName : String) : Predicate :=
@@ -203,7 +204,7 @@ mutual
     | Expr.lam param τ body  => s!"λ{param} : {tyToString τ}. {exprToString body}"
     | Expr.app f arg         => s!"{exprToString f} {exprToString arg}"
     | Expr.letIn n v b       => s!"let {n} = {exprToString v} in {exprToString b}"
-    | Expr.lookup name args  => s!"#{name}" ++ String.intercalate ", " (args.map fun xy => (exprToString xy.fst) ++ ": " ++ exprToString xy.snd)
+    | Expr.lookup n c args e  => s!"let {n} = #{c}" ++ String.intercalate ", " (args.map fun xy => (exprToString xy.fst) ++ ": " ++ exprToString xy.snd) ++ s!" in {exprToString e}"
 
 
   partial def predicateToString : Predicate → String

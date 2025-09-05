@@ -61,91 +61,96 @@ def lookup_pred (args: List (Ast.Expr × Ast.Expr)) (c: Ast.Circuit) (φ: Ast.Pr
   (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))
                         c.ident_i (Env.freshName Η c.ident_i))
 
+def update_UsedNames (c: Ast.Circuit) (Η: Env.UsedNames) : Env.UsedNames :=
+  [Env.freshName Η c.ident_i, Env.freshName Η c.ident_t] ++ Η
+
 /--
   Typing judgment `Γ ⊢ e : τ`: expression `e` has type `τ`
   under type environment `Γ`, valuation `σ`, circuits `Δ`, and fuel.
 -/
-inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Η: Env.UsedNames}:
-  Env.TyEnv → Ast.Expr → Ast.Ty → Prop where
+inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
+  Env.TyEnv → Env.UsedNames → Ast.Expr → Ast.Ty → Prop where
   -- TE-VAR
-  | TE_Var {Γ: Env.TyEnv} {x : String} {T: Ast.Ty}:
+  | TE_Var {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty}:
     ∀ φ: Ast.Predicate, Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
-    TypeJudgment Γ (Ast.Expr.var x) (Ast.Ty.refin T (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.var x))))
+    TypeJudgment Γ Η (Ast.Expr.var x) (Ast.Ty.refin T (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.var x))))
 
-  | TE_VarEnv {Γ: Env.TyEnv} {x : String} {T: Ast.Ty}:
+  | TE_VarEnv {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty}:
     ∀ φ: Ast.Predicate, Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
-    TypeJudgment Γ (Ast.Expr.var x) (Ast.Ty.refin T φ)
+    TypeJudgment Γ Η (Ast.Expr.var x) (Ast.Ty.refin T φ)
 
   -- TE-VAR-FUNC
-  | TE_VarFunc {Γ: Env.TyEnv} {f x : String} {τ₁ τ₂: Ast.Ty}:
+  | TE_VarFunc {Γ: Env.TyEnv} {Η: Env.UsedNames} {f x : String} {τ₁ τ₂: Ast.Ty}:
     Env.lookupTy Γ f = (Ast.Ty.func x τ₁ τ₂) →
-    TypeJudgment Γ (Ast.Expr.var f) (Ast.Ty.func x τ₁ τ₂)
+    TypeJudgment Γ Η (Ast.Expr.var f) (Ast.Ty.func x τ₁ τ₂)
 
   -- TE-ARRY-INDEX
-  | TE_ArrayIndex {Γ: Env.TyEnv} {e idx: Ast.Expr} {τ: Ast.Ty} {n: Int} {i: ℕ} {φ: Ast.Predicate}:
-    TypeJudgment Γ e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
+  | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n: Int} {i: ℕ} {φ: Ast.Predicate}:
+    TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
     Eval.EvalProp σ Δ idx (Ast.Value.vZ i) →
     i < n →
-    TypeJudgment Γ (Ast.Expr.arrIdx e idx) τ
+    TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
-  | TE_Branch {Γ: Env.TyEnv} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty}:
-    TypeJudgment Γ e₁ τ →
-    TypeJudgment Γ e₂ τ →
-    TypeJudgment Γ (Ast.Expr.branch c e₁ e₂) τ
+  | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty}:
+    TypeJudgment Γ Η e₁ τ →
+    TypeJudgment Γ Η e₂ τ →
+    TypeJudgment Γ Η (Ast.Expr.branch c e₁ e₂) τ
 
   -- TE-CONSTF
-  | TE_ConstF {Γ: Env.TyEnv} {f: F} :
-    TypeJudgment Γ (Ast.Expr.constF f) (Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constF f))))
+  | TE_ConstF {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: F} :
+    TypeJudgment Γ Η (Ast.Expr.constF f) (Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constF f))))
 
   -- TE-CONSTZ
-  | TE_ConstZ {Γ: Env.TyEnv} {f: ℕ} :
-    TypeJudgment Γ (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constZ f))))
+  | TE_ConstZ {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: ℕ} :
+    TypeJudgment Γ Η (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constZ f))))
 
   -- TE-ASSERT
-  | TE_Assert {Γ: Env.TyEnv} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate}:
-    TypeJudgment Γ e₁ (Ast.Ty.refin (Ast.Ty.field) φ₁) →
-    TypeJudgment Γ e₂ (Ast.Ty.refin (Ast.Ty.field) φ₂) →
-    TypeJudgment Γ (Ast.Expr.assertE e₁ e₂) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq e₁ e₂)))
+  | TE_Assert {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate}:
+    TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.field) φ₁) →
+    TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.field) φ₂) →
+    TypeJudgment Γ Η (Ast.Expr.assertE e₁ e₂) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq e₁ e₂)))
 
   -- TE-BINOPFIELD
-  | TE_BinOpField {Γ: Env.TyEnv} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.FieldOp}:
-    TypeJudgment Γ e₁ (Ast.Ty.refin (Ast.Ty.field) φ₁) →
-    TypeJudgment Γ e₂ (Ast.Ty.refin (Ast.Ty.field) φ₂) →
-  TypeJudgment Γ (Ast.Expr.fieldExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.fieldExpr e₁ op e₂)))))
+  | TE_BinOpField {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.FieldOp}:
+    TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.field) φ₁) →
+    TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.field) φ₂) →
+  TypeJudgment Γ Η (Ast.Expr.fieldExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.fieldExpr e₁ op e₂)))))
 
   -- TE-ABS (function abstraction)
-  | TE_Abs {Γ: Env.TyEnv} {x: String} {τ₁ τ₂: Ast.Ty} {e: Ast.Expr}:
+  | TE_Abs {Γ: Env.TyEnv} {Η: Env.UsedNames} {x: String} {τ₁ τ₂: Ast.Ty} {e: Ast.Expr}:
     Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁ →
-    TypeJudgment (Env.updateTy Γ x τ₁) e (τ₂) →
-    TypeJudgment Γ (Ast.Expr.lam x τ₁ e) ((Ast.Ty.func x τ₁ τ₂))
+    TypeJudgment (Env.updateTy Γ x τ₁) Η e (τ₂) →
+    TypeJudgment Γ Η (Ast.Expr.lam x τ₁ e) ((Ast.Ty.func x τ₁ τ₂))
 
   -- TE-APP
-  | TE_App {Γ: Env.TyEnv} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂: Ast.Ty} {x₂_v: Ast.Value}:
-    TypeJudgment Γ x₁ (Ast.Ty.func s τ₁ τ₂) →
+  | TE_App {Γ: Env.TyEnv} {Η: Env.UsedNames} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂: Ast.Ty} {x₂_v: Ast.Value}:
+    TypeJudgment Γ Η x₁ (Ast.Ty.func s τ₁ τ₂) →
     Eval.EvalProp σ Δ x₂ x₂_v →
-    TypeJudgment Γ x₂ τ₁ →
-    TypeJudgment Γ (Ast.Expr.app x₁ x₂) τ₂
+    TypeJudgment Γ Η x₂ τ₁ →
+    TypeJudgment Γ Η (Ast.Expr.app x₁ x₂) τ₂
 
   -- TE_SUB
-  | TE_SUB {Γ: Env.TyEnv} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
+  | TE_SUB {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
     (h₀ : @SubtypeJudgment σ Δ Γ τ₁ τ₂)
-    (ht : @TypeJudgment σ Δ Η Γ e τ₁) :
-    TypeJudgment Γ e τ₂
+    (ht : @TypeJudgment σ Δ Γ Η e τ₁) :
+    TypeJudgment Γ Η e τ₂
 
   -- TE-LETIN
-  | TE_LetIn {Γ: Env.TyEnv} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ : Ast.Ty}
+  | TE_LetIn {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ : Ast.Ty}
     (h₀: Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁)
-    (h₁: @TypeJudgment σ Δ Η Γ e₁ τ₁)
-    (h₂: @TypeJudgment σ Δ Η (Env.updateTy Γ x τ₁) e₂ τ₂):
-    TypeJudgment Γ (Ast.Expr.letIn x e₁ e₂) τ₂
+    (h₁: @TypeJudgment σ Δ Γ Η e₁ τ₁)
+    (h₂: @TypeJudgment σ Δ (Env.updateTy Γ x τ₁) Η e₂ τ₂):
+    TypeJudgment Γ Η (Ast.Expr.letIn x e₁ e₂) τ₂
 
   -- TE-LOOKUP
-  | TE_LookUp {Γ: Env.TyEnv} {x : String} {args: List (Ast.Expr × Ast.Expr)} {c: Ast.Circuit} {φ: Ast.Predicate} {φ': Ast.Predicate}
-    (hc: c = Env.lookupCircuit Δ x)
+  | TE_LookUp {Γ: Env.TyEnv} {Η: Env.UsedNames} {vname cname : String} {args: List (Ast.Expr × Ast.Expr)}
+              {c: Ast.Circuit} {φ φ': Ast.Predicate} {e: Ast.Expr} {τ: Ast.Ty}
+    (hc: c = Env.lookupCircuit Δ cname)
     (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ)
-    (hn: φ' = lookup_pred args c φ Η):
-    TypeJudgment Γ (Ast.Expr.lookup x args) (Ast.Ty.refin Ast.Ty.unit φ')
+    (hn: φ' = lookup_pred args c φ Η)
+    (h₂: @TypeJudgment σ Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
+    TypeJudgment Γ Η (Ast.Expr.lookup vname cname args e) τ
 
 /-
 /--
@@ -186,10 +191,10 @@ def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) (minimum_height: ℕ)
     i < trace.length →
     (∃ row: List Ast.Value, (trace.get? i = some (Ast.Value.vArr row))) →
     let (σ, Γ) := makeEnvs c (Ast.Value.vArr trace) (Ast.Value.vZ i) trace.length
-    let Η := [c.ident_t, c.ident_i]
+    let Η := [c.ident_i, c.ident_t]
     checkInputsTrace c (Ast.Value.vArr trace) trace.length →
     PropSemantics.tyenvToProp σ Δ Γ →
-    @TypeJudgment σ Δ Η Γ c.body c.goal
+    @TypeJudgment σ Δ Γ Η c.body c.goal
 
 lemma lookupTy_mem (Γ: Env.TyEnv) (x: String) (τ :Ast.Ty) (φ: Ast.Predicate)
   (h : Env.lookupTy Γ x = Ast.Ty.refin τ φ) :
