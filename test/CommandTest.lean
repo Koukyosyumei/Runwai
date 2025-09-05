@@ -15,7 +15,7 @@ import Runwai.Tactic
 }
 
 #runwai_prove Assert1 := by {
-  rename_i Δ h_delta x i height hs hi ht hty hσ σ Γ
+  rename_i Δ h_delta x i hs hi ht hty hσ σ Γ
   apply Ty.TypeJudgment.TE_LetIn
   · apply lookup_update_self
   · apply Ty.TypeJudgment.TE_Assert

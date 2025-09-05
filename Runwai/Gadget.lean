@@ -42,6 +42,29 @@ lemma zip_get_ne {α β: Type} {es : List α} {xs xs' : List β} {i : Nat}
   have := congrArg Prod.snd eq
   simpa using this
 
+theorem evalRelOp_eq_symm {v₁ v₂: Ast.Value} (h: Eval.evalRelOp Ast.RelOp.eq v₁ v₂ = some true):
+  Eval.evalRelOp Ast.RelOp.eq v₂ v₁ = some true := by {
+    unfold Eval.evalRelOp at h ⊢
+    simp at h ⊢
+    cases v₁
+    cases v₂
+    repeat simp_all
+    cases v₂
+    repeat simp_all
+  }
+
+theorem evalProp_eq_symm
+  {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {e₁ e₂: Expr} (h: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true)):
+  Eval.EvalProp σ Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₁) (Ast.Value.vBool true) := by {
+    cases h
+    rename_i v₁ v₂ h₁ h₂ h₃
+    apply evalRelOp_eq_symm at h₃
+    apply Eval.EvalProp.Rel
+    exact h₂
+    exact h₁
+    exact h₃
+  }
+
 theorem evalprop_deterministic
   {σ : Env.ValEnv} {Δ : Env.CircuitEnv} {e : Expr} :
   ∀ {v₁ v₂}, Eval.EvalProp σ Δ e v₁ → Eval.EvalProp σ Δ e v₂ → v₁ = v₂ := by
@@ -153,6 +176,61 @@ theorem evalprop_deterministic
       have ha := iha_ih iha'
       have hi := ihi_ih ihi'
       simp_all
+  }
+  | LookUp => {
+    cases h₂
+    rfl
+  }
+
+theorem evalProp_eq_trans
+  {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {e₁ e₂ e₃: Expr}
+  (h₁: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true))
+  (h₂: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₃) (Ast.Value.vBool true)):
+  Eval.EvalProp σ Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₃) (Ast.Value.vBool true) := by {
+    cases h₁
+    cases h₂
+    rename_i v₁ v₂ ih₁ ih₂ ih₃ v₃ v₄ ih₄ ih₅ ih₆
+    have h := evalprop_deterministic ih₁ ih₄
+    rw[← h] at ih₆
+    unfold Eval.evalRelOp at ih₃ ih₆
+    cases v₁ with
+    | vF => {
+      cases v₂ with
+      | vF => {
+        simp at ih₆
+        cases v₄ with
+        | vF => {
+          simp at ih₃ ih₆
+          apply Eval.EvalProp.Rel
+          exact ih₂
+          exact ih₅
+          unfold Eval.evalRelOp
+          simp
+          rw[← ih₃, ← ih₆]
+        }
+        | _ => simp at ih₆
+      }
+      | _ => simp at ih₃
+    }
+    | vZ => {
+      cases v₂ with
+      | vZ => {
+        simp at ih₆
+        cases v₄ with
+        | vZ => {
+          simp at ih₃ ih₆
+          apply Eval.EvalProp.Rel
+          exact ih₂
+          exact ih₅
+          unfold Eval.evalRelOp
+          simp
+          rw[← ih₃, ← ih₆]
+        }
+        | _ => simp at ih₆
+      }
+      | _ => simp at ih₃
+    }
+    | _ => simp_all
   }
 
 theorem ne_symm' {α} {a b : α} (h : a ≠ b) : b ≠ a :=
@@ -308,10 +386,10 @@ theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ�
       }
     }
 
-theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
-  (h₂: @Ty.TypeJudgment σ Δ Γ₁ e τ) :
+theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env.UsedNames) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
+  (h₂: @Ty.TypeJudgment σ Δ Η Γ₁ e τ) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
-        @Ty.TypeJudgment σ Δ Γ₂ e τ := by {
+        @Ty.TypeJudgment σ Δ Η Γ₂ e τ := by {
     induction h₂ with
     | TE_Var _ ha => intro Γ₂ h; apply Ty.TypeJudgment.TE_Var; rwa [← h]
     | TE_VarEnv _ h₁ => intro Γ₂ h; apply Ty.TypeJudgment.TE_VarEnv; rwa [← h]
@@ -354,6 +432,14 @@ theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: 
       apply h'
       have hu := @update_preserve_pointwise Γ' Γ₂ x₁ τ₁ h
       exact hu
+    | TE_LookUp h₁ h₂ => {
+      rename_i Γ' x args c h₃
+      intro Γ₂ x₁
+      apply Ty.TypeJudgment.TE_LookUp
+      exact h₁
+      exact h₂
+      exact h₃
+    }
   }
 
 lemma mem_update_preserve (Γ: Env.TyEnv) (x x': String) (τ τ': Ty) (h: (x, τ) ∈ Γ):
@@ -409,15 +495,15 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.
   . simp_all; rw[← ih₄]; simp
 }
 
-lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
+lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
   (x y inv u₁ u₂: String)
   (htx: Env.lookupTy Γ x = (Ty.refin Ast.Ty.field φ₁))
   (hty: Env.lookupTy Γ y = (Ty.refin Ast.Ty.field φ₂))
-  (htinv: @Ty.TypeJudgment σ Δ Γ (.var inv) (Ty.refin Ast.Ty.field φ₃))
+  (htinv: @Ty.TypeJudgment σ Δ Η Γ (.var inv) (Ty.refin Ast.Ty.field φ₃))
   (hne₁: ¬ x = u₁)
   (hne₂: ¬ y = u₁)
   (hne₃: ¬ u₁ = u₂):
-  @Ty.TypeJudgment σ Δ Γ
+  @Ty.TypeJudgment σ Δ Η Γ
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
@@ -445,7 +531,6 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
         apply Ty.SubtypeJudgment.TSub_Refine
         apply Ty.SubtypeJudgment.TSub_Refl
         unfold PropSemantics.tyenvToProp PropSemantics.predToProp PropSemantics.exprToProp PropSemantics.varToProp
-        simp
         intro v h₁ h₂
         set φ₁ := (Ast.Predicate.ind
           (exprEq (Expr.var y)
@@ -460,8 +545,6 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyE
         }
         have h₅ := lookup_mem_of_eq h₄
         rw[h₄] at h₃
-        simp at h₃
-        unfold PropSemantics.predToProp PropSemantics.exprToProp φ₁ at h₃
         simp at h₃
         apply isZero_eval_eq_branch_semantics h₃ h₂
         repeat apply Eval.EvalProp.Var; rfl

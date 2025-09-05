@@ -59,7 +59,7 @@ inductive SubtypeJudgment :
   Typing judgment `Γ ⊢ e : τ`: expression `e` has type `τ`
   under type environment `Γ`, valuation `σ`, circuits `Δ`, and fuel.
 -/
-inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
+inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Η: Env.UsedNames}:
   Env.TyEnv → Ast.Expr → Ast.Ty → Prop where
   -- TE-VAR
   | TE_Var {Γ: Env.TyEnv} {x : String} {T: Ast.Ty}:
@@ -79,7 +79,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
   | TE_ArrayIndex {Γ: Env.TyEnv} {e idx: Ast.Expr} {τ: Ast.Ty} {n: Int} {i: ℕ} {φ: Ast.Predicate}:
     TypeJudgment Γ e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
     Eval.EvalProp σ Δ idx (Ast.Value.vZ i) →
-    i ≤ n →
+    i < n →
     TypeJudgment Γ (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
@@ -124,15 +124,26 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
   -- TE_SUB
   | TE_SUB {Γ: Env.TyEnv} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
     (h₀ : @SubtypeJudgment σ Δ Γ τ₁ τ₂)
-    (ht : @TypeJudgment σ Δ Γ e τ₁) :
+    (ht : @TypeJudgment σ Δ Η Γ e τ₁) :
     TypeJudgment Γ e τ₂
 
   -- TE-LETIN
   | TE_LetIn {Γ: Env.TyEnv} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ : Ast.Ty}
     (h₀: Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁)
-    (h₁: @TypeJudgment σ Δ Γ e₁ τ₁)
-    (h₂: @TypeJudgment σ Δ (Env.updateTy Γ x τ₁) e₂ τ₂):
+    (h₁: @TypeJudgment σ Δ Η Γ e₁ τ₁)
+    (h₂: @TypeJudgment σ Δ Η (Env.updateTy Γ x τ₁) e₂ τ₂):
     TypeJudgment Γ (Ast.Expr.letIn x e₁ e₂) τ₂
+
+  -- TE-LOOKUP
+  | TE_LookUp {Γ: Env.TyEnv} {x : String} {args: List (Ast.Expr × Ast.Expr)} {c: Ast.Circuit} {φ: Ast.Predicate} {φ': Ast.Predicate}
+    (hc: c = Env.lookupCircuit Δ x)
+    (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ)
+    (hn: φ' =
+      args.foldl
+        (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst (Ast.renameVar (Ast.renameVar y.snd c.ident_t (Env.freshName Η c.ident_t) 1000) c.ident_i (Env.freshName Η c.ident_i) 1000))))
+        (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))
+                             c.ident_i (Env.freshName Η c.ident_i))):
+    TypeJudgment Γ (Ast.Expr.lookup x args) (Ast.Ty.refin Ast.Ty.unit φ')
 
 /-
 /--
@@ -150,7 +161,7 @@ def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℕ):
   let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] c.ident_t
     (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.ind (Ast.Expr.constBool true))))
-    "i" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ height))))
+    c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ height))))
   (σ, Γ)
 
 def checkInputsTrace (c: Ast.Circuit) (trace : Ast.Value) (height: ℕ): Prop :=
@@ -168,13 +179,15 @@ def checkInputsTrace (c: Ast.Circuit) (trace : Ast.Value) (height: ℕ): Prop :=
   yields a value satisfying the output refinement.
 -/
 def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) (minimum_height: ℕ) : Prop :=
-  ∀ (trace: Ast.Value) (i height: ℕ),
-    minimum_height ≤ height →
-    i ≤ height →
-    let (σ, Γ) := makeEnvs c trace (Ast.Value.vZ i) height
-    checkInputsTrace c trace height →
+  ∀ (trace: List Ast.Value) (i: ℕ),
+    minimum_height ≤ trace.length →
+    i < trace.length →
+    (∃ row: List Ast.Value, (trace.get? i = some (Ast.Value.vArr row))) →
+    let (σ, Γ) := makeEnvs c (Ast.Value.vArr trace) (Ast.Value.vZ i) trace.length
+    let Η := [c.ident_t, c.ident_i]
+    checkInputsTrace c (Ast.Value.vArr trace) trace.length →
     PropSemantics.tyenvToProp σ Δ Γ →
-    @TypeJudgment σ Δ Γ c.body c.goal
+    @TypeJudgment σ Δ Η Γ c.body c.goal
 
 lemma lookupTy_mem (Γ: Env.TyEnv) (x: String) (τ :Ast.Ty) (φ: Ast.Predicate)
   (h : Env.lookupTy Γ x = Ast.Ty.refin τ φ) :
