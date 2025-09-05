@@ -179,7 +179,8 @@ theorem evalprop_deterministic
   }
   | LookUp => {
     cases h₂
-    rfl
+    rename_i ih₁ ih₂
+    apply ih₁ ih₂
   }
 
 theorem evalProp_eq_trans
@@ -387,9 +388,9 @@ theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ�
     }
 
 theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env.UsedNames) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
-  (h₂: @Ty.TypeJudgment σ Δ Η Γ₁ e τ) :
+  (h₂: @Ty.TypeJudgment σ Δ Γ₁ Η e τ) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
-        @Ty.TypeJudgment σ Δ Η Γ₂ e τ := by {
+        @Ty.TypeJudgment σ Δ Γ₂ Η e τ := by {
     induction h₂ with
     | TE_Var _ ha => intro Γ₂ h; apply Ty.TypeJudgment.TE_Var; rwa [← h]
     | TE_VarEnv _ h₁ => intro Γ₂ h; apply Ty.TypeJudgment.TE_VarEnv; rwa [← h]
@@ -420,7 +421,7 @@ theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env
       · exact subtyping_pointwise_preserve σ Δ _ _ _ h₀ Γ₂ h
       · apply ih; assumption
     | TE_LetIn h₁ h₂ ih₁ ih₂ =>
-      rename_i Γ' x₁ e₁ e₂ τ₁ τ₂ h'
+      rename_i Γ' Η' x₁ e₁ e₂ τ₁ τ₂ h'
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_LetIn
       have hu := @update_preserve_pointwise Γ' Γ₂ x₁ τ₁ h
@@ -433,12 +434,16 @@ theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env
       have hu := @update_preserve_pointwise Γ' Γ₂ x₁ τ₁ h
       exact hu
     | TE_LookUp h₁ h₂ => {
-      rename_i Γ' x args c h₃
-      intro Γ₂ x₁
+      rename_i Γ' Η' vname cname args c φ φ' τ' h₅ h₆ h₇ h₈
+      intro Γ₂ h₉
       apply Ty.TypeJudgment.TE_LookUp
       exact h₁
       exact h₂
-      exact h₃
+      rfl
+      apply h₈
+      rw[h₆]
+      have hu := @update_preserve_pointwise Γ' Γ₂ vname (Ty.unit.refin (Ty.lookup_pred args c φ Η')) h₉
+      exact hu
     }
   }
 
@@ -499,11 +504,11 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env.Use
   (x y inv u₁ u₂: String)
   (htx: Env.lookupTy Γ x = (Ty.refin Ast.Ty.field φ₁))
   (hty: Env.lookupTy Γ y = (Ty.refin Ast.Ty.field φ₂))
-  (htinv: @Ty.TypeJudgment σ Δ Η Γ (.var inv) (Ty.refin Ast.Ty.field φ₃))
+  (htinv: @Ty.TypeJudgment σ Δ Γ Η (.var inv) (Ty.refin Ast.Ty.field φ₃))
   (hne₁: ¬ x = u₁)
   (hne₂: ¬ y = u₁)
   (hne₃: ¬ u₁ = u₂):
-  @Ty.TypeJudgment σ Δ Η Γ
+  @Ty.TypeJudgment σ Δ Γ Η
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
