@@ -11,14 +11,8 @@ def assertCircuit : Ast.Circuit := {
   ident_t := "trace",
   ident_i := "i",
   width   := 2,
-  goal    := Ast.Ty.refin Ast.Ty.unit
-    (Ast.Predicate.ind
-      (Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
-                       Ast.RelOp.eq (Ast.Expr.constF 2))),
-  body    := (Ast.Expr.letIn "u" (Ast.Expr.assertE
-              (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
-              (Ast.Expr.constF 2))
-            (Ast.Expr.var "u"))
+  goal    := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2))),
+  body    := (Ast.Expr.letIn "u" (Ast.Expr.assertE (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2)) (Ast.Expr.var "u"))
 }
 
 @[simp]
@@ -28,14 +22,8 @@ def lookupCircuit : Ast.Circuit := {
   ident_i := "i",
   width   := 2,
   goal    := Ast.Ty.refin Ast.Ty.unit
-              (Ast.Predicate.ind (Ast.Expr.binRel
-                (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
-                  Ast.RelOp.eq
-                (Ast.Expr.constF 2))),
-  body    := Ast.Expr.letIn "u" (Ast.Expr.lookup "assert"
-                [((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0)),
-                  (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1)))])
-                (Ast.Expr.var "u")
+              (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 2))),
+  body    := Ast.Expr.letIn "u" (Ast.Expr.lookup "assert" [((Ast.trace_i_j "trace" "i" 0), (Ast.trace_i_j "trace" "i" 1))]) (Ast.Expr.var "u")
 }
 
 def σ : Env.ValEnv := []
@@ -53,28 +41,19 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   let τ' := (Ast.Ty.unit.refin
       (Ty.lookup_pred
-        [(((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 0),
-            ((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 1))]
+        [(Ast.trace_i_j "trace" "i" 0, Ast.trace_i_j "trace" "i" 1)]
         (Env.lookupCircuit Δ "assert")
-        (Ast.Predicate.ind
-          ((((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 1)).binRel Ast.RelOp.eq
-            (Ast.Expr.constF 2)))
+        (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2)))
         ["trace", "i"]))
   let Γ' := (Env.updateTy
     (Env.updateTy
       (Env.updateTy [] "trace"
-        (((((Ast.Ty.field.refin (Ast.Predicate.ind (Ast.Expr.constBool true))).arr 2).refin
-                  (Ast.Predicate.ind (Ast.Expr.constBool true))).arr
-              ↑x.length).refin
-          (Ast.Predicate.ind (Ast.Expr.constBool true))))
+        (((((Ast.Ty.field.refin Ast.constTruePred).arr 2).refin Ast.constTruePred).arr ↑x.length).refin Ast.constTruePred))
       "i"
       (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ x.length)))))
     "u" τ')
   have hs : Ty.SubtypeJudgment σ Δ Γ' τ'
-         (Ast.Ty.unit.refin
-    (Ast.Predicate.ind
-      ((((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 0)).binRel Ast.RelOp.eq
-        (Ast.Expr.constF 2)))) := by {
+         (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 2)))) := by {
       apply Ty.SubtypeJudgment.TSub_Refine
       apply Ty.SubtypeJudgment.TSub_Refl
       intro v h₁ h₂
