@@ -3,7 +3,7 @@ import Runwai.Env
 import Runwai.Eval
 import Runwai.Gadget
 import Runwai.Typing
-import Runwai.PP
+--import Runwai.PP
 
 @[simp]
 def assertCircuit : Ast.Circuit := {
@@ -57,7 +57,61 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
   rfl
   rfl
   rfl
-  apply Ty.TypeJudgment.TE_SUB
+  let Γ' := (Env.updateTy
+    (Env.updateTy
+      (Env.updateTy [] "trace"
+        (((((Ast.Ty.field.refin (Ast.Predicate.ind (Ast.Expr.constBool true))).arr 2).refin
+                  (Ast.Predicate.ind (Ast.Expr.constBool true))).arr
+              ↑x.length).refin
+          (Ast.Predicate.ind (Ast.Expr.constBool true))))
+      "i"
+      (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ x.length)))))
+    "u"
+    (Ast.Ty.unit.refin
+      (List.foldl
+        (fun acc y ↦
+          acc.and
+            (Ast.Predicate.ind
+              (Ast.exprEq y.1
+                (Ast.renameVar
+                  (Ast.renameVar y.2 (Env.lookupCircuit Δ "assert").ident_t
+                    (Env.freshName ["trace", "i"] (Env.lookupCircuit Δ "assert").ident_t) 1000)
+                  (Env.lookupCircuit Δ "assert").ident_i
+                  (Env.freshName ["trace", "i"] (Env.lookupCircuit Δ "assert").ident_i) 1000))))
+        (Ast.renameVarinPred
+          (Ast.renameVarinPred
+            (Ast.Predicate.ind
+              ((((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 1)).binRel Ast.RelOp.eq
+                (Ast.Expr.constF 2)))
+            (Env.lookupCircuit Δ "assert").ident_t
+            (Env.freshName ["trace", "i"] (Env.lookupCircuit Δ "assert").ident_t))
+          (Env.lookupCircuit Δ "assert").ident_i (Env.freshName ["trace", "i"] (Env.lookupCircuit Δ "assert").ident_i))
+        [(((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 0),
+            ((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 1))])))
+  have hs : Ty.SubtypeJudgment σ Δ Γ' (Ast.Ty.unit.refin
+    (List.foldl
+      (fun acc y ↦
+        acc.and
+          (Ast.Predicate.ind
+            (Ast.exprEq y.1
+              (Ast.renameVar
+                (Ast.renameVar y.2 (Env.lookupCircuit Δ "assert").ident_t
+                  (Env.freshName ["trace", "i"] (Env.lookupCircuit Δ "assert").ident_t) 1000)
+                (Env.lookupCircuit Δ "assert").ident_i
+                (Env.freshName ["trace", "i"] (Env.lookupCircuit Δ "assert").ident_i) 1000))))
+      (Ast.renameVarinPred
+        (Ast.renameVarinPred
+          (Ast.Predicate.ind
+            ((((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 1)).binRel Ast.RelOp.eq
+              (Ast.Expr.constF 2)))
+          (Env.lookupCircuit Δ "assert").ident_t (Env.freshName ["trace", "i"] (Env.lookupCircuit Δ "assert").ident_t))
+        (Env.lookupCircuit Δ "assert").ident_i (Env.freshName ["trace", "i"] (Env.lookupCircuit Δ "assert").ident_i))
+      [(((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 0),
+          ((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 1))]))
+         (Ast.Ty.unit.refin
+    (Ast.Predicate.ind
+      ((((Ast.Expr.var "trace").arrIdx (Ast.Expr.var "i")).arrIdx (Ast.Expr.constZ 0)).binRel Ast.RelOp.eq
+        (Ast.Expr.constF 2)))) := by {
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro v
@@ -93,6 +147,11 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
   unfold lookupCircuit
   unfold PropSemantics.predToProp
   unfold PropSemantics.exprToProp
-
-  simp at h₃
-  sorry
+  apply evalProp_eq_symm at h₅
+  apply evalProp_eq_trans h₅ h₄
+        }
+  apply Ty.TypeJudgment.TE_SUB hs
+  unfold Γ'
+  apply Ty.TypeJudgment.TE_VarEnv
+  unfold Env.lookupTy Env.updateTy
+  simp

@@ -182,6 +182,56 @@ theorem evalprop_deterministic
     rfl
   }
 
+theorem evalProp_eq_trans
+  {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {e₁ e₂ e₃: Expr}
+  (h₁: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true))
+  (h₂: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₃) (Ast.Value.vBool true)):
+  Eval.EvalProp σ Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₃) (Ast.Value.vBool true) := by {
+    cases h₁
+    cases h₂
+    rename_i v₁ v₂ ih₁ ih₂ ih₃ v₃ v₄ ih₄ ih₅ ih₆
+    have h := evalprop_deterministic ih₁ ih₄
+    rw[← h] at ih₆
+    unfold Eval.evalRelOp at ih₃ ih₆
+    cases v₁ with
+    | vF => {
+      cases v₂ with
+      | vF => {
+        simp at ih₆
+        cases v₄ with
+        | vF => {
+          simp at ih₃ ih₆
+          apply Eval.EvalProp.Rel
+          exact ih₂
+          exact ih₅
+          unfold Eval.evalRelOp
+          simp
+          rw[← ih₃, ← ih₆]
+        }
+        | _ => simp at ih₆
+      }
+      | _ => simp at ih₃
+    }
+    | vZ => {
+      cases v₂ with
+      | vZ => {
+        simp at ih₆
+        cases v₄ with
+        | vZ => {
+          simp at ih₃ ih₆
+          apply Eval.EvalProp.Rel
+          exact ih₂
+          exact ih₅
+          unfold Eval.evalRelOp
+          simp
+          rw[← ih₃, ← ih₆]
+        }
+        | _ => simp at ih₆
+      }
+      | _ => simp at ih₃
+    }
+    | _ => simp_all
+  }
 
 theorem ne_symm' {α} {a b : α} (h : a ≠ b) : b ≠ a :=
 by
