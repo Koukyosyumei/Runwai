@@ -53,9 +53,7 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
   apply Ty.TypeJudgment.TE_LetIn
   rfl
   apply Ty.TypeJudgment.TE_LookUp
-  rfl
-  rfl
-  rfl
+  repeat rfl
   let τ' := (Ast.Ty.unit.refin
       (List.foldl
         (fun acc y ↦
@@ -97,21 +95,13 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
       intro v h₁ h₂
       unfold PropSemantics.tyenvToProp at h₁
       have h₃ := h₁ "u"
-      unfold Γ' at h₃
-      unfold Env.lookupTy Env.updateTy at h₃
+      unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' Env.lookupCircuit Δ Env.freshName at h₃
       simp at h₃
-      unfold PropSemantics.varToProp at h₃
-      unfold Env.lookupTy at h₃
-      simp at h₃
-      unfold τ' Env.lookupCircuit Δ Env.freshName at h₃
-      simp at h₃
-      unfold Ast.renameVarinPred at h₃
-      unfold Ast.renameVarinPred at h₃
+      repeat unfold Ast.renameVarinPred at h₃
       repeat unfold Ast.renameVar at h₃; simp at h₃
       unfold PropSemantics.predToProp at h₃
       obtain ⟨h₄,h₅⟩ := h₃
-      unfold PropSemantics.predToProp at h₄ h₅
-      unfold PropSemantics.exprToProp at h₄ h₅
+      unfold PropSemantics.predToProp PropSemantics.exprToProp at h₄ h₅
       unfold Δ assertCircuit lookupCircuit PropSemantics.predToProp PropSemantics.exprToProp
       apply evalProp_eq_symm at h₅
       apply evalProp_eq_trans h₅ h₄
