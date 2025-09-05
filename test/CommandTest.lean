@@ -15,7 +15,7 @@ import Runwai.Tactic
 }
 
 #runwai_register circuit Lookup(trace, i, 2) -> {Unit| trace [i][0] == Fp 2} {
-  let u = # Assert1 (trace [i][0] : trace [i][1]) in u
+  let u = #Assert1(trace [i][0] : trace [i][1]) in u
 }
 
 #runwai_prove Assert1 := by {
