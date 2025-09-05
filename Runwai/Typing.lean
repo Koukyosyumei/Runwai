@@ -55,6 +55,12 @@ inductive SubtypeJudgment :
       SubtypeJudgment σ Δ Γ T₁ T₂ →
       SubtypeJudgment σ Δ Γ (Ast.Ty.arr T₁ n) (Ast.Ty.arr T₂ n)
 
+def lookup_pred (args: List (Ast.Expr × Ast.Expr)) (c: Ast.Circuit) (φ: Ast.Predicate) (Η: Env.UsedNames): Ast.Predicate :=
+  args.foldl
+  (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst (Ast.renameVar (Ast.renameVar y.snd c.ident_t (Env.freshName Η c.ident_t) 1000) c.ident_i (Env.freshName Η c.ident_i) 1000))))
+  (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))
+                        c.ident_i (Env.freshName Η c.ident_i))
+
 /--
   Typing judgment `Γ ⊢ e : τ`: expression `e` has type `τ`
   under type environment `Γ`, valuation `σ`, circuits `Δ`, and fuel.
@@ -138,11 +144,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Η: Env.UsedNames}
   | TE_LookUp {Γ: Env.TyEnv} {x : String} {args: List (Ast.Expr × Ast.Expr)} {c: Ast.Circuit} {φ: Ast.Predicate} {φ': Ast.Predicate}
     (hc: c = Env.lookupCircuit Δ x)
     (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ)
-    (hn: φ' =
-      args.foldl
-        (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst (Ast.renameVar (Ast.renameVar y.snd c.ident_t (Env.freshName Η c.ident_t) 1000) c.ident_i (Env.freshName Η c.ident_i) 1000))))
-        (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))
-                             c.ident_i (Env.freshName Η c.ident_i))):
+    (hn: φ' = lookup_pred args c φ Η):
     TypeJudgment Γ (Ast.Expr.lookup x args) (Ast.Ty.refin Ast.Ty.unit φ')
 
 /-
