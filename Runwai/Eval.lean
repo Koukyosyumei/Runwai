@@ -129,8 +129,9 @@ mutual
         EvalProp σ Δ (Expr.arrIdx a i) v
 
     -- E-LOOKUP
-    | LookUp {σ Δ name args}:
-      EvalProp σ Δ (Expr.lookup name args) (Value.vUnit)
+    | LookUp {σ Δ vname cname args e v}
+      (ih₁: EvalProp σ Δ e v):
+      EvalProp σ Δ (Expr.lookup vname cname args e) v
 end
 
 end Eval
