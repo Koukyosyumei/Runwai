@@ -148,14 +148,10 @@ partial def valueEq : Value → Value → Bool
 instance : BEq Value where
   beq := valueEq
 
-/-- Convenience: `exprEq e₁ e₂` builds `e₁ = e₂` as an `Expr`. -/
-def exprEq (e₁ e₂: Expr): Expr :=
-  Expr.binRel e₁ RelOp.eq e₂
-
-def constTruePred : Predicate :=
-  Predicate.ind (Ast.Expr.constBool true)
-
-def v: Expr := Expr.var ".v"
+/-- Convenience -/
+abbrev exprEq (e₁ e₂: Expr): Expr := Expr.binRel e₁ RelOp.eq e₂
+abbrev constTruePred : Predicate := Predicate.ind (Ast.Expr.constBool true)
+abbrev v: Expr := Expr.var ".v"
 
 structure Circuit where
   name    : String
