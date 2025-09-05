@@ -116,8 +116,7 @@ theorem lookupCircuit_correct_2 : Ty.circuitCorrect Δ lookupCircuit_2 1 := by
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   have ht : (Ty.update_UsedNames (Env.lookupCircuit Δ "assert") ["i", "trace"]) = ["i'", "trace'", "i", "trace"] := by {
-    unfold Ty.update_UsedNames Env.lookupCircuit Δ Env.freshName
-    simp
+    unfold Ty.update_UsedNames Env.lookupCircuit Δ Env.freshName; simp
   }
   let τ' := (Ast.Ty.unit.refin
       (Ty.lookup_pred
@@ -128,18 +127,16 @@ theorem lookupCircuit_correct_2 : Ty.circuitCorrect Δ lookupCircuit_2 1 := by
   let Γ' := (Env.updateTy
     (Env.updateTy
       (Env.updateTy
-        (Env.updateTy [] "trace"
-          (((((Ast.Ty.field.refin (Ast.Predicate.ind (Ast.Expr.constBool true))).arr 2).refin
-                    (Ast.Predicate.ind (Ast.Expr.constBool true))).arr
-                ↑x.length).refin
-            (Ast.Predicate.ind (Ast.Expr.constBool true))))
+        (Env.updateTy []
+        "trace"
+          (((((Ast.Ty.field.refin Ast.constTruePred).arr 2).refin Ast.constTruePred).arr ↑x.length).refin Ast.constTruePred))
         "i"
-        (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ x.length)))))
-      "u₁"
-      (Ast.Ty.unit.refin
-        (Ty.lookup_pred [(Ast.trace_i_j "trace" "i" 0, Ast.trace_i_j "trace" "i" 1)] (Env.lookupCircuit Δ "assert")
-          (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2))) ["i", "trace"])))
-    "u₂" τ')
+          (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ x.length)))))
+        "u₁"
+          (Ast.Ty.unit.refin
+            (Ty.lookup_pred [(Ast.trace_i_j "trace" "i" 0, Ast.trace_i_j "trace" "i" 1)] (Env.lookupCircuit Δ "assert")
+              (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2))) ["i", "trace"])))
+        "u₂" τ')
   have hs : Ty.SubtypeJudgment σ Δ Γ' τ'
          (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 3)))) := by {
       apply Ty.SubtypeJudgment.TSub_Refine
@@ -147,13 +144,9 @@ theorem lookupCircuit_correct_2 : Ty.circuitCorrect Δ lookupCircuit_2 1 := by
       intro v h₁ h₂
       unfold PropSemantics.tyenvToProp at h₁
       have h₃ := h₁ "u₂"
-      unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' at h₃
-      simp at h₃
-      unfold Ty.lookup_pred at h₃
-      have hat : (Env.lookupCircuit Δ "assert_2").ident_t = "trace" := by {
-        unfold Env.lookupCircuit Δ; simp }
-      have hai : (Env.lookupCircuit Δ "assert_2").ident_i = "i" := by {
-        unfold Env.lookupCircuit Δ; simp }
+      unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' Ty.lookup_pred at h₃
+      have hat : (Env.lookupCircuit Δ "assert_2").ident_t = "trace" := by {unfold Env.lookupCircuit Δ; simp }
+      have hai : (Env.lookupCircuit Δ "assert_2").ident_i = "i" := by {unfold Env.lookupCircuit Δ; simp }
       rw[hat, hai] at h₃
       unfold Env.freshName at h₃
       simp at h₃
