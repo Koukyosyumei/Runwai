@@ -140,7 +140,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Η: Env.UsedNames}
     (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ)
     (hn: φ' =
       args.foldl
-        (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst y.snd)))
+        (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst (Ast.renameVar (Ast.renameVar y.snd c.ident_t (Env.freshName Η c.ident_t) 1000) c.ident_i (Env.freshName Η c.ident_i) 1000))))
         (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))
                              c.ident_i (Env.freshName Η c.ident_i))):
     TypeJudgment Γ (Ast.Expr.lookup x args) (Ast.Ty.refin Ast.Ty.unit φ')

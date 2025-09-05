@@ -42,6 +42,29 @@ lemma zip_get_ne {α β: Type} {es : List α} {xs xs' : List β} {i : Nat}
   have := congrArg Prod.snd eq
   simpa using this
 
+theorem evalRelOp_eq_symm {v₁ v₂: Ast.Value} (h: Eval.evalRelOp Ast.RelOp.eq v₁ v₂ = some true):
+  Eval.evalRelOp Ast.RelOp.eq v₂ v₁ = some true := by {
+    unfold Eval.evalRelOp at h ⊢
+    simp at h ⊢
+    cases v₁
+    cases v₂
+    repeat simp_all
+    cases v₂
+    repeat simp_all
+  }
+
+theorem evalProp_eq_symm
+  {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {e₁ e₂: Expr} (h: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true)):
+  Eval.EvalProp σ Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₁) (Ast.Value.vBool true) := by {
+    cases h
+    rename_i v₁ v₂ h₁ h₂ h₃
+    apply evalRelOp_eq_symm at h₃
+    apply Eval.EvalProp.Rel
+    exact h₂
+    exact h₁
+    exact h₃
+  }
+
 theorem evalprop_deterministic
   {σ : Env.ValEnv} {Δ : Env.CircuitEnv} {e : Expr} :
   ∀ {v₁ v₂}, Eval.EvalProp σ Δ e v₁ → Eval.EvalProp σ Δ e v₂ → v₁ = v₂ := by

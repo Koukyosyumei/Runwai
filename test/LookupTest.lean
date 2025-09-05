@@ -28,12 +28,14 @@ def lookupCircuit : Ast.Circuit := {
   ident_i := "i",
   width   := 2,
   goal    := Ast.Ty.refin Ast.Ty.unit
-    (Ast.Predicate.and
-      (Ast.Predicate.ind (Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace'") (Ast.Expr.var "i'")) (Ast.Expr.constZ 1))
-                       Ast.RelOp.eq (Ast.Expr.constF 2)))
-      (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
-                                     (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))))),
-  body    := (Ast.Expr.lookup "assert" [((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0)), (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1)))])
+              (Ast.Predicate.ind (Ast.Expr.binRel
+                (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
+                  Ast.RelOp.eq
+                (Ast.Expr.constF 2))),
+  body    := Ast.Expr.letIn "u" (Ast.Expr.lookup "assert"
+                [((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0)),
+                  (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1)))])
+                (Ast.Expr.var "u")
 }
 
 def σ : Env.ValEnv := []
@@ -48,9 +50,49 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
   unfold lookupCircuit
   simp_all
   intro h
+  apply Ty.TypeJudgment.TE_LetIn
+  unfold Env.lookupTy Env.updateTy
+  simp
   apply Ty.TypeJudgment.TE_LookUp
   rfl
   rfl
-  repeat unfold Ast.renameVarinPred; simp
-  repeat unfold Env.freshName Ast.renameVar Env.lookupCircuit Δ; simp
-  repeat unfold Ast.renameVar; simp
+  rfl
+  apply Ty.TypeJudgment.TE_SUB
+  apply Ty.SubtypeJudgment.TSub_Refine
+  apply Ty.SubtypeJudgment.TSub_Refl
+  intro v
+  intro h₁
+  intro h₂
+  unfold PropSemantics.tyenvToProp at h₁
+  have h₃ := h₁ "u"
+  unfold Env.lookupTy Env.updateTy at h₃
+  simp at h₃
+  unfold PropSemantics.varToProp at h₃
+  unfold Env.lookupTy at h₃
+  simp at h₃
+  unfold Env.lookupCircuit Δ Env.freshName at h₃
+  simp at h₃
+  unfold Ast.renameVarinPred at h₃
+  unfold Ast.renameVarinPred at h₃
+  unfold Ast.renameVar at h₃
+  simp at h₃
+  unfold Ast.renameVar at h₃
+  simp at h₃
+  unfold Ast.renameVar at h₃
+  simp at h₃
+  unfold Ast.renameVar at h₃
+  simp at h₃
+  unfold Ast.renameVar at h₃
+  simp at h₃
+  unfold PropSemantics.predToProp at h₃
+  obtain ⟨h₄,h₅⟩ := h₃
+  unfold PropSemantics.predToProp at h₄ h₅
+  unfold PropSemantics.exprToProp at h₄ h₅
+  unfold Δ
+  unfold assertCircuit
+  unfold lookupCircuit
+  unfold PropSemantics.predToProp
+  unfold PropSemantics.exprToProp
+
+  simp at h₃
+  sorry
