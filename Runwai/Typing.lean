@@ -191,7 +191,7 @@ def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) (minimum_height: ℕ)
     i < trace.length →
     (∃ row: List Ast.Value, (trace.get? i = some (Ast.Value.vArr row))) →
     let (σ, Γ) := makeEnvs c (Ast.Value.vArr trace) (Ast.Value.vZ i) trace.length
-    let Η := [c.ident_t, c.ident_i]
+    let Η := [c.ident_i, c.ident_t]
     checkInputsTrace c (Ast.Value.vArr trace) trace.length →
     PropSemantics.tyenvToProp σ Δ Γ →
     @TypeJudgment σ Δ Γ Η c.body c.goal
