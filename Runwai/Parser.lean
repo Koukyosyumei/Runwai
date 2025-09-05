@@ -75,9 +75,6 @@ syntax "if" runwai_expr "then" "{" runwai_expr "}" "else" "{" runwai_expr "}" : 
 -- Assert: “assert e₁ = e₂”
 syntax "assert_eq" "(" runwai_expr "," runwai_expr ")"         : runwai_expr
 
--- Circuit reference:  “#Name (e₁, e₂, … ,eₙ)”
--- syntax "#" ident "(" sepBy1(runwai_expr, ",") ")"  : runwai_expr
-
 -- Array indexing: “a[e]”
 syntax runwai_expr "[" runwai_expr "]"               : runwai_expr
 
@@ -89,6 +86,11 @@ syntax runwai_expr "(" runwai_expr ")"               : runwai_expr
 
 -- Let‐binding: “let x = e₁ in e₂”
 syntax "let" ident "=" runwai_expr "in" runwai_expr  : runwai_expr
+
+syntax pair := runwai_expr ":" runwai_expr
+
+-- Lookup: “let x = #Name (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
+syntax "let" ident "=" "#" ident "(" sepBy1(pair, ",") ")" "in" runwai_expr  : runwai_expr
 
 syntax "(" runwai_expr ")" : runwai_expr
 
@@ -150,6 +152,15 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
       pure (Ast.Ty.func x.getId.toString dom cod)
 
   | _ => throwError "unsupported type syntax: {stx}"
+
+unsafe def elaborateExprPair (stx : Syntax) : MetaM (Ast.Expr × Ast.Expr) := do
+  match stx with
+  | `(pair| $left:runwai_expr : $right:runwai_expr) => do
+    let left' ← elaborateExpr left
+    let right' ← elaborateExpr right
+    pure (left', right')
+
+  | _ => throwError "unsupported expression syntax: {stx}"
 
 /--
   `elaborateExpr` turns a `Syntax` node of category `runwai_expr` into an `Ast.Expr`.
@@ -246,20 +257,6 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let e₂' ← elaborateExpr e₂
     pure (Ast.Expr.binRel e₁' Ast.RelOp.le e₂')
 
-    /-
-  -- $ts,*
-  -- Circuit reference: “#C (e₁, e₂, …, eN)”
-  | `(runwai_expr| # $C:ident ($args:runwai_expr,*)) => do
-    let name := C.getId.toString
-    -- We only support a single‐argument circRef in AST, so if there are multiple args,
-    -- you might want to nest them or wrap them in a tuple. For now, assume 1:
-    match args.getElems.toList with
-    | [a] =>
-        let a'  ← elaborateExpr a
-        pure (Ast.Expr.circRef name a')
-    | _   => throwError "only single‐arg circuit calls supported, got {args.getElems.toList.length}"
-    -/
-
   -- Array indexing: “a[e]”
   | `(runwai_expr| $a [ $i ] ) => do
     let a' ← elaborateExpr a
@@ -283,6 +280,12 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let v' ← elaborateExpr v
     let b' ← elaborateExpr body
     pure (Ast.Expr.letIn x.getId.toString v' b')
+
+  -- Lookup: “let x = #Name (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
+  | `(runwai_expr| let $vname:ident = # $cname:ident ($args:pair,*) in $body) => do
+    let args' ← args.getElems.toList.mapM elaborateExprPair
+    let b' ← elaborateExpr body
+    pure (Ast.Expr.lookup vname.getId.toString cname.getId.toString args' b')
 
   | `(runwai_expr| ($e)) => do
     elaborateExpr e

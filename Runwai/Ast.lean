@@ -204,7 +204,7 @@ mutual
     | Expr.lam param τ body  => s!"λ{param} : {tyToString τ}. {exprToString body}"
     | Expr.app f arg         => s!"{exprToString f} {exprToString arg}"
     | Expr.letIn n v b       => s!"let {n} = {exprToString v} in {exprToString b}"
-    | Expr.lookup n c args e  => s!"let {n} = #{c}" ++ String.intercalate ", " (args.map fun xy => (exprToString xy.fst) ++ ": " ++ exprToString xy.snd) ++ s!" in {exprToString e}"
+    | Expr.lookup n c args e  => s!"let {n} = #{c}(" ++ String.intercalate ", " (args.map fun xy => (exprToString xy.fst) ++ ": " ++ exprToString xy.snd) ++ s!") in {exprToString e}"
 
 
   partial def predicateToString : Predicate → String
