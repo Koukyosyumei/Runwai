@@ -39,6 +39,16 @@ def iszeroCircuit : Ast.Circuit := {
 }
 
 @[simp]
+def u8chip : Ast.Circuit := {
+  name := "u8",
+  ident_t := "trace",
+  ident_i := "i"
+  width := 1,
+  goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.Expr.binRel (Ast.Expr.toZ (Ast.trace_i_j "trace" "i" 0)) Ast.RelOp.lt (Ast.Expr.constZ 256))),
+  body := Ast.Expr.assertE (Ast.Expr.constF 0) (Ast.Expr.constF 0)
+}
+
+@[simp]
 def wordRangeCheckerCircuit : Ast.Circuit := {
   name := "word_range_checker",
   ident_t := "trace",
