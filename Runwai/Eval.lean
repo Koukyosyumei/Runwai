@@ -36,10 +36,6 @@ def evalRelOp (op: RelOp) : Value → Value → Option Bool
     match op with
     | RelOp.eq => some (i = j)
     | _ => none
-    /-
-    | RelOp.lt => i.val % p < j.val % p
-    | RelOp.le => i.val % p ≤ j.val % p
-    -/
   | Value.vZ i, Value.vZ j =>
     some $ match op with
     | RelOp.eq => i = j
@@ -64,6 +60,9 @@ mutual
     | ConstBool     {σ Δ b} : EvalProp σ Δ (Expr.constBool b) (Value.vBool b)
     | ConstArr  {σ Δ xs es} (ilength: xs.length = es.length) (ih : ∀ xe ∈ List.zip xs es, EvalProp σ Δ xe.fst xe.snd) :
         EvalProp σ Δ (Expr.arr xs) (Value.vArr es)
+
+    | toZ {σ Δ e v} (h: EvalProp σ Δ e (Ast.Value.vF v)) :
+        EvalProp σ Δ (Expr.toZ e) (Ast.Value.vZ v.val)
 
     -- E‑VAR
     | Var         {σ Δ x v} : lookupVal σ x = v → EvalProp σ Δ (Expr.var x) v

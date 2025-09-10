@@ -182,6 +182,13 @@ theorem evalprop_deterministic
     rename_i ih₁ ih₂
     apply ih₁ ih₂
   }
+  | toZ => {
+    cases h₂
+    rename_i v₁ ih₀ ih₁ fv₂ ih₃
+    have h := ih₁ ih₃
+    have h' : v₁ = fv₂ := by simp_all
+    simp_all
+  }
 
 theorem evalProp_eq_trans
   {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {e₁ e₂ e₃: Expr}
