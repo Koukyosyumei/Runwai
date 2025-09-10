@@ -33,10 +33,13 @@ def evalFieldOp (op: FieldOp) : Value → Value → Option Value
 @[simp]
 def evalRelOp (op: RelOp) : Value → Value → Option Bool
   | Value.vF i, Value.vF j =>
-    some $ match op with
-    | RelOp.eq => i = j
+    match op with
+    | RelOp.eq => some (i = j)
+    | _ => none
+    /-
     | RelOp.lt => i.val % p < j.val % p
     | RelOp.le => i.val % p ≤ j.val % p
+    -/
   | Value.vZ i, Value.vZ j =>
     some $ match op with
     | RelOp.eq => i = j
