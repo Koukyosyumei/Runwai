@@ -124,10 +124,14 @@ def wordRangeCheckerCircuit : Ast.Circuit := {
             (.letIn "u₉" (.assertE (.constF 0) (.fieldExpr (.var "and_most_sig_byte_decomp_0_to_7") .mul (.var "value_0")))
             (.letIn "u₁₀" (.assertE (.constF 0) (.fieldExpr (.var "and_most_sig_byte_decomp_0_to_7") .mul (.var "value_1")))
             (.letIn "u₁₁" (.assertE (.constF 0) (.fieldExpr (.var "and_most_sig_byte_decomp_0_to_7") .mul (.var "value_2")))
-             (.var "u₁₁"))))))))))))))))))))))))))))))))))))))
+            (.lookup "l₀" "u8" [(.var "value_0", (Ast.trace_i_j "trace" "i" 0))]
+            (.lookup "l₁" "u8" [(.var "value_1", (Ast.trace_i_j "trace" "i" 0))]
+            (.lookup "l₂" "u8" [(.var "value_2", (Ast.trace_i_j "trace" "i" 0))]
+            (.lookup "l₃" "u8" [(.var "value_3", (Ast.trace_i_j "trace" "i" 0))]
+             (.var "l₃"))))))))))))))))))))))))))))))))))))))))))
 }
 
-def Δ : Env.CircuitEnv := [("assert", assertCircuit)]
+def Δ : Env.CircuitEnv := [("assert", assertCircuit), ("u8", u8chip)]
 
 lemma is_binary {x: ℕ} (h: x * (x - 1) = 0): x = 0 ∨ x = 1 := by {
   simp_all
@@ -361,7 +365,22 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
       apply Ty.TypeJudgment.TE_VarEnv
       apply lookup_update_ne
       simp
-
+    apply Ty.TypeJudgment.TE_LookUp
+    rfl
+    rfl
+    rfl
+    apply Ty.TypeJudgment.TE_LookUp
+    rfl
+    rfl
+    rfl
+    apply Ty.TypeJudgment.TE_LookUp
+    rfl
+    rfl
+    rfl
+    apply Ty.TypeJudgment.TE_LookUp
+    rfl
+    rfl
+    rfl
     sorry
 
 theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
