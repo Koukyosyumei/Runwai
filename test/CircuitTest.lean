@@ -103,11 +103,90 @@ def wordRangeCheckerCircuit : Ast.Circuit := {
             (.letIn "u₆" (.assertE (.var "and_most_sig_byte_decomp_0_to_5") (.fieldExpr (.var "and_most_sig_byte_decomp_0_to_4") .mul (.var "most_sig_byte_decomp_4")))
             (.letIn "u₇" (.assertE (.var "and_most_sig_byte_decomp_0_to_6") (.fieldExpr (.var "and_most_sig_byte_decomp_0_to_5") .mul (.var "most_sig_byte_decomp_5")))
             (.letIn "u₈" (.assertE (.var "and_most_sig_byte_decomp_0_to_7") (.fieldExpr (.var "and_most_sig_byte_decomp_0_to_6") .mul (.var "most_sig_byte_decomp_6")))
-            (.letIn "u₉" (.assertE (.var "and_most_sig_byte_decomp_0_to_7") (.fieldExpr (.fieldExpr (.var "value_0") .add (.var "value_1")) .add (.var "value_2")))
-              (.var "u₉"))))))))))))))))))))))))))))
+            (.letIn "u₉" (.branch (Ast.exprEq (.var "and_most_sig_byte_decomp_0_to_7") (.constF 1)) (.assertE (.constF 0) (.var "value_0")) (.assertE (.constF 0) (.constF 0)))
+            (.letIn "u₁₀" (.branch (Ast.exprEq (.var "and_most_sig_byte_decomp_0_to_7") (.constF 1)) (.assertE (.constF 0) (.var "value_1")) (.assertE (.constF 0) (.constF 0)))
+            (.letIn "u₁₁" (.branch (Ast.exprEq (.var "and_most_sig_byte_decomp_0_to_7") (.constF 1)) (.assertE (.constF 0) (.var "value_2")) (.assertE (.constF 0) (.constF 0)))
+             (.var "u₁₁"))))))))))))))))))))))))))))))
 }
 
 def Δ : Env.CircuitEnv := [("assert", assertCircuit)]
+
+theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerCircuit 1 := by
+  unfold Ty.circuitCorrect
+  intro x i hs hi hrow ht hσ
+  let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
+  let σ := envs.1
+  let Γ := envs.2
+  repeat
+    apply Ty.TypeJudgment.TE_LetIn;
+    · apply lookup_update_self;
+    · auto_judgment;
+  apply Ty.TypeJudgment.TE_LetIn
+  · apply lookup_update_self;
+  . apply Ty.TypeJudgment.TE_Assert
+    repeat apply Ty.TypeJudgment.TE_BinOpField
+    apply Ty.TypeJudgment.TE_VarEnv
+    apply lookup_update_ne
+    simp
+    apply Ty.TypeJudgment.TE_BinOpField
+    apply Ty.TypeJudgment.TE_VarEnv
+    apply lookup_update_ne
+    simp
+    repeat
+      apply Ty.TypeJudgment.TE_ConstF
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply lookup_update_ne
+      simp
+    apply Ty.TypeJudgment.TE_ConstF
+    apply Ty.TypeJudgment.TE_VarEnv
+    apply lookup_update_ne
+    simp
+  . apply Ty.TypeJudgment.TE_LetIn
+    apply lookup_update_self
+    apply Ty.TypeJudgment.TE_Assert
+    apply Ty.TypeJudgment.TE_VarEnv
+    apply lookup_update_ne
+    simp
+    apply Ty.TypeJudgment.TE_ConstF
+    repeat
+      apply Ty.TypeJudgment.TE_LetIn
+      apply lookup_update_self
+      apply Ty.TypeJudgment.TE_Assert
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply lookup_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply lookup_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply lookup_update_ne
+      simp
+    apply Ty.TypeJudgment.TE_LetIn
+    apply lookup_update_self
+    sorry
+    sorry
+    sorry
+    /-
+    apply Ty.TypeJudgment.TE_Branch
+    apply Ty.TypeJudgment.TE_Assert
+    apply Ty.TypeJudgment.TE_ConstF
+    apply Ty.TypeJudgment.TE_VarEnv
+    apply lookup_update_ne
+    simp
+    apply Ty.TypeJudgment.TE_Assert
+    apply Ty.TypeJudgment.TE_ConstF
+    repeat
+      apply Ty.TypeJudgment.TE_LetIn
+      apply lookup_update_self
+      apply Ty.TypeJudgment.TE_Assert
+      apply Ty.TypeJudgment.TE_ConstF
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply lookup_update_ne
+      simp
+    sorry
+    -/
 
 theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
   unfold Ty.circuitCorrect
