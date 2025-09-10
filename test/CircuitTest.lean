@@ -119,6 +119,35 @@ def wordRangeCheckerCircuit : Ast.Circuit := {
 
 def Δ : Env.CircuitEnv := [("assert", assertCircuit)]
 
+lemma wordRange_correct
+  {value_0 value_1 value_2 value_3 most_sig_byte_decomp_0
+   most_sig_byte_decomp_1 most_sig_byte_decomp_2 most_sig_byte_decomp_3
+   most_sig_byte_decomp_4 most_sig_byte_decomp_5 most_sig_byte_decomp_6 most_sig_byte_decomp_7
+   and_most_sig_byte_decomp_0_to_2 and_most_sig_byte_decomp_0_to_3 and_most_sig_byte_decomp_0_to_4
+   and_most_sig_byte_decomp_0_to_5 and_most_sig_byte_decomp_0_to_6 and_most_sig_byte_decomp_0_to_7: F}
+  (h₀: most_sig_byte_decomp_0 * (most_sig_byte_decomp_0 - 1) = 0)
+  (h₁: most_sig_byte_decomp_1 * (most_sig_byte_decomp_1 - 1) = 0)
+  (h₂: most_sig_byte_decomp_2 * (most_sig_byte_decomp_2 - 1) = 0)
+  (h₃: most_sig_byte_decomp_3 * (most_sig_byte_decomp_3 - 1) = 0)
+  (h₄: most_sig_byte_decomp_4 * (most_sig_byte_decomp_4 - 1) = 0)
+  (h₅: most_sig_byte_decomp_5 * (most_sig_byte_decomp_5 - 1) = 0)
+  (h₆: most_sig_byte_decomp_6 * (most_sig_byte_decomp_6 - 1) = 0)
+  (h₇: most_sig_byte_decomp_7 * (most_sig_byte_decomp_7 - 1) = 0)
+  (h₉: most_sig_byte_decomp_0 + most_sig_byte_decomp_1 * 2 + most_sig_byte_decomp_2 * 4 + most_sig_byte_decomp_3 * 8 + most_sig_byte_decomp_4 * 16 + most_sig_byte_decomp_5 * 32 + most_sig_byte_decomp_6 * 64 + most_sig_byte_decomp_7 * 128 = value_3)
+  (h₁₀: most_sig_byte_decomp_7 = 0)
+  (h₁₁: and_most_sig_byte_decomp_0_to_2 = most_sig_byte_decomp_0 * most_sig_byte_decomp_1)
+  (h₁₂: and_most_sig_byte_decomp_0_to_3 = most_sig_byte_decomp_2 * most_sig_byte_decomp_2)
+  (h₁₃: and_most_sig_byte_decomp_0_to_4 = most_sig_byte_decomp_3 * most_sig_byte_decomp_3)
+  (h₁₄: and_most_sig_byte_decomp_0_to_5 = most_sig_byte_decomp_4 * most_sig_byte_decomp_4)
+  (h₁₅: and_most_sig_byte_decomp_0_to_6 = most_sig_byte_decomp_5 * most_sig_byte_decomp_5)
+  (h₁₆: and_most_sig_byte_decomp_0_to_7 = most_sig_byte_decomp_6 * most_sig_byte_decomp_6)
+  (h₁₇: and_most_sig_byte_decomp_0_to_7 * value_0 = 0)
+  (h₁₈: and_most_sig_byte_decomp_0_to_7 * value_1 = 0)
+  (h₁₉: and_most_sig_byte_decomp_0_to_7 * value_2 = 0)
+  : value_0.val + value_1.val * 256 + value_2.val * (256 ^ 2) + value_3.val * (256 ^ 3) < 2130706433 := by {
+  sorry
+}
+
 theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerCircuit 1 := by
   unfold Ty.circuitCorrect
   intro x i hs hi hrow ht hσ
@@ -205,6 +234,7 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
       apply Ty.TypeJudgment.TE_VarEnv
       apply lookup_update_ne
       simp
+
     sorry
 
 theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
