@@ -61,6 +61,7 @@ mutual
     | assertE     : (lhs: Expr) → (rhs: Expr) → Expr                     -- assert e₁ = e₂
     | boolExpr    : (lhs: Expr) → (op: BooleanOp) → (rhs: Expr) → Expr
     | fieldExpr   : (lhs: Expr) → (op: FieldOp) → (rhs: Expr) → Expr
+    | integerExpr : (lhs: Expr) → (op: IntegerOp) → (rhs: Expr) → Expr
     | binRel      : (lhs: Expr) → (op: RelOp) → (rhs: Expr) → Expr       -- e₁ ⊘ e₂
     | arrIdx      : (arr: Expr) → (idx: Expr) → Expr                     -- e₁[e₂]
     | branch      : (cond: Expr) → (th: Expr) → (els: Expr) → Expr       -- if cond then e₁ else e₂
@@ -112,6 +113,7 @@ def renameVar (e : Expr) (oldName newName : String) (cnt: ℕ): Expr :=
     | Expr.assertE l r   => Expr.assertE (renameVar l oldName newName (cnt - 1)) (renameVar r oldName newName (cnt - 1))
     | Expr.boolExpr l o r => Expr.boolExpr (renameVar l oldName newName (cnt - 1)) o (renameVar r oldName newName (cnt - 1))
     | Expr.fieldExpr l o r => Expr.fieldExpr (renameVar l oldName newName (cnt - 1)) o (renameVar r oldName newName (cnt - 1))
+    | Expr.integerExpr l o r => Expr.integerExpr (renameVar l oldName newName (cnt - 1)) o (renameVar r oldName newName (cnt - 1))
     | Expr.binRel l o r  => Expr.binRel (renameVar l oldName newName (cnt - 1)) o (renameVar r oldName newName (cnt - 1))
     | Expr.arrIdx a i    => Expr.arrIdx (renameVar a oldName newName (cnt - 1)) (renameVar i oldName newName (cnt - 1))
     | Expr.branch c t e  => Expr.branch (renameVar c oldName newName (cnt - 1)) (renameVar t oldName newName (cnt - 1)) (renameVar e oldName newName (cnt - 1))
@@ -199,6 +201,7 @@ mutual
     | Expr.assertE l r       => s!"assert_eq({exprToString l}, {exprToString r})"
     | Expr.boolExpr l op r   => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.fieldExpr l op r  => s!"({exprToString l} {repr op} {exprToString r})"
+    | Expr.integerExpr l op r  => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.binRel l op r     => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.arr elems         => "[" ++ String.intercalate ", " (elems.map exprToString) ++ "]"
     | Expr.arrIdx a i        => s!"{exprToString a}[{exprToString i}]"

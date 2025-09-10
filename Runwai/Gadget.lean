@@ -131,6 +131,13 @@ theorem evalprop_deterministic
     have h₂_eq := ih₂_ih ih₂'
     simp_all
   }
+  | ZBinOp ih₁ ih₂ r ih₁_ih ih₂_ih => {
+    cases h₂
+    case ZBinOp i₁' i₂' ih₁' ih₂' ih₃' =>
+    have h₁_eq := ih₁_ih ih₁'
+    have h₂_eq := ih₂_ih ih₂'
+    simp_all
+  }
   | BoolOp ih₁ ih₂ bv ih₁_ih ih₂_ih => {
     cases h₂
     case BoolOp b₁' b₂' b₃' ih₁' ih₂' ih₃' =>
@@ -414,6 +421,7 @@ theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env
     | TE_ConstZ => intros; constructor
     | TE_Assert _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Assert (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_BinOpField _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpField (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_BinOpInteger _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpInteger (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_Abs ih₀ _ ih₂ =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_Abs
