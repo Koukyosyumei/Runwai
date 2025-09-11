@@ -297,7 +297,9 @@ lemma wordRange_correct
   {
     rename_i h
     have : and_most_sig_byte_decomp_0_to_7 = 1 := by {
-      sorry
+      rw[← ZMod.val_one'] at h
+      apply ZMod.val_injective
+      exact h
     }
     rw[this] at h₁₇ h₁₈ h₁₉
     simp at h₁₇ h₁₈ h₁₉
