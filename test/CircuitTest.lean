@@ -312,6 +312,43 @@ lemma wordRange_correct
   }
 }
 
+lemma eval_eq_lt
+  (h₁: Eval.EvalProp σ Δ (Ast.exprEq e₁ e₂) (Ast.Value.vBool true))
+  (h₂: Eval.EvalProp σ Δ (Ast.Expr.binRel (Ast.Expr.toZ e₂) Ast.RelOp.lt e₃) (Ast.Value.vBool true))
+  : Eval.EvalProp σ Δ (Ast.Expr.binRel (Ast.Expr.toZ e₁) Ast.RelOp.lt e₃) (Ast.Value.vBool true) := by {
+    cases h₂
+    rename_i ih₁ ih₂ r
+    cases ih₁
+    rename_i h
+    cases h₁
+    rename_i ih₁ ih₂ r
+    have hv := evalprop_deterministic h ih₂
+    rename_i ev₃ hev₃ v₂ hlt ev₁ ev₂
+    unfold Eval.evalRelOp at hlt
+    simp at hlt
+    cases ev₃ with
+    | vZ v₃ => {
+      simp at hlt
+      rw[← hv] at r
+      unfold Eval.evalRelOp at r
+      simp at r
+      cases ev₁ with
+      | vF v₁ => {
+        simp at r
+        apply Eval.EvalProp.Rel
+        apply Eval.EvalProp.toZ
+        exact ih₁
+        exact hev₃
+        unfold Eval.evalRelOp
+        simp
+        rw[r]
+        exact hlt
+      }
+      | _ => simp at r
+    }
+    | _ => simp at hlt
+  }
+
 theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerCircuit 1 := by
   unfold Ty.circuitCorrect
   intro x i hs hi hrow ht hσ
@@ -841,6 +878,14 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
                                         apply lookup_update_ne
                                         simp
                                       }
+        have hl₀ : Env.lookupTy Γ' "l₀" = some ((Ast.Ty.unit.refin
+            (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+              (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))) := by {
+                unfold Γ'
+                apply lookup_update_ne
+                simp
+              }
         have hb₁' := h₁ "b₀" (Ast.Ty.unit.refin
                                                   (Ast.Predicate.ind
                                                     (Ast.exprEq
@@ -921,6 +966,10 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
                                         ((Ast.Expr.var "most_sig_byte_decomp_7").fieldExpr Ast.FieldOp.mul
                                           (Ast.Expr.constF 128)))
                                       (Ast.Expr.var "value_3")))) hu₁
+        have hl₀' := h₁ "l₀" ((Ast.Ty.unit.refin
+            (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+              (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))) hl₀
         rw[hb₁] at hb₁'
         simp at hb₁'
         cases hb₁'
@@ -1117,13 +1166,25 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
         simp at r₂ r₄ r₅ r₇ r₈ r₉ r₁₀ r₁₁ r₁₂ r₁₃ r₁₄ r₁₅
         rw[← r₁₅] at r₁₄
         rw[← r₁₄] at r₁₃
-        rw[← r₁₃] at r₁₂
-        rw[← r₁₂] at r₁₁
-        rw[← r₁₁] at r₁₀
-        rw[← r₁₀] at r₉
-        rw[← r₉] at r₈
-        rw[← r₈] at r₇
+        rw[← r₁₃] at r₁₁
+        rw[← r₁₂] at r₉
+        rw[← r₁₁] at r₉
+        rw[← r₁₀] at r₇
+        rw[← r₉] at r₇
+        rw[← r₈] at r₄
+        rw[← r₇] at r₄
 
+        rw[hl₀] at hl₀'
+        unfold Ty.lookup_pred Env.lookupCircuit Δ at hl₀'
+        simp at hl₀'
+        unfold PropSemantics.predToProp Ast.renameVarinPred Ast.renameVar Env.freshName at hl₀'
+        simp at hl₀'
+        unfold Ast.renameVarinPred Ast.renameVar PropSemantics.exprToProp at hl₀'
+        simp at hl₀'
+        repeat
+          unfold Ast.renameVar at hl₀'
+          simp at hl₀'
+        sorry
     }
     apply Ty.TypeJudgment.TE_SUB h_sub
     apply Ty.TypeJudgment.TE_VarEnv
