@@ -421,7 +421,7 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
           (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
             (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
               [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))) with hτ
-    have hsub : @Ty.SubtypeJudgment σ Δ (Env.updateTy
+    have h_sub : @Ty.SubtypeJudgment σ Δ (Env.updateTy
     (Env.updateTy
       (Env.updateTy
         (Env.updateTy
@@ -711,7 +711,9 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
     "l₃" τ) τ wordRangeCheckerCircuit.goal := by {
       sorry
     }
-    sorry
+    apply Ty.TypeJudgment.TE_SUB h_sub
+    apply Ty.TypeJudgment.TE_VarEnv
+    apply lookup_update_self
 
 theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
   unfold Ty.circuitCorrect
