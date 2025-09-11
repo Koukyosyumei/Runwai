@@ -1184,6 +1184,14 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
         repeat
           unfold Ast.renameVar at hl₀'
           simp at hl₀'
+        obtain ⟨hl₀₁',hl₀₂'⟩ := hl₀'
+        have hvl₀ := eval_eq_lt hl₀₂' hl₀₁'
+        cases hvl₀
+        rename_i ih₀ ih₁ r₁
+        cases ih₀
+        cases ih₁
+        unfold Eval.evalRelOp at r₁
+        simp at r₁
         sorry
     }
     apply Ty.TypeJudgment.TE_SUB h_sub
