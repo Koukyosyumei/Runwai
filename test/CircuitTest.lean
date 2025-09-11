@@ -511,6 +511,7 @@ lemma binary_word_reduce_val (h: Eval.EvalProp σ Δ
     Env.lookupVal σ x₂ = some (Ast.Value.vF v₂) ∧ Env.lookupVal σ x₃ = some (Ast.Value.vF v₃) ∧
     Env.lookupVal σ x₄ = some (Ast.Value.vF v₄) ∧ Env.lookupVal σ x₅ = some (Ast.Value.vF v₅) ∧
     Env.lookupVal σ x₆ = some (Ast.Value.vF v₆) ∧ Env.lookupVal σ x₇ = some (Ast.Value.vF v₇) ∧
+    Env.lookupVal σ x₈ = some (Ast.Value.vF v₈) ∧
     v₀ + v₁ * 2 + v₂ * 4 + v₃ * 8 + v₄ * 16 + v₅ * 32 + v₆ * 64 + v₇ * 128 = v₈ := by {
     cases h
     rename_i ih₁ ih₂ r₁
@@ -610,6 +611,65 @@ lemma tyenv_and_prop_to_expr (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: E
     exact h₁'
   }
 
+lemma lt_val (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
+  ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
+    cases h
+    rename_i ih₀ ih₁ r₁
+    cases ih₀
+    rename_i ih₀
+    cases ih₀
+    cases ih₁
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+    rename_i v h
+    use v
+    simp_all
+  }
+
+lemma lookup_u8
+  (h₁: PropSemantics.tyenvToProp σ Δ Γ)
+  (h₂: Env.lookupTy Γ u = some ((Ast.Ty.unit.refin
+          (Ty.lookup_pred [(Ast.Expr.var x, Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+            (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+            Η))))
+  (h₃: (Env.freshName Η (Env.lookupCircuit Δ "u8").ident_i) = new_ident_i)
+  (h₄: (Env.freshName Η (Env.lookupCircuit Δ "u8").ident_t) = new_ident_t)
+  (h₇: new_ident_t ≠ "i") :  ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < 256 := by {
+    unfold Ty.lookup_pred at h₂
+    have hu8_i : (Env.lookupCircuit Δ "u8").ident_i = "i" := by {
+      unfold Env.lookupCircuit Δ
+      simp
+    }
+    have hu8_t : (Env.lookupCircuit Δ "u8").ident_t = "trace" := by {
+      unfold Env.lookupCircuit Δ
+      simp
+    }
+
+    --rw[hu8_i] at h₃
+    --rw[hu8_t] at h₄
+    rw[h₃, h₄, hu8_i, hu8_t] at h₂
+    -- Ast.renameVarinPred Ast.renameVar Env.freshName
+    unfold Ast.renameVarinPred Ast.renameVar at h₂
+    simp at h₂
+    unfold Ast.renameVarinPred Ast.renameVar at h₂
+    simp at h₂
+    unfold Ast.renameVar at h₂
+    simp at h₂
+    unfold Ast.renameVar at h₂
+    simp at h₂
+    unfold Ast.renameVar at h₂
+    simp at h₂
+    unfold Ast.renameVar at h₂
+    simp at h₂
+    rw [if_neg h₇] at h₂
+    have hl₀' := tyenv_and_prop_to_expr h₁ h₂
+
+    obtain ⟨hl₀₁',hl₀₂'⟩ := hl₀'
+    have hvl₀ := eval_eq_lt hl₀₂' hl₀₁'
+    have hvl₀' := lt_val hvl₀
+    exact hvl₀'
+  }
+
 lemma subtype_wordrage_check
   (hb₁: Env.lookupTy Γ "b₀" = some (is_binary_type "most_sig_byte_decomp_0"))
   (hb₂ : Env.lookupTy Γ "b₁" = some (is_binary_type "most_sig_byte_decomp_1"))
@@ -653,6 +713,24 @@ lemma subtype_wordrage_check
             (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
               (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
               [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))
+  ( hl₁: Env.lookupTy Γ "l₁" = some (        (Ast.Ty.unit.refin
+          (Ty.lookup_pred [(Ast.Expr.var "value_1", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+            (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t])))))
+  ( hl₂: Env.lookupTy Γ "l₂" =       (Ast.Ty.unit.refin
+        (Ty.lookup_pred [(Ast.Expr.var "value_2", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+          (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t])))))
+  ( hl₃: Env.lookupTy Γ "l₃" = (Ast.Ty.unit.refin
+      (Ty.lookup_pred [(Ast.Expr.var "value_3", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+        (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+        (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))))
   : @Ty.SubtypeJudgment σ Δ Γ (Ast.Ty.unit.refin
       (Ty.lookup_pred [(Ast.Expr.var "value_3", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
         (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
@@ -701,6 +779,14 @@ lemma subtype_wordrage_check
     have hu₁₀'' := eq_mul_val hu₁₀'
     have hu₁₁'' := eq_mul_val hu₁₁'
 
+    cases hu₂'
+    rename_i v₁ u₁ ih₁ ih₂ r₁
+    cases ih₁
+    cases ih₂
+    unfold Eval.evalRelOp at r₁
+    cases v₁ <;> simp at r₁
+    --rename_i most_sig_byte_decomp_7 h_most_sig_byte_decomp_7_env
+
     have hu8_i : (Env.lookupCircuit Δ "u8").ident_i = "i" := by {
       unfold Env.lookupCircuit Δ
       simp
@@ -709,31 +795,197 @@ lemma subtype_wordrage_check
       unfold Env.lookupCircuit Δ
       simp
     }
-    unfold Ty.lookup_pred Ast.renameVarinPred Ast.renameVar Env.freshName at hl₀
-    unfold Ast.renameVarinPred Ast.renameVar at hl₀
-    rw[hu8_i, hu8_t] at hl₀
-    simp at hl₀
-    repeat
-      unfold Ast.renameVar at hl₀
-      simp at hl₀
+    have h₁' : (Env.freshName [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t] (Env.lookupCircuit Δ "u8").ident_t) = "trace'" := by {
+      unfold Env.freshName
+      rw[hu8_t]
+      simp
+    }
+    have h₂' : (Env.freshName [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t] (Env.lookupCircuit Δ "u8").ident_i) = "i'" := by {
+      unfold Env.freshName
+      rw[hu8_i]
+      simp
+    }
+    have h₃' : "trace'" ≠ "i" := by simp
     have hl₀' := tyenv_and_prop_to_expr h₁ hl₀
+    have hvl₀ := lookup_u8 h₁ hl₀ h₂' h₁' h₃'
+    have h₁' : (Env.freshName (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]) (Env.lookupCircuit Δ "u8").ident_t) = "trace'" := by {
+      unfold Env.freshName
+      rw[hu8_t]
+      simp
+      unfold Ty.update_UsedNames
+      simp
+    }
+    have h₂' : (Env.freshName (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]) (Env.lookupCircuit Δ "u8").ident_i) = "i'" := by {
+      unfold Env.freshName
+      rw[hu8_i]
+      simp
+      unfold Ty.update_UsedNames
+      simp
+    }
+    have hl₁' := tyenv_and_prop_to_expr h₁ hl₁
+    have hvl₁ := lookup_u8 h₁ hl₁ h₂' h₁' h₃'
+    have h₁' : (Env.freshName (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))) (Env.lookupCircuit Δ "u8").ident_t) = "trace'" := by {
+      unfold Env.freshName
+      rw[hu8_t]
+      simp
+      unfold Ty.update_UsedNames
+      simp
+    }
+    have h₂' : (Env.freshName (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))) (Env.lookupCircuit Δ "u8").ident_i) = "i'" := by {
+      unfold Env.freshName
+      rw[hu8_i]
+      simp
+      unfold Ty.update_UsedNames
+      simp
+    }
+    have hl₂' := tyenv_and_prop_to_expr h₁ hl₂
+    have hvl₂ := lookup_u8 h₁ hl₂ h₂' h₁' h₃'
+    have hl₃' := tyenv_and_prop_to_expr h₁ hl₃
+    have hvl₃ := lookup_u8 h₁ hl₃ h₂' h₁' h₃'
+
     unfold PropSemantics.predToProp PropSemantics.exprToProp
+    obtain ⟨most_sig_byte_decomp_0, h⟩ := hb₁''
+    obtain ⟨h_most_sig_byte_decomp_0_env, h_most_sig_byte_decomp_0⟩ := h
+    obtain ⟨most_sig_byte_decomp_1, h⟩ := hb₂''
+    obtain ⟨h_most_sig_byte_decomp_1_env, h_most_sig_byte_decomp_1⟩ := h
+    obtain ⟨most_sig_byte_decomp_2, h⟩ := hb₃''
+    obtain ⟨h_most_sig_byte_decomp_2_env, h_most_sig_byte_decomp_2⟩ := h
+    obtain ⟨most_sig_byte_decomp_3, h⟩ := hb₄''
+    obtain ⟨h_most_sig_byte_decomp_3_env, h_most_sig_byte_decomp_3⟩ := h
+    obtain ⟨most_sig_byte_decomp_4, h⟩ := hb₅''
+    obtain ⟨h_most_sig_byte_decomp_4_env, h_most_sig_byte_decomp_4⟩ := h
+    obtain ⟨most_sig_byte_decomp_5, h⟩ := hb₆''
+    obtain ⟨h_most_sig_byte_decomp_5_env, h_most_sig_byte_decomp_5⟩ := h
+    obtain ⟨most_sig_byte_decomp_6, h⟩ := hb₇''
+    obtain ⟨h_most_sig_byte_decomp_6_env, h_most_sig_byte_decomp_6⟩ := h
+    obtain ⟨most_sig_byte_decomp_7, h⟩ := hb₈''
+    obtain ⟨h_most_sig_byte_decomp_7_env, h_most_sig_byte_decomp_7⟩ := h
 
-    cases hu₂'
-    rename_i v₁ u₁ ih₁ ih₂ r₁
-    cases ih₁
-    cases ih₂
+    obtain ⟨v₀, v₁, v₂, v₃, v₄, v₅, v₆, v₇, value_3, h⟩ := hu₁'
+    obtain ⟨h₁, h₂, h₃, h₄, h₅, h₆, h₇, h₈, h_value_3_env, h_msb_rec⟩ := h
+    simp at h_most_sig_byte_decomp_0_env h_most_sig_byte_decomp_1_env
+            h_most_sig_byte_decomp_2_env h_most_sig_byte_decomp_3_env
+            h_most_sig_byte_decomp_4_env h_most_sig_byte_decomp_5_env
+            h_most_sig_byte_decomp_6_env h_most_sig_byte_decomp_7_env
+    rw[h_most_sig_byte_decomp_0_env] at h₁
+    rw[h_most_sig_byte_decomp_1_env] at h₂
+    rw[h_most_sig_byte_decomp_2_env] at h₃
+    rw[h_most_sig_byte_decomp_3_env] at h₄
+    rw[h_most_sig_byte_decomp_4_env] at h₅
+    rw[h_most_sig_byte_decomp_5_env] at h₆
+    rw[h_most_sig_byte_decomp_6_env] at h₇
+    rw[h_most_sig_byte_decomp_7_env] at h₈
+    simp at h₁ h₂ h₃ h₄ h₅ h₆ h₇ h₈ h_value_3_env
+    rw[← h₁, ← h₂, ← h₃, ← h₄, ← h₅, ← h₆, ← h₇, ← h₈] at h_msb_rec
 
-    obtain ⟨hl₀₁',hl₀₂'⟩ := hl₀'
-    have hvl₀ := eval_eq_lt hl₀₂' hl₀₁'
-    cases hvl₀
-    rename_i ih₀ ih₁ r₁
-    cases ih₀
-    rename_i ih₀
-    cases ih₀
-    cases ih₁
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
+    obtain ⟨and_most_sig_byte_decomp_0_to_2, v₂, v₃, h⟩ := hu₃''
+    obtain ⟨h_and_most_sig_byte_decomp_0_to_2_env, h₂, h₃, hamm₁⟩ := h
+    simp at h_and_most_sig_byte_decomp_0_to_2_env h₂ h₃ hamm₁
+    rw[h_most_sig_byte_decomp_0_env] at h₂
+    rw[h_most_sig_byte_decomp_1_env] at h₃
+    simp at h₂ h₃ hamm₁
+    rw[← h₂, ← h₃] at hamm₁
+
+
+    obtain ⟨and_most_sig_byte_decomp_0_to_3, v₂, v₃, h⟩ := hu₄''
+    obtain ⟨h_and_most_sig_byte_decomp_0_to_3_env, h₂, h₃, hamm₂⟩ := h
+    simp at h_and_most_sig_byte_decomp_0_to_3_env h₂ h₃ hamm₂
+    rw[h_and_most_sig_byte_decomp_0_to_2_env] at h₂
+    rw[h_most_sig_byte_decomp_2_env] at h₃
+    simp at h₂ h₃ hamm₂
+    rw[← h₂, ← h₃] at hamm₂
+
+    obtain ⟨and_most_sig_byte_decomp_0_to_4, v₂, v₃, h⟩ := hu₅''
+    obtain ⟨h_and_most_sig_byte_decomp_0_to_4_env, h₂, h₃, hamm₃⟩ := h
+    simp at h_and_most_sig_byte_decomp_0_to_4_env h₂ h₃ hamm₃
+    rw[h_and_most_sig_byte_decomp_0_to_3_env] at h₂
+    rw[h_most_sig_byte_decomp_3_env] at h₃
+    simp at h₂ h₃ hamm₃
+    rw[← h₂, ← h₃] at hamm₃
+
+    obtain ⟨and_most_sig_byte_decomp_0_to_5, v₂, v₃, h⟩ := hu₆''
+    obtain ⟨h_and_most_sig_byte_decomp_0_to_5_env, h₂, h₃, hamm₄⟩ := h
+    simp at h_and_most_sig_byte_decomp_0_to_5_env h₂ h₃ hamm₄
+    rw[h_and_most_sig_byte_decomp_0_to_4_env] at h₂
+    rw[h_most_sig_byte_decomp_4_env] at h₃
+    simp at h₂ h₃ hamm₄
+    rw[← h₂, ← h₃] at hamm₄
+
+    obtain ⟨and_most_sig_byte_decomp_0_to_6, v₂, v₃, h⟩ := hu₇''
+    obtain ⟨h_and_most_sig_byte_decomp_0_to_6_env, h₂, h₃, hamm₅⟩ := h
+    simp at h_and_most_sig_byte_decomp_0_to_6_env h₂ h₃ hamm₅
+    rw[h_and_most_sig_byte_decomp_0_to_5_env] at h₂
+    rw[h_most_sig_byte_decomp_5_env] at h₃
+    simp at h₂ h₃ hamm₅
+    rw[← h₂, ← h₃] at hamm₅
+
+    obtain ⟨and_most_sig_byte_decomp_0_to_7, v₂, v₃, h⟩ := hu₈''
+    obtain ⟨h_and_most_sig_byte_decomp_0_to_7_env, h₂, h₃, hamm₆⟩ := h
+    simp at h_and_most_sig_byte_decomp_0_to_7_env h₂ h₃ hamm₆
+    rw[h_and_most_sig_byte_decomp_0_to_6_env] at h₂
+    rw[h_most_sig_byte_decomp_6_env] at h₃
+    simp at h₂ h₃ hamm₆
+    rw[← h₂, ← h₃] at hamm₆
+
+    obtain ⟨v₁, value_0, h⟩ := hu₉''
+    obtain ⟨h₁, h_value_0_env, hav₀⟩ := h
+    simp at h₁ h_value_0_env hav₀
+    rw[h_and_most_sig_byte_decomp_0_to_7_env] at h₁
+    simp at h₁
+    rw[← h₁] at hav₀
+
+
+    obtain ⟨v₁, value_1, h⟩ := hu₁₀''
+    obtain ⟨h₁, h_value_1_env, hav₁⟩ := h
+    simp at h₁ h_value_1_env hav₁
+    rw[h_and_most_sig_byte_decomp_0_to_7_env] at h₁
+    simp at h₁
+    rw[← h₁] at hav₁
+
+    obtain ⟨v₁, value_2, h⟩ := hu₁₁''
+    obtain ⟨h₁, h_value_2_env, hav₂⟩ := h
+    simp at h₁ h_value_2_env hav₂
+    rw[h_and_most_sig_byte_decomp_0_to_7_env] at h₁
+    simp at h₁
+    rw[← h₁] at hav₂
+
+    obtain ⟨v₁, h₁, hvl₀⟩ := hvl₀
+    simp at h₁
+    rw[h_value_0_env] at h₁
+    simp at h₁
+    rw[← h₁] at hvl₀
+
+    obtain ⟨v₁, h₁, hvl₁⟩ := hvl₁
+    simp at h₁
+    rw[h_value_1_env] at h₁
+    simp at h₁
+    rw[← h₁] at hvl₁
+
+    obtain ⟨v₁, h₁, hvl₂⟩ := hvl₂
+    simp at h₁
+    rw[h_value_2_env] at h₁
+    simp at h₁
+    rw[← h₁] at hvl₂
+
+    obtain ⟨v₁, h₁, hvl₃⟩ := hvl₃
+    simp at h₁
+    rw[h_value_3_env] at h₁
+    simp at h₁
+    rw[← h₁] at hvl₃
+
+    have hg : value_0.val + value_1.val * 256 + value_2.val * (256 ^ 2) + value_3.val * (256 ^ 3) < 2130706433 := by {
+      apply wordRange_correct
+      simp
+      exact h_most_sig_byte_decomp_0
+    }
 }
 
 /-
