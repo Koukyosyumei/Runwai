@@ -750,69 +750,68 @@ lemma subtype_wordrage_check
     rw[← r₄] at r₂
 
     cases hu₂'
-    rename_i ih₁ ih₂ r₁
+    rename_i v₁ u₁ ih₁ ih₂ r₁
     cases ih₁
     cases ih₂
-    --unfold Eval.evalRelOp at r₁
 
     cases hu₃'
-    rename_i ih₁ ih₂ r₂
+    rename_i v₂ u₂ ih₁ ih₂ r₂
     cases ih₁
     cases ih₂
-    rename_i ih₁ ih₂ r₂'
+    rename_i v₂' u₂' ih₁ ih₂ r₂'
     cases ih₁
     cases ih₂
 
     cases hu₄'
-    rename_i ih₁ ih₂ r₃
+    rename_i v₃ u₃ ih₁ ih₂ r₃
     cases ih₁
     cases ih₂
-    rename_i ih₁ ih₂ r₃'
+    rename_i v₃' u₃' ih₁ ih₂ r₃'
     cases ih₁
     cases ih₂
 
     cases hu₅'
-    rename_i ih₁ ih₂ r₄
+    rename_i v₄ u₄ ih₁ ih₂ r₄
     cases ih₁
     cases ih₂
-    rename_i ih₁ ih₂ r₄'
+    rename_i v₄' u₄' ih₁ ih₂ r₄'
     cases ih₁
     cases ih₂
 
     cases hu₆'
-    rename_i ih₁ ih₂ r₅
+    rename_i v₅ u₅ ih₁ ih₂ r₅
     cases ih₁
     cases ih₂
-    rename_i ih₁ ih₂ r₅'
+    rename_i v₅' u₅' ih₁ ih₂ r₅'
     cases ih₁
     cases ih₂
 
     cases hu₇'
-    rename_i ih₁ ih₂ r₆
+    rename_i v₆ u₆ ih₁ ih₂ r₆
     cases ih₁
     cases ih₂
-    rename_i ih₁ ih₂ r₆'
+    rename_i v₆' u₆' ih₁ ih₂ r₆'
     cases ih₁
     cases ih₂
 
     cases hu₈'
-    rename_i ih₁ ih₂ r₇
+    rename_i v₇ u₇ ih₁ ih₂ r₇
     cases ih₁
     cases ih₂
-    rename_i ih₁ ih₂ r₇'
+    rename_i v₇' u₇' ih₁ ih₂ r₇'
     cases ih₁
     cases ih₂
 
     cases hu₉'
-    rename_i ih₁ ih₂ r₈
+    rename_i v₈ u₈ ih₁ ih₂ r₈
     cases ih₁
     cases ih₂
-    rename_i ih₁ ih₂ r₈'
+    rename_i v₈' u₈' ih₁ ih₂ r₈'
     cases ih₁
     cases ih₂
 
     cases hu₁₀'
-    rename_i ih₁ ih₂ r₉
+    rename_i v₉ u₉ ih₁ ih₂ r₉
     cases ih₁
     cases ih₂
     rename_i ih₁ ih₂ r₉'
@@ -820,7 +819,7 @@ lemma subtype_wordrage_check
     cases ih₂
 
     cases hu₁₁'
-    rename_i ih₁ ih₂ r₁₀
+    rename_i v₁₀ u₁₀ ih₁ ih₂ r₁₀
     cases ih₁
     cases ih₂
     rename_i ih₁ ih₂ r₁₀'
@@ -829,6 +828,18 @@ lemma subtype_wordrage_check
 
     unfold Eval.evalFieldOp at r₂' r₃' r₄' r₅' r₆' r₇' r₈' r₉' r₁₀'
     simp at r₂' r₃' r₄' r₅' r₆' r₇' r₈' r₉' r₁₀'
+
+    unfold Eval.evalRelOp at r₁ r₂ r₃ r₄ r₅ r₆ r₇ r₈ r₉ r₁₀
+    cases v₁ <;> simp at r₁
+    cases v₂ <;> simp at r₂
+    cases v₃ <;> simp at r₃
+    cases v₄ <;> simp at r₄
+    cases v₅ <;> simp at r₅
+    cases v₆ <;> simp at r₆
+    cases v₇ <;> simp at r₇
+    cases u₈ <;> simp at r₈
+    cases u₉ <;> simp at r₉
+    cases u₁₀ <;> simp at r₁₀
 
     unfold Ty.lookup_pred Env.lookupCircuit Δ at hl₀'
     simp at hl₀'
