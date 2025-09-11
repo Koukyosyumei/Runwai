@@ -133,7 +133,7 @@ def wordRangeCheckerCircuit : Ast.Circuit := {
 
 def Δ : Env.CircuitEnv := [("assert", assertCircuit), ("u8", u8chip)]
 
-lemma is_binary {x: ℕ} (h: x * (x - 1) = 0): x = 0 ∨ x = 1 := by {
+lemma is_binary {x: F} (h: x * (x - 1) = 0): x = 0 ∨ x = 1 := by {
   simp_all
   rcases h with h_case | h_case
   {
@@ -142,8 +142,22 @@ lemma is_binary {x: ℕ} (h: x * (x - 1) = 0): x = 0 ∨ x = 1 := by {
   }
   {
     right
-    have h_le_one : x ≤ 1 := Nat.le_of_sub_eq_zero h_case
-    sorry
+    apply sub_eq_iff_eq_add.mp h_case
+  }
+}
+
+
+lemma is_binary_f_to_z {x: F} (h: x = 0 ∨ x = 1) : x.val = 0 ∨ x.val = 1 := by {
+  rcases h with h_case | h_case
+  {
+    left
+    simp
+    exact h_case
+  }
+  {
+    right
+    rw[h_case]
+    rfl
   }
 }
 
@@ -173,7 +187,7 @@ lemma wordRange_correct
    most_sig_byte_decomp_1 most_sig_byte_decomp_2 most_sig_byte_decomp_3
    most_sig_byte_decomp_4 most_sig_byte_decomp_5 most_sig_byte_decomp_6 most_sig_byte_decomp_7
    and_most_sig_byte_decomp_0_to_2 and_most_sig_byte_decomp_0_to_3 and_most_sig_byte_decomp_0_to_4
-   and_most_sig_byte_decomp_0_to_5 and_most_sig_byte_decomp_0_to_6 and_most_sig_byte_decomp_0_to_7: ℕ}
+   and_most_sig_byte_decomp_0_to_5 and_most_sig_byte_decomp_0_to_6 and_most_sig_byte_decomp_0_to_7: F}
   (h₀: most_sig_byte_decomp_0 * (most_sig_byte_decomp_0 - 1) = 0)
   (h₁: most_sig_byte_decomp_1 * (most_sig_byte_decomp_1 - 1) = 0)
   (h₂: most_sig_byte_decomp_2 * (most_sig_byte_decomp_2 - 1) = 0)
@@ -193,11 +207,11 @@ lemma wordRange_correct
   (h₁₇: and_most_sig_byte_decomp_0_to_7 * value_0 = 0)
   (h₁₈: and_most_sig_byte_decomp_0_to_7 * value_1 = 0)
   (h₁₉: and_most_sig_byte_decomp_0_to_7 * value_2 = 0)
-  (h₂₀: value_0 < 256)
-  (h₂₁: value_1 < 256)
-  (h₂₂: value_2 < 256)
-  (h₂₃: value_3 < 256)
-  : value_0 + value_1 * 256 + value_2 * (256 ^ 2) + value_3 * (256 ^ 3) < 2130706433 := by {
+  (h₂₀: value_0.val < 256)
+  (h₂₁: value_1.val < 256)
+  (h₂₂: value_2.val < 256)
+  (h₂₃: value_3.val < 256)
+  : value_0.val + value_1.val * 256 + value_2.val * (256 ^ 2) + value_3.val * (256 ^ 3) < 2130706433 := by {
   -- 1) each decomposed bit is 0 or 1
   have b0 : most_sig_byte_decomp_0 = 0 ∨ most_sig_byte_decomp_0 = 1 := is_binary h₀
   have b1 : most_sig_byte_decomp_1 = 0 ∨ most_sig_byte_decomp_1 = 1 := is_binary h₁
@@ -208,18 +222,18 @@ lemma wordRange_correct
   have b6 : most_sig_byte_decomp_6 = 0 ∨ most_sig_byte_decomp_6 = 1 := is_binary h₆
   have b7 : most_sig_byte_decomp_7 = 0 ∨ most_sig_byte_decomp_7 = 1 := is_binary h₇
   -- 2) because bit7 = 0, value_3 ≤ 127
-  have v3_le_127 : value_3 ≤ 127 := by
+  have v3_le_127 : value_3.val ≤ 127 := by
     { -- value_3 = sum_{i=0..7} bit_i * 2^i and bit7 = 0 so upper bound is when bits0..6 = 1
       rw [← h₉, h₁₀]
-      have : most_sig_byte_decomp_0 + most_sig_byte_decomp_1 * 2 + most_sig_byte_decomp_2 * 4 + most_sig_byte_decomp_3 * 8 +
-            most_sig_byte_decomp_4 * 16 + most_sig_byte_decomp_5 * 32 + most_sig_byte_decomp_6 * 64 ≤ 1 + 2 + 4 + 8 + 16 + 32 + 64 := by
-      { have b0' : most_sig_byte_decomp_0 ≤ 1 := is_binary_less_than_one b0
-        have b1' : most_sig_byte_decomp_1 ≤ 1 := is_binary_less_than_one b1
-        have b2' : most_sig_byte_decomp_2 ≤ 1 := is_binary_less_than_one b2
-        have b3' : most_sig_byte_decomp_3 ≤ 1 := is_binary_less_than_one b3
-        have b4' : most_sig_byte_decomp_4 ≤ 1 := is_binary_less_than_one b4
-        have b5' : most_sig_byte_decomp_5 ≤ 1 := is_binary_less_than_one b5
-        have b6' : most_sig_byte_decomp_6 ≤ 1 := is_binary_less_than_one b6
+      have : most_sig_byte_decomp_0.val + most_sig_byte_decomp_1.val * 2 + most_sig_byte_decomp_2.val * 4 + most_sig_byte_decomp_3.val * 8 +
+            most_sig_byte_decomp_4.val * 16 + most_sig_byte_decomp_5.val * 32 + most_sig_byte_decomp_6.val * 64 ≤ 1 + 2 + 4 + 8 + 16 + 32 + 64 := by
+      { have b0' : most_sig_byte_decomp_0.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b0)
+        have b1' : most_sig_byte_decomp_1.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b1)
+        have b2' : most_sig_byte_decomp_2.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b2)
+        have b3' : most_sig_byte_decomp_3.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b3)
+        have b4' : most_sig_byte_decomp_4.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b4)
+        have b5' : most_sig_byte_decomp_5.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b5)
+        have b6' : most_sig_byte_decomp_6.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b6)
         gcongr
         simp
         exact b1'
@@ -234,8 +248,14 @@ lemma wordRange_correct
         simp
         exact b6'
       }
-      simp at this
+      simp at this ⊢
+      simp [ZMod.val_add, ZMod.val_mul]
+      rw [Nat.mod_eq_of_lt]
       exact this
+      apply Nat.lt_trans
+      exact Nat.lt_succ_of_le this
+      unfold p
+      simp
     }
   have c0 := is_binary_mul_is_binary b0 b1 h₁₁
   have c1 := is_binary_mul_is_binary c0 b2 h₁₂
