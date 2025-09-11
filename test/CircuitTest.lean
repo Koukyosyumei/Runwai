@@ -349,6 +349,510 @@ lemma eval_eq_lt
     | _ => simp at hlt
   }
 
+abbrev is_binary_type (ident: String): Ast.Ty := (Ast.Ty.unit.refin
+                                                  (Ast.Predicate.ind
+                                                    (Ast.exprEq
+                                                      ((Ast.Expr.var ident).fieldExpr Ast.FieldOp.mul
+                                                        ((Ast.Expr.var ident).fieldExpr
+                                                          Ast.FieldOp.sub (Ast.Expr.constF 1)))
+                                                      (Ast.Expr.constF 0))))
+
+abbrev bits_word_reduce (i₀ i₁ i₂ i₃ i₄ i₅ i₆ i₇: String) : Ast.Expr :=
+                                      ((((((((Ast.Expr.var i₀).fieldExpr Ast.FieldOp.add
+                                                                ((Ast.Expr.var i₁).fieldExpr
+                                                                  Ast.FieldOp.mul (Ast.Expr.constF 2))).fieldExpr
+                                                            Ast.FieldOp.add
+                                                            ((Ast.Expr.var i₂).fieldExpr
+                                                              Ast.FieldOp.mul (Ast.Expr.constF 4))).fieldExpr
+                                                        Ast.FieldOp.add
+                                                        ((Ast.Expr.var i₃).fieldExpr
+                                                          Ast.FieldOp.mul (Ast.Expr.constF 8))).fieldExpr
+                                                    Ast.FieldOp.add
+                                                    ((Ast.Expr.var i₄).fieldExpr Ast.FieldOp.mul
+                                                      (Ast.Expr.constF 16))).fieldExpr
+                                                Ast.FieldOp.add
+                                                ((Ast.Expr.var i₅).fieldExpr Ast.FieldOp.mul
+                                                  (Ast.Expr.constF 32))).fieldExpr
+                                            Ast.FieldOp.add
+                                            ((Ast.Expr.var i₆).fieldExpr Ast.FieldOp.mul
+                                              (Ast.Expr.constF 64))).fieldExpr
+                                        Ast.FieldOp.add
+                                        ((Ast.Expr.var i₇).fieldExpr Ast.FieldOp.mul
+                                          (Ast.Expr.constF 128)))
+abbrev is_eq_mul_type (i₁ i₂ i₃: String): Ast.Ty := Ast.Ty.unit.refin
+                        (Ast.Predicate.ind
+                          (Ast.exprEq (Ast.Expr.var i₁)
+                            ((Ast.Expr.var i₂).fieldExpr Ast.FieldOp.mul
+                              (Ast.Expr.var i₃))))
+
+lemma subtype_wordrage_check
+  (hb₁: Env.lookupTy Γ "b₀" = some (is_binary_type "most_sig_byte_decomp_0"))
+  (hb₂ : Env.lookupTy Γ "b₁" = some (is_binary_type "most_sig_byte_decomp_1"))
+  (hb₃: Env.lookupTy Γ "b₂" = some (is_binary_type "most_sig_byte_decomp_2"))
+  (hb₄ : Env.lookupTy Γ "b₃" = some (is_binary_type "most_sig_byte_decomp_3"))
+  (hb₅: Env.lookupTy Γ "b₄" = some (is_binary_type "most_sig_byte_decomp_4"))
+  (hb₆ : Env.lookupTy Γ "b₅" = some (is_binary_type "most_sig_byte_decomp_5"))
+  (hb₇: Env.lookupTy Γ "b₆" = some (is_binary_type "most_sig_byte_decomp_6"))
+  (hb₈ : Env.lookupTy Γ "b₇" = some (is_binary_type "most_sig_byte_decomp_7"))
+  (hu₁: Env.lookupTy Γ "u₁" = some (Ast.Ty.unit.refin
+                                  (Ast.Predicate.ind
+                                    (Ast.exprEq
+                                      (bits_word_reduce "most_sig_byte_decomp_0" "most_sig_byte_decomp_1" "most_sig_byte_decomp_2" "most_sig_byte_decomp_3"
+                                                        "most_sig_byte_decomp_4" "most_sig_byte_decomp_5" "most_sig_byte_decomp_6" "most_sig_byte_decomp_7")
+                                      (Ast.Expr.var "value_3")))))
+  (hu₂: Env.lookupTy Γ "u₂" = some                               (Ast.Ty.unit.refin
+                                (Ast.Predicate.ind
+                                  (Ast.exprEq (Ast.Expr.var "most_sig_byte_decomp_7") (Ast.Expr.constF 0)))))
+  (hu₃: Env.lookupTy Γ "u₃" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_0" "most_sig_byte_decomp_1"))
+  (hu₄: Env.lookupTy Γ "u₄" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_3" "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_2"))
+  (hu₅: Env.lookupTy Γ "u₅" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_4" "and_most_sig_byte_decomp_0_to_3" "most_sig_byte_decomp_3"))
+  (hu₆: Env.lookupTy Γ "u₆" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_5" "and_most_sig_byte_decomp_0_to_4" "most_sig_byte_decomp_4"))
+  (hu₇: Env.lookupTy Γ "u₇" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_6" "and_most_sig_byte_decomp_0_to_5" "most_sig_byte_decomp_5"))
+  (hu₈: Env.lookupTy Γ "u₈" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_7" "and_most_sig_byte_decomp_0_to_6" "most_sig_byte_decomp_6"))
+  (hu₉: Env.lookupTy Γ "u₉" = some                           (Ast.Ty.unit.refin
+                  (Ast.Predicate.ind
+                    (Ast.exprEq (Ast.Expr.constF 0)
+                      ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                        (Ast.Expr.var "value_0"))))))
+  (hu₁₀: Env.lookupTy Γ "u₁₀" = some                           (Ast.Ty.unit.refin
+                (Ast.Predicate.ind
+                  (Ast.exprEq (Ast.Expr.constF 0)
+                    ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                      (Ast.Expr.var "value_1"))))))
+  (hu₁₁: Env.lookupTy Γ "u₁₁" = some                           (Ast.Ty.unit.refin
+                (Ast.Predicate.ind
+                  (Ast.exprEq (Ast.Expr.constF 0)
+                    ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                      (Ast.Expr.var "value_2"))))))
+  ( hl₀ : Env.lookupTy Γ "l₀" = some ((Ast.Ty.unit.refin
+            (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+              (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))
+  : @Ty.SubtypeJudgment σ Δ Γ (Ast.Ty.unit.refin
+      (Ty.lookup_pred [(Ast.Expr.var "value_3", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+        (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+        (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))) wordRangeCheckerCircuit.goal := by {
+    apply Ty.SubtypeJudgment.TSub_Refine
+    apply Ty.SubtypeJudgment.TSub_Refl
+    unfold PropSemantics.tyenvToProp PropSemantics.predToProp PropSemantics.exprToProp PropSemantics.varToProp
+    unfold Ty.lookup_pred Ast.renameVarinPred Ast.renameVar Env.freshName Ty.update_UsedNames
+    simp
+    unfold PropSemantics.predToProp PropSemantics.exprToProp
+    unfold Ast.renameVarinPred Ast.renameVar Env.freshName
+    simp
+    have hu8_i : (Env.lookupCircuit Δ "u8").ident_i = "i" := by {
+      unfold Env.lookupCircuit Δ
+      simp
+    }
+    have hu8_t : (Env.lookupCircuit Δ "u8").ident_t = "trace" := by {
+      unfold Env.lookupCircuit Δ
+      simp
+    }
+    --unfold Env.lookupCircuit Δ
+    rw[hu8_i, hu8_t]
+    simp
+    repeat
+      unfold Ast.renameVar
+      simp
+    intro v h₁ h₂ h₃
+    have hb₁' := h₁ "b₀" (is_binary_type "most_sig_byte_decomp_0") hb₁
+    rw[hb₁] at hb₁'
+    simp at hb₁'
+    have hb₂' := h₁ "b₁" (is_binary_type "most_sig_byte_decomp_1") hb₂
+    rw[hb₂] at hb₂'
+    simp at hb₂'
+    have hb₃' := h₁ "b₂" (is_binary_type "most_sig_byte_decomp_2") hb₃
+    rw[hb₃] at hb₃'
+    simp at hb₃'
+    have hb₄' := h₁ "b₃" (is_binary_type "most_sig_byte_decomp_3") hb₄
+    rw[hb₄] at hb₄'
+    simp at hb₄'
+    have hb₅' := h₁ "b₄" (is_binary_type "most_sig_byte_decomp_4") hb₅
+    rw[hb₅] at hb₅'
+    simp at hb₅'
+    have hb₆' := h₁ "b₅" (is_binary_type "most_sig_byte_decomp_5") hb₆
+    rw[hb₆] at hb₆'
+    simp at hb₆'
+    have hb₇' := h₁ "b₆" (is_binary_type "most_sig_byte_decomp_6") hb₇
+    rw[hb₇] at hb₇'
+    simp at hb₇'
+    have hb₈' := h₁ "b₇" (is_binary_type "most_sig_byte_decomp_7") hb₈
+    rw[hb₈] at hb₈'
+    simp at hb₈'
+    have hu₁' := h₁ "u₁" (Ast.Ty.unit.refin (Ast.Predicate.ind
+                                    (Ast.exprEq
+                                      (bits_word_reduce "most_sig_byte_decomp_0" "most_sig_byte_decomp_1" "most_sig_byte_decomp_2" "most_sig_byte_decomp_3"
+                                                        "most_sig_byte_decomp_4" "most_sig_byte_decomp_5" "most_sig_byte_decomp_6" "most_sig_byte_decomp_7")
+                                      (Ast.Expr.var "value_3")))) hu₁
+    rw[hu₁] at hu₁'
+    simp at hu₁'
+    have hu₂' := h₁ "u₂" (Ast.Ty.unit.refin
+                            (Ast.Predicate.ind
+                              (Ast.exprEq (Ast.Expr.var "most_sig_byte_decomp_7") (Ast.Expr.constF 0)))) hu₂
+    rw[hu₂] at hu₂'
+    simp at hu₂'
+    have hu₃' := h₁ "u₃" (is_eq_mul_type "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_0" "most_sig_byte_decomp_1") hu₃
+    rw[hu₃] at hu₃'
+    simp at hu₃'
+    have hu₄' := h₁ "u₄" (is_eq_mul_type "and_most_sig_byte_decomp_0_to_3" "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_2") hu₄
+    rw[hu₄] at hu₄'
+    simp at hu₄'
+    have hu₅' := h₁ "u₅" (Ast.Ty.unit.refin (Ast.Predicate.ind
+                        (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_4")
+                          ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_3").fieldExpr Ast.FieldOp.mul
+                            (Ast.Expr.var "most_sig_byte_decomp_3"))))) hu₅
+    rw[hu₅] at hu₅'
+    simp at hu₅'
+    have hu₆' := h₁ "u₆" (Ast.Ty.unit.refin (Ast.Predicate.ind
+                      (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_5")
+                        ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_4").fieldExpr Ast.FieldOp.mul
+                          (Ast.Expr.var "most_sig_byte_decomp_4"))))) hu₆
+    rw[hu₆] at hu₆'
+    simp at hu₆'
+    have hu₇' := h₁ "u₇" (Ast.Ty.unit.refin (Ast.Predicate.ind
+                    (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_6")
+                      ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_5").fieldExpr Ast.FieldOp.mul
+                        (Ast.Expr.var "most_sig_byte_decomp_5"))))) hu₇
+    rw[hu₇] at hu₇'
+    simp at hu₇'
+    have hu₈' := h₁ "u₈" (Ast.Ty.unit.refin (Ast.Predicate.ind
+                  (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_7")
+                    ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_6").fieldExpr Ast.FieldOp.mul
+                      (Ast.Expr.var "most_sig_byte_decomp_6"))))) hu₈
+    rw[hu₈] at hu₈'
+    simp at hu₈'
+    have hu₉' := h₁ "u₉" (Ast.Ty.unit.refin
+              (Ast.Predicate.ind
+                (Ast.exprEq (Ast.Expr.constF 0)
+                  ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                    (Ast.Expr.var "value_0"))))) hu₉
+    rw[hu₉] at hu₉'
+    simp at hu₉'
+    have hu₁₀' := h₁ "u₁₀" (Ast.Ty.unit.refin
+              (Ast.Predicate.ind
+                (Ast.exprEq (Ast.Expr.constF 0)
+                  ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                    (Ast.Expr.var "value_1"))))) hu₁₀
+    rw[hu₁₀] at hu₁₀'
+    simp at hu₁₀'
+    have hu₁₁' := h₁ "u₁₁" (Ast.Ty.unit.refin
+              (Ast.Predicate.ind
+                (Ast.exprEq (Ast.Expr.constF 0)
+                  ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                    (Ast.Expr.var "value_2"))))) hu₁₁
+    rw[hu₁₁] at hu₁₁'
+    simp at hu₁₁'
+    have hl₀' := h₁ "l₀" ((Ast.Ty.unit.refin
+        (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+          (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+          [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))) hl₀
+    rw[hl₀] at hl₀'
+    simp at hl₀'
+
+    cases hb₁'
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    rename_i ih₃ ih₄ r₂
+    cases ih₂
+    cases ih₃
+    cases ih₄
+    rename_i ih₁ ih₂ r₂
+    cases ih₁
+    cases ih₂
+    cases r₂
+    simp at r₂
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+    rw[← r₂] at r₁
+    simp at r₁
+
+    cases hb₂'
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    rename_i ih₃ ih₄ r₂
+    cases ih₂
+    cases ih₃
+    cases ih₄
+    rename_i ih₁ ih₂ r₂
+    cases ih₁
+    cases ih₂
+    cases r₂
+    simp at r₂
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+    rw[← r₂] at r₁
+    simp at r₁
+
+    cases hb₃'
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    rename_i ih₃ ih₄ r₂
+    cases ih₂
+    cases ih₃
+    cases ih₄
+    rename_i ih₁ ih₂ r₂
+    cases ih₁
+    cases ih₂
+    cases r₂
+    simp at r₂
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+    rw[← r₂] at r₁
+    simp at r₁
+
+    cases hb₄'
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    rename_i ih₃ ih₄ r₂
+    cases ih₂
+    cases ih₃
+    cases ih₄
+    rename_i ih₁ ih₂ r₂
+    cases ih₁
+    cases ih₂
+    cases r₂
+    simp at r₂
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+    rw[← r₂] at r₁
+    simp at r₁
+
+    cases hb₅'
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    rename_i ih₃ ih₄ r₂
+    cases ih₂
+    cases ih₃
+    cases ih₄
+    rename_i ih₁ ih₂ r₂
+    cases ih₁
+    cases ih₂
+    cases r₂
+    simp at r₂
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+    rw[← r₂] at r₁
+    simp at r₁
+
+    cases hb₆'
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    rename_i ih₃ ih₄ r₂
+    cases ih₂
+    cases ih₃
+    cases ih₄
+    rename_i ih₁ ih₂ r₂
+    cases ih₁
+    cases ih₂
+    cases r₂
+    simp at r₂
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+    rw[← r₂] at r₁
+    simp at r₁
+
+    cases hb₇'
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    rename_i ih₃ ih₄ r₂
+    cases ih₂
+    cases ih₃
+    cases ih₄
+    rename_i ih₁ ih₂ r₂
+    cases ih₁
+    cases ih₂
+    cases r₂
+    simp at r₂
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+    rw[← r₂] at r₁
+    simp at r₁
+
+    cases hb₈'
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    rename_i ih₃ ih₄ r₂
+    cases ih₂
+    cases ih₃
+    cases ih₄
+    rename_i ih₁ ih₂ r₂
+    cases ih₁
+    cases ih₂
+    cases r₂
+    simp at r₂
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+    rw[← r₂] at r₁
+    simp at r₁
+
+    cases hu₁'
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    rename_i ih₃ ih₄ r₂
+    cases ih₂
+    cases ih₃
+    rename_i ih₇ ih₈ r₄
+    cases ih₄
+    rename_i ih₉ ih₁₀ r₅
+    cases ih₇
+    rename_i ih₁₃ ih₁₄ r₇
+    cases ih₈
+    rename_i ih₁₅ ih₁₆ r₈
+    cases ih₉
+    cases ih₁₀
+    cases ih₁₃
+    rename_i ih₁₇ ih₁₈ r₉
+    cases ih₁₄
+    rename_i ih₁₉ ih₂₀ r₁₀
+    cases ih₁₅
+    cases ih₁₆
+    cases ih₁₇
+    rename_i ih₂₁ ih₂₂ r₁₁
+    cases ih₁₈
+    rename_i ih₂₂ ih₂₃ r₁₂
+    cases ih₁₉
+    cases ih₂₀
+    cases ih₂₁
+    rename_i ih₂₄ ih₂₅ r₁₃
+    cases ih₂₂
+    cases ih₂₃
+    cases ih₂₄
+    rename_i ih₂₅ ih₂₆ r₁₄
+    cases ih₂₅
+    cases ih₂₆
+    rename_i ih₂₇ ih₂₈ r₁₅
+    cases ih₂₇
+    cases ih₂₈
+    cases ih₂₂
+    rename_i ih₂₉ ih₃₀ r₁₆
+    cases ih₂₉
+    cases ih₃₀
+    cases ih₂₅
+    rename_i ih₃₁ ih₃₂ r₁₇
+    cases ih₃₁
+    cases ih₃₂
+    unfold Eval.evalFieldOp at r₂ r₄ r₅ r₇ r₈ r₉ r₁₀ r₁₁ r₁₂ r₁₃ r₁₄ r₁₅
+    simp at r₂ r₄ r₅ r₇ r₈ r₉ r₁₀ r₁₁ r₁₂ r₁₃ r₁₄ r₁₅ r₁₆ r₁₇
+    rw[← r₁₅] at r₁₄
+    rw[← r₁₄] at r₁₃
+    rw[← r₁₃] at r₁₁
+    rw[← r₁₂] at r₉
+    rw[← r₁₁] at r₉
+    rw[← r₁₀] at r₇
+    rw[← r₉] at r₇
+    rw[← r₈] at r₄
+    rw[← r₇] at r₄
+    rw[← r₁₆] at r₄
+    rw[← r₅] at r₂
+    rw[← r₄] at r₂
+
+    cases hu₂'
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    cases ih₂
+    --unfold Eval.evalRelOp at r₁
+
+    cases hu₃'
+    rename_i ih₁ ih₂ r₂
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r₂'
+    cases ih₁
+    cases ih₂
+
+    cases hu₄'
+    rename_i ih₁ ih₂ r₃
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r₃'
+    cases ih₁
+    cases ih₂
+
+    cases hu₅'
+    rename_i ih₁ ih₂ r₄
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r₄'
+    cases ih₁
+    cases ih₂
+
+    cases hu₆'
+    rename_i ih₁ ih₂ r₅
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r₅'
+    cases ih₁
+    cases ih₂
+
+    cases hu₇'
+    rename_i ih₁ ih₂ r₆
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r₆'
+    cases ih₁
+    cases ih₂
+
+    cases hu₈'
+    rename_i ih₁ ih₂ r₇
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r₇'
+    cases ih₁
+    cases ih₂
+
+    cases hu₉'
+    rename_i ih₁ ih₂ r₈
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r₈'
+    cases ih₁
+    cases ih₂
+
+    cases hu₁₀'
+    rename_i ih₁ ih₂ r₉
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r₉'
+    cases ih₁
+    cases ih₂
+
+    cases hu₁₁'
+    rename_i ih₁ ih₂ r₁₀
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r₁₀'
+    cases ih₁
+    cases ih₂
+
+    unfold Eval.evalFieldOp at r₂' r₃' r₄' r₅' r₆' r₇' r₈' r₉' r₁₀'
+    simp at r₂' r₃' r₄' r₅' r₆' r₇' r₈' r₉' r₁₀'
+
+    unfold Ty.lookup_pred Env.lookupCircuit Δ at hl₀'
+    simp at hl₀'
+    unfold PropSemantics.predToProp Ast.renameVarinPred Ast.renameVar Env.freshName at hl₀'
+    simp at hl₀'
+    unfold Ast.renameVarinPred Ast.renameVar PropSemantics.exprToProp at hl₀'
+    simp at hl₀'
+    repeat
+      unfold Ast.renameVar at hl₀'
+      simp at hl₀'
+    obtain ⟨hl₀₁',hl₀₂'⟩ := hl₀'
+    have hvl₀ := eval_eq_lt hl₀₂' hl₀₁'
+    cases hvl₀
+    rename_i ih₀ ih₁ r₁
+    cases ih₀
+    rename_i ih₀
+    cases ih₀
+    cases ih₁
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+
+}
+
+/-
 theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerCircuit 1 := by
   unfold Ty.circuitCorrect
   intro x i hs hi hrow ht hσ
@@ -756,6 +1260,7 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
         unfold Ast.renameVarinPred Ast.renameVar Env.freshName
         simp
         unfold Env.lookupCircuit Δ
+        --rw[hu8_i, hu8_t]
         simp
         repeat
           unfold Ast.renameVar
@@ -878,6 +1383,139 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
                                         apply lookup_update_ne
                                         simp
                                       }
+        have hu₂: Env.lookupTy Γ' "u₂" = some                               (Ast.Ty.unit.refin
+                                (Ast.Predicate.ind
+                                  (Ast.exprEq (Ast.Expr.var "most_sig_byte_decomp_7") (Ast.Expr.constF 0)))) := by {
+                                    unfold Γ'
+                                    apply lookup_update_ne
+                                    simp
+                                  }
+
+        have hu₃: Env.lookupTy Γ' "u₃" = some (
+                            (Ast.Ty.unit.refin
+                              (Ast.Predicate.ind
+                                (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_2")
+                                  ((Ast.Expr.var "most_sig_byte_decomp_0").fieldExpr Ast.FieldOp.mul
+                                    (Ast.Expr.var "most_sig_byte_decomp_1")))))) := by {
+                                    unfold Γ'
+                                    apply lookup_update_ne
+                                    simp
+                                    }
+        have hu₄: Env.lookupTy Γ' "u₄" = some                           (Ast.Ty.unit.refin
+                            (Ast.Predicate.ind
+                              (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_3")
+                                ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_2").fieldExpr Ast.FieldOp.mul
+                                  (Ast.Expr.var "most_sig_byte_decomp_2"))))) := by {
+                                    unfold Γ'
+                                    apply lookup_update_ne
+                                    simp
+                                    }
+        have hu₅: Env.lookupTy Γ' "u₅" = some                           (Ast.Ty.unit.refin
+                          (Ast.Predicate.ind
+                            (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_4")
+                              ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_3").fieldExpr Ast.FieldOp.mul
+                                (Ast.Expr.var "most_sig_byte_decomp_3"))))) := by {
+                                    unfold Γ'
+                                    apply lookup_update_ne
+                                    simp
+                                    }
+        have hu₆: Env.lookupTy Γ' "u₆" = some                           (Ast.Ty.unit.refin
+                        (Ast.Predicate.ind
+                          (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_5")
+                            ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_4").fieldExpr Ast.FieldOp.mul
+                              (Ast.Expr.var "most_sig_byte_decomp_4"))))) := by {
+                                    unfold Γ'
+                                    apply lookup_update_ne
+                                    simp
+                                    }
+        have hu₇: Env.lookupTy Γ' "u₇" = some                           (Ast.Ty.unit.refin
+                      (Ast.Predicate.ind
+                        (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_6")
+                          ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_5").fieldExpr Ast.FieldOp.mul
+                            (Ast.Expr.var "most_sig_byte_decomp_5"))))) := by {
+                                    unfold Γ'
+                                    apply lookup_update_ne
+                                    simp
+                                    }
+        have hu₈: Env.lookupTy Γ' "u₈" = some                           (Ast.Ty.unit.refin
+                    (Ast.Predicate.ind
+                      (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_7")
+                        ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_6").fieldExpr Ast.FieldOp.mul
+                          (Ast.Expr.var "most_sig_byte_decomp_6"))))) := by {
+                                    unfold Γ'
+                                    apply lookup_update_ne
+                                    simp
+                                    }
+        have hu₉: Env.lookupTy Γ' "u₉" = some                           (Ast.Ty.unit.refin
+                  (Ast.Predicate.ind
+                    (Ast.exprEq (Ast.Expr.constF 0)
+                      ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                        (Ast.Expr.var "value_0"))))):= by {
+                                    unfold Γ'
+                                    apply lookup_update_ne
+                                    simp
+                                    }
+        have hu₁₀: Env.lookupTy Γ' "u₁₀" = some                           (Ast.Ty.unit.refin
+                (Ast.Predicate.ind
+                  (Ast.exprEq (Ast.Expr.constF 0)
+                    ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                      (Ast.Expr.var "value_1"))))):= by {
+                                    unfold Γ'
+                                    apply lookup_update_ne
+                                    simp
+                                    }
+        have hu₁₁: Env.lookupTy Γ' "u₁₁" = some                           (Ast.Ty.unit.refin
+                (Ast.Predicate.ind
+                  (Ast.exprEq (Ast.Expr.constF 0)
+                    ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                      (Ast.Expr.var "value_2"))))):= by {
+                                    unfold Γ'
+                                    apply lookup_update_ne
+                                    simp
+                                    }
+        have hu₄' := h₁ "u₄" (Ast.Ty.unit.refin (Ast.Predicate.ind
+                              (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_3")
+                                ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_2").fieldExpr Ast.FieldOp.mul
+                                  (Ast.Expr.var "most_sig_byte_decomp_2"))))) hu₄
+        have hu₃' := h₁ "u₃" (Ast.Ty.unit.refin
+                              (Ast.Predicate.ind
+                                (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_2")
+                                  ((Ast.Expr.var "most_sig_byte_decomp_0").fieldExpr Ast.FieldOp.mul
+                                    (Ast.Expr.var "most_sig_byte_decomp_1"))))) hu₃
+        have hu₂' := h₁ "u₂" (Ast.Ty.unit.refin
+                                (Ast.Predicate.ind
+                                  (Ast.exprEq (Ast.Expr.var "most_sig_byte_decomp_7") (Ast.Expr.constF 0)))) hu₂
+        have hu₅' := h₁ "u₅" (Ast.Ty.unit.refin (Ast.Predicate.ind
+                            (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_4")
+                              ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_3").fieldExpr Ast.FieldOp.mul
+                                (Ast.Expr.var "most_sig_byte_decomp_3"))))) hu₅
+        have hu₆' := h₁ "u₆" (Ast.Ty.unit.refin (Ast.Predicate.ind
+                          (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_5")
+                            ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_4").fieldExpr Ast.FieldOp.mul
+                              (Ast.Expr.var "most_sig_byte_decomp_4"))))) hu₆
+        have hu₇' := h₁ "u₇" (Ast.Ty.unit.refin (Ast.Predicate.ind
+                        (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_6")
+                          ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_5").fieldExpr Ast.FieldOp.mul
+                            (Ast.Expr.var "most_sig_byte_decomp_5"))))) hu₇
+        have hu₈' := h₁ "u₈" (Ast.Ty.unit.refin (Ast.Predicate.ind
+                      (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_7")
+                        ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_6").fieldExpr Ast.FieldOp.mul
+                          (Ast.Expr.var "most_sig_byte_decomp_6"))))) hu₈
+        have hu₉' := h₁ "u₉" (Ast.Ty.unit.refin
+                  (Ast.Predicate.ind
+                    (Ast.exprEq (Ast.Expr.constF 0)
+                      ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                        (Ast.Expr.var "value_0"))))) hu₉
+        have hu₁₀' := h₁ "u₁₀" (Ast.Ty.unit.refin
+                  (Ast.Predicate.ind
+                    (Ast.exprEq (Ast.Expr.constF 0)
+                      ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                        (Ast.Expr.var "value_1"))))) hu₁₀
+        have hu₁₁' := h₁ "u₁₁" (Ast.Ty.unit.refin
+                  (Ast.Predicate.ind
+                    (Ast.exprEq (Ast.Expr.constF 0)
+                      ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                        (Ast.Expr.var "value_2"))))) hu₁₁
         have hl₀ : Env.lookupTy Γ' "l₀" = some ((Ast.Ty.unit.refin
             (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
               (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
@@ -1192,11 +1830,37 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
         cases ih₁
         unfold Eval.evalRelOp at r₁
         simp at r₁
-        sorry
+
+        rw[hu₂] at hu₂'
+        simp at hu₂'
+        cases hu₂'
+        rename_i ih₀ ih₁ r₂
+        cases ih₀
+        cases ih₁
+        rename_i v₁' h₁
+        unfold Eval.evalRelOp at r₂
+        cases v₁' with
+        | vF _ => {
+          simp at r₂
+          rw[hu₃] at hu₃'
+          simp at hu₃'
+          cases hu₃'
+
+          rw[hu₄] at hu₄'
+          simp at hu₄'
+          cases hu₄'
+
+          rw[hu₅] at hu₅'
+          simp at hu₅'
+          cases hu₅'
+        }
+        | _ => simp at r₂
+
     }
     apply Ty.TypeJudgment.TE_SUB h_sub
     apply Ty.TypeJudgment.TE_VarEnv
     apply lookup_update_self
+-/
 
 theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
   unfold Ty.circuitCorrect
