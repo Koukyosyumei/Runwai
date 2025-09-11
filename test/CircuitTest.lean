@@ -1,6 +1,6 @@
 import Runwai.Typing
 import Runwai.Gadget
-import Runwai.PP
+--import Runwai.PP
 import Runwai.Tactic
 
 @[simp]
@@ -414,6 +414,303 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
     rfl
     rfl
     rfl
+    set τ := (Ast.Ty.unit.refin
+      (Ty.lookup_pred [(Ast.Expr.var "value_3", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+        (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+        (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))) with hτ
+    have hsub : @Ty.SubtypeJudgment σ Δ (Env.updateTy
+    (Env.updateTy
+      (Env.updateTy
+        (Env.updateTy
+          (Env.updateTy
+            (Env.updateTy
+              (Env.updateTy
+                (Env.updateTy
+                  (Env.updateTy
+                    (Env.updateTy
+                      (Env.updateTy
+                        (Env.updateTy
+                          (Env.updateTy
+                            (Env.updateTy
+                              (Env.updateTy
+                                (Env.updateTy
+                                  (Env.updateTy
+                                    (Env.updateTy
+                                      (Env.updateTy
+                                        (Env.updateTy
+                                          (Env.updateTy
+                                            (Env.updateTy
+                                              (Env.updateTy
+                                                (Env.updateTy
+                                                  (Env.updateTy
+                                                    (Env.updateTy
+                                                      (Env.updateTy
+                                                        (Env.updateTy
+                                                          (Env.updateTy
+                                                            (Env.updateTy
+                                                              (Env.updateTy
+                                                                (Env.updateTy
+                                                                  (Env.updateTy
+                                                                    (Env.updateTy
+                                                                      (Env.updateTy
+                                                                        (Env.updateTy
+                                                                          (Env.updateTy
+                                                                            (Env.updateTy
+                                                                              (Env.updateTy
+                                                                                (Env.updateTy
+                                                                                  (Env.updateTy
+                                                                                    (Env.updateTy
+                                                                                      (Env.updateTy []
+                                                                                        wordRangeCheckerCircuit.ident_t
+                                                                                        (((((Ast.Ty.field.refin
+                                                                                                          (Ast.Predicate.ind
+                                                                                                            (Ast.Expr.constBool
+                                                                                                              true))).arr
+                                                                                                      wordRangeCheckerCircuit.width).refin
+                                                                                                  (Ast.Predicate.ind
+                                                                                                    (Ast.Expr.constBool
+                                                                                                      true))).arr
+                                                                                              ↑x.length).refin
+                                                                                          (Ast.Predicate.ind
+                                                                                            (Ast.Expr.constBool true))))
+                                                                                      wordRangeCheckerCircuit.ident_i
+                                                                                      (Ast.Ty.int.refin
+                                                                                        (Ast.Predicate.dep "v"
+                                                                                          ((Ast.Expr.var "v").binRel
+                                                                                            Ast.RelOp.lt
+                                                                                            (Ast.Expr.constZ
+                                                                                              x.length)))))
+                                                                                    "value_0"
+                                                                                    (Ast.Ty.field.refin
+                                                                                      (Ast.Predicate.ind
+                                                                                        (Ast.Expr.constBool true))))
+                                                                                  "value_1"
+                                                                                  (Ast.Ty.field.refin
+                                                                                    (Ast.Predicate.ind
+                                                                                      (Ast.Expr.constBool true))))
+                                                                                "value_2"
+                                                                                (Ast.Ty.field.refin
+                                                                                  (Ast.Predicate.ind
+                                                                                    (Ast.Expr.constBool true))))
+                                                                              "value_3"
+                                                                              (Ast.Ty.field.refin
+                                                                                (Ast.Predicate.ind
+                                                                                  (Ast.Expr.constBool true))))
+                                                                            "most_sig_byte_decomp_0"
+                                                                            (Ast.Ty.field.refin
+                                                                              (Ast.Predicate.ind
+                                                                                (Ast.Expr.constBool true))))
+                                                                          "most_sig_byte_decomp_1"
+                                                                          (Ast.Ty.field.refin
+                                                                            (Ast.Predicate.ind
+                                                                              (Ast.Expr.constBool true))))
+                                                                        "most_sig_byte_decomp_2"
+                                                                        (Ast.Ty.field.refin
+                                                                          (Ast.Predicate.ind
+                                                                            (Ast.Expr.constBool true))))
+                                                                      "most_sig_byte_decomp_3"
+                                                                      (Ast.Ty.field.refin
+                                                                        (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                                    "most_sig_byte_decomp_4"
+                                                                    (Ast.Ty.field.refin
+                                                                      (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                                  "most_sig_byte_decomp_5"
+                                                                  (Ast.Ty.field.refin
+                                                                    (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                                "most_sig_byte_decomp_6"
+                                                                (Ast.Ty.field.refin
+                                                                  (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                              "most_sig_byte_decomp_7"
+                                                              (Ast.Ty.field.refin
+                                                                (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                            "and_most_sig_byte_decomp_0_to_2"
+                                                            (Ast.Ty.field.refin
+                                                              (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                          "and_most_sig_byte_decomp_0_to_3"
+                                                          (Ast.Ty.field.refin
+                                                            (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                        "and_most_sig_byte_decomp_0_to_4"
+                                                        (Ast.Ty.field.refin
+                                                          (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                      "and_most_sig_byte_decomp_0_to_5"
+                                                      (Ast.Ty.field.refin
+                                                        (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                    "and_most_sig_byte_decomp_0_to_6"
+                                                    (Ast.Ty.field.refin (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                  "and_most_sig_byte_decomp_0_to_7"
+                                                  (Ast.Ty.field.refin (Ast.Predicate.ind (Ast.Expr.constBool true))))
+                                                "b₀"
+                                                (Ast.Ty.unit.refin
+                                                  (Ast.Predicate.ind
+                                                    (Ast.exprEq
+                                                      ((Ast.Expr.var "most_sig_byte_decomp_0").fieldExpr Ast.FieldOp.mul
+                                                        ((Ast.Expr.var "most_sig_byte_decomp_0").fieldExpr
+                                                          Ast.FieldOp.sub (Ast.Expr.constF 1)))
+                                                      (Ast.Expr.constF 0)))))
+                                              "b₁"
+                                              (Ast.Ty.unit.refin
+                                                (Ast.Predicate.ind
+                                                  (Ast.exprEq
+                                                    ((Ast.Expr.var "most_sig_byte_decomp_1").fieldExpr Ast.FieldOp.mul
+                                                      ((Ast.Expr.var "most_sig_byte_decomp_1").fieldExpr Ast.FieldOp.sub
+                                                        (Ast.Expr.constF 1)))
+                                                    (Ast.Expr.constF 0)))))
+                                            "b₂"
+                                            (Ast.Ty.unit.refin
+                                              (Ast.Predicate.ind
+                                                (Ast.exprEq
+                                                  ((Ast.Expr.var "most_sig_byte_decomp_2").fieldExpr Ast.FieldOp.mul
+                                                    ((Ast.Expr.var "most_sig_byte_decomp_2").fieldExpr Ast.FieldOp.sub
+                                                      (Ast.Expr.constF 1)))
+                                                  (Ast.Expr.constF 0)))))
+                                          "b₃"
+                                          (Ast.Ty.unit.refin
+                                            (Ast.Predicate.ind
+                                              (Ast.exprEq
+                                                ((Ast.Expr.var "most_sig_byte_decomp_3").fieldExpr Ast.FieldOp.mul
+                                                  ((Ast.Expr.var "most_sig_byte_decomp_3").fieldExpr Ast.FieldOp.sub
+                                                    (Ast.Expr.constF 1)))
+                                                (Ast.Expr.constF 0)))))
+                                        "b₄"
+                                        (Ast.Ty.unit.refin
+                                          (Ast.Predicate.ind
+                                            (Ast.exprEq
+                                              ((Ast.Expr.var "most_sig_byte_decomp_4").fieldExpr Ast.FieldOp.mul
+                                                ((Ast.Expr.var "most_sig_byte_decomp_4").fieldExpr Ast.FieldOp.sub
+                                                  (Ast.Expr.constF 1)))
+                                              (Ast.Expr.constF 0)))))
+                                      "b₅"
+                                      (Ast.Ty.unit.refin
+                                        (Ast.Predicate.ind
+                                          (Ast.exprEq
+                                            ((Ast.Expr.var "most_sig_byte_decomp_5").fieldExpr Ast.FieldOp.mul
+                                              ((Ast.Expr.var "most_sig_byte_decomp_5").fieldExpr Ast.FieldOp.sub
+                                                (Ast.Expr.constF 1)))
+                                            (Ast.Expr.constF 0)))))
+                                    "b₆"
+                                    (Ast.Ty.unit.refin
+                                      (Ast.Predicate.ind
+                                        (Ast.exprEq
+                                          ((Ast.Expr.var "most_sig_byte_decomp_6").fieldExpr Ast.FieldOp.mul
+                                            ((Ast.Expr.var "most_sig_byte_decomp_6").fieldExpr Ast.FieldOp.sub
+                                              (Ast.Expr.constF 1)))
+                                          (Ast.Expr.constF 0)))))
+                                  "b₇"
+                                  (Ast.Ty.unit.refin
+                                    (Ast.Predicate.ind
+                                      (Ast.exprEq
+                                        ((Ast.Expr.var "most_sig_byte_decomp_7").fieldExpr Ast.FieldOp.mul
+                                          ((Ast.Expr.var "most_sig_byte_decomp_7").fieldExpr Ast.FieldOp.sub
+                                            (Ast.Expr.constF 1)))
+                                        (Ast.Expr.constF 0)))))
+                                "u₁"
+                                (Ast.Ty.unit.refin
+                                  (Ast.Predicate.ind
+                                    (Ast.exprEq
+                                      ((((((((Ast.Expr.var "most_sig_byte_decomp_0").fieldExpr Ast.FieldOp.add
+                                                                ((Ast.Expr.var "most_sig_byte_decomp_1").fieldExpr
+                                                                  Ast.FieldOp.mul (Ast.Expr.constF 2))).fieldExpr
+                                                            Ast.FieldOp.add
+                                                            ((Ast.Expr.var "most_sig_byte_decomp_2").fieldExpr
+                                                              Ast.FieldOp.mul (Ast.Expr.constF 4))).fieldExpr
+                                                        Ast.FieldOp.add
+                                                        ((Ast.Expr.var "most_sig_byte_decomp_3").fieldExpr
+                                                          Ast.FieldOp.mul (Ast.Expr.constF 8))).fieldExpr
+                                                    Ast.FieldOp.add
+                                                    ((Ast.Expr.var "most_sig_byte_decomp_4").fieldExpr Ast.FieldOp.mul
+                                                      (Ast.Expr.constF 16))).fieldExpr
+                                                Ast.FieldOp.add
+                                                ((Ast.Expr.var "most_sig_byte_decomp_5").fieldExpr Ast.FieldOp.mul
+                                                  (Ast.Expr.constF 32))).fieldExpr
+                                            Ast.FieldOp.add
+                                            ((Ast.Expr.var "most_sig_byte_decomp_6").fieldExpr Ast.FieldOp.mul
+                                              (Ast.Expr.constF 64))).fieldExpr
+                                        Ast.FieldOp.add
+                                        ((Ast.Expr.var "most_sig_byte_decomp_7").fieldExpr Ast.FieldOp.mul
+                                          (Ast.Expr.constF 128)))
+                                      (Ast.Expr.var "value_3")))))
+                              "u₂"
+                              (Ast.Ty.unit.refin
+                                (Ast.Predicate.ind
+                                  (Ast.exprEq (Ast.Expr.var "most_sig_byte_decomp_7") (Ast.Expr.constF 0)))))
+                            "u₃"
+                            (Ast.Ty.unit.refin
+                              (Ast.Predicate.ind
+                                (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_2")
+                                  ((Ast.Expr.var "most_sig_byte_decomp_0").fieldExpr Ast.FieldOp.mul
+                                    (Ast.Expr.var "most_sig_byte_decomp_1"))))))
+                          "u₄"
+                          (Ast.Ty.unit.refin
+                            (Ast.Predicate.ind
+                              (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_3")
+                                ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_2").fieldExpr Ast.FieldOp.mul
+                                  (Ast.Expr.var "most_sig_byte_decomp_2"))))))
+                        "u₅"
+                        (Ast.Ty.unit.refin
+                          (Ast.Predicate.ind
+                            (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_4")
+                              ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_3").fieldExpr Ast.FieldOp.mul
+                                (Ast.Expr.var "most_sig_byte_decomp_3"))))))
+                      "u₆"
+                      (Ast.Ty.unit.refin
+                        (Ast.Predicate.ind
+                          (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_5")
+                            ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_4").fieldExpr Ast.FieldOp.mul
+                              (Ast.Expr.var "most_sig_byte_decomp_4"))))))
+                    "u₇"
+                    (Ast.Ty.unit.refin
+                      (Ast.Predicate.ind
+                        (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_6")
+                          ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_5").fieldExpr Ast.FieldOp.mul
+                            (Ast.Expr.var "most_sig_byte_decomp_5"))))))
+                  "u₈"
+                  (Ast.Ty.unit.refin
+                    (Ast.Predicate.ind
+                      (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_7")
+                        ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_6").fieldExpr Ast.FieldOp.mul
+                          (Ast.Expr.var "most_sig_byte_decomp_6"))))))
+                "u₉"
+                (Ast.Ty.unit.refin
+                  (Ast.Predicate.ind
+                    (Ast.exprEq (Ast.Expr.constF 0)
+                      ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                        (Ast.Expr.var "value_0"))))))
+              "u₁₀"
+              (Ast.Ty.unit.refin
+                (Ast.Predicate.ind
+                  (Ast.exprEq (Ast.Expr.constF 0)
+                    ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                      (Ast.Expr.var "value_1"))))))
+            "u₁₁"
+            (Ast.Ty.unit.refin
+              (Ast.Predicate.ind
+                (Ast.exprEq (Ast.Expr.constF 0)
+                  ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
+                    (Ast.Expr.var "value_2"))))))
+          "l₀"
+          (Ast.Ty.unit.refin
+            (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+              (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t])))
+        "l₁"
+        (Ast.Ty.unit.refin
+          (Ty.lookup_pred [(Ast.Expr.var "value_1", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+            (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))
+      "l₂"
+      (Ast.Ty.unit.refin
+        (Ty.lookup_pred [(Ast.Expr.var "value_2", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+          (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
+              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t])))))
+    "l₃" τ) τ wordRangeCheckerCircuit.goal := by {
+      sorry
+    }
     sorry
 
 theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
