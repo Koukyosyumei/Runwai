@@ -278,12 +278,39 @@ lemma wordRange_correct
   cases c5
   {
     rename_i h
-    have : value_3.val < 126 := by {
-      sorry
+    have : value_3.val < 127 := by {
+      by_contra hcontra
+      have h_eq : ZMod.val value_3 = 127 := by
+        apply le_antisymm v3_le_127
+        exact Nat.le_of_not_lt hcontra
+      have decomp :
+          most_sig_byte_decomp_0 = 1 ∧
+          most_sig_byte_decomp_1 = 1 ∧
+          most_sig_byte_decomp_2 = 1 ∧
+          most_sig_byte_decomp_3 = 1 ∧
+          most_sig_byte_decomp_4 = 1 ∧
+          most_sig_byte_decomp_5 = 1 ∧
+          most_sig_byte_decomp_6 = 1 := by {
+          rw[h₁₀] at h₉
+          rcases b0 with (rfl | rfl) <;>
+          rcases b1 with (rfl | rfl) <;>
+          rcases b2 with (rfl | rfl) <;>
+          rcases b3 with (rfl | rfl) <;>
+          rcases b4 with (rfl | rfl) <;>
+          rcases b5 with (rfl | rfl) <;>
+          rcases b6 with (rfl | rfl)
+          all_goals
+            simp at h₉
+            rw[← h₉] at h_eq
+            try contradiction
+          simp
+        }
+      rcases decomp with ⟨d0, d1, d2, d3, d4, d5, d6⟩
+      simp_all
     }
     calc
       value_0.val + value_1.val * 256 + value_2.val * 256^2 + value_3.val * 256^3
-          ≤ 255 + 255*256 + 255*256^2 + 125*256^3 := by
+          ≤ 255 + 255*256 + 255*256^2 + 126*256^3 := by
             apply Nat.add_le_add
             apply Nat.add_le_add
             apply Nat.add_le_add
@@ -291,11 +318,11 @@ lemma wordRange_correct
             · rw [Nat.mul_comm]; exact Nat.mul_le_mul_left _ (Nat.lt_succ_iff.mp h₂₁)
             · rw [Nat.mul_comm]; exact Nat.mul_le_mul_left _ (Nat.lt_succ_iff.mp h₂₂)
             · {
-              have h_le : value_3.val ≤ 125 := Nat.lt_succ_iff.mp this
+              have h_le : value_3.val ≤ 126 := Nat.lt_succ_iff.mp this
               rw [Nat.mul_comm]
               exact Nat.mul_le_mul_left _ h_le
             }
-      _ = 2113929215 := by simp
+      _ = 2130706431 := by simp
       _ < 2130706433 := by simp
   }
   {
