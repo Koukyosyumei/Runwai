@@ -780,12 +780,12 @@ lemma subtype_wordrage_check
     have hu₁₁'' := eq_mul_val hu₁₁'
 
     cases hu₂'
-    rename_i v₁ u₁ ih₁ ih₂ r₁
+    rename_i v₁ u₁ ih₁ ih₂ h_most_sig_byte_decomp_7_is_0
     cases ih₁
     cases ih₂
-    unfold Eval.evalRelOp at r₁
-    cases v₁ <;> simp at r₁
-    --rename_i most_sig_byte_decomp_7 h_most_sig_byte_decomp_7_env
+    unfold Eval.evalRelOp at h_most_sig_byte_decomp_7_is_0
+    cases v₁ <;> simp at h_most_sig_byte_decomp_7_is_0
+    rename_i most_sig_byte_decomp_7 h_most_sig_byte_decomp_7_env
 
     have hu8_i : (Env.lookupCircuit Δ "u8").ident_i = "i" := by {
       unfold Env.lookupCircuit Δ
@@ -866,8 +866,11 @@ lemma subtype_wordrage_check
     obtain ⟨h_most_sig_byte_decomp_5_env, h_most_sig_byte_decomp_5⟩ := h
     obtain ⟨most_sig_byte_decomp_6, h⟩ := hb₇''
     obtain ⟨h_most_sig_byte_decomp_6_env, h_most_sig_byte_decomp_6⟩ := h
-    obtain ⟨most_sig_byte_decomp_7, h⟩ := hb₈''
-    obtain ⟨h_most_sig_byte_decomp_7_env, h_most_sig_byte_decomp_7⟩ := h
+    obtain ⟨most_sig_byte_decomp_7', h⟩ := hb₈''
+    obtain ⟨h_most_sig_byte_decomp_7_env', h_most_sig_byte_decomp_7⟩ := h
+    rw[h_most_sig_byte_decomp_7_env] at h_most_sig_byte_decomp_7_env'
+    simp at h_most_sig_byte_decomp_7_env'
+    rw[← h_most_sig_byte_decomp_7_env'] at h_most_sig_byte_decomp_7
 
     obtain ⟨v₀, v₁, v₂, v₃, v₄, v₅, v₆, v₇, value_3, h⟩ := hu₁'
     obtain ⟨h₁, h₂, h₃, h₄, h₅, h₆, h₇, h₈, h_value_3_env, h_msb_rec⟩ := h
@@ -981,11 +984,84 @@ lemma subtype_wordrage_check
     simp at h₁
     rw[← h₁] at hvl₃
 
-    have hg : value_0.val + value_1.val * 256 + value_2.val * (256 ^ 2) + value_3.val * (256 ^ 3) < 2130706433 := by {
+    apply Eval.EvalProp.Rel
+    . apply Eval.EvalProp.ZBinOp
+      . apply Eval.EvalProp.ZBinOp
+        apply Eval.EvalProp.ZBinOp
+        . apply Eval.EvalProp.toZ
+          apply Eval.EvalProp.Var
+          exact h_value_0_env
+        . apply Eval.EvalProp.ZBinOp
+          . apply Eval.EvalProp.toZ
+            apply Eval.EvalProp.Var
+            exact h_value_1_env
+          . apply Eval.EvalProp.ConstZ
+          . unfold Eval.evalIntegerOp
+            simp
+            rfl
+        . unfold Eval.evalIntegerOp
+          simp
+          rfl
+        . apply Eval.EvalProp.ZBinOp
+          . apply Eval.EvalProp.toZ
+            apply Eval.EvalProp.Var
+            exact h_value_2_env
+          . apply Eval.EvalProp.ConstZ
+          . unfold Eval.evalIntegerOp
+            simp
+            rfl
+        . unfold Eval.evalIntegerOp
+          simp
+          rfl
+      . apply Eval.EvalProp.ZBinOp
+        . apply Eval.EvalProp.toZ
+          apply Eval.EvalProp.Var
+          exact h_value_3_env
+        . apply Eval.EvalProp.ConstZ
+        . unfold Eval.evalIntegerOp
+          simp
+          rfl
+      . unfold Eval.evalIntegerOp
+        simp
+        rfl
+    . apply Eval.EvalProp.ConstZ
+    . unfold Eval.evalRelOp
+      simp
       apply wordRange_correct
       simp
       exact h_most_sig_byte_decomp_0
-    }
+      simp
+      exact h_most_sig_byte_decomp_1
+      simp
+      exact h_most_sig_byte_decomp_2
+      simp
+      exact h_most_sig_byte_decomp_3
+      simp
+      exact h_most_sig_byte_decomp_4
+      simp
+      exact h_most_sig_byte_decomp_5
+      simp
+      exact h_most_sig_byte_decomp_6
+      simp
+      exact h_most_sig_byte_decomp_7
+      exact h_msb_rec
+      exact h_most_sig_byte_decomp_7_is_0
+      exact hamm₁
+      exact hamm₂
+      exact hamm₃
+      exact hamm₄
+      exact hamm₅
+      exact hamm₆
+      simp
+      exact hav₀
+      simp
+      exact hav₁
+      simp
+      exact hav₂
+      exact hvl₀
+      exact hvl₁
+      exact hvl₂
+      exact hvl₃
 }
 
 /-
