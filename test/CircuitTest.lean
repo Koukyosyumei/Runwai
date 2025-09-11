@@ -182,6 +182,14 @@ lemma is_binary_mul_is_binary {x y z: ℕ} (h₁: x = 0 ∨ x = 1) (h₂: y = 0 
   simp_all
 }
 
+lemma is_binary_mul_is_binary_f {x y z: F} (h₁: x = 0 ∨ x = 1) (h₂: y = 0 ∨ y = 1) (h₃: z = x * y): z = 0 ∨ z = 1 := by {
+  cases h₁
+  cases h₂
+  simp_all
+  simp_all
+  simp_all
+}
+
 lemma wordRange_correct
   {value_0 value_1 value_2 value_3 most_sig_byte_decomp_0
    most_sig_byte_decomp_1 most_sig_byte_decomp_2 most_sig_byte_decomp_3
@@ -257,20 +265,20 @@ lemma wordRange_correct
       unfold p
       simp
     }
-  have c0 := is_binary_mul_is_binary b0 b1 h₁₁
-  have c1 := is_binary_mul_is_binary c0 b2 h₁₂
-  have c2 := is_binary_mul_is_binary c1 b3 h₁₃
-  have c3 := is_binary_mul_is_binary c2 b4 h₁₄
-  have c4 := is_binary_mul_is_binary c3 b5 h₁₅
-  have c5 := is_binary_mul_is_binary c4 b6 h₁₆
+  have c0 := is_binary_mul_is_binary_f b0 b1 h₁₁
+  have c1 := is_binary_mul_is_binary_f c0 b2 h₁₂
+  have c2 := is_binary_mul_is_binary_f c1 b3 h₁₃
+  have c3 := is_binary_mul_is_binary_f c2 b4 h₁₄
+  have c4 := is_binary_mul_is_binary_f c3 b5 h₁₅
+  have c5 := is_binary_f_to_z (is_binary_mul_is_binary_f c4 b6 h₁₆)
   cases c5
   {
     rename_i h
-    have : value_3 < 126 := by {
+    have : value_3.val < 126 := by {
       sorry
     }
     calc
-      value_0 + value_1 * 256 + value_2 * 256^2 + value_3 * 256^3
+      value_0.val + value_1.val * 256 + value_2.val * 256^2 + value_3.val * 256^3
           ≤ 255 + 255*256 + 255*256^2 + 125*256^3 := by
             apply Nat.add_le_add
             apply Nat.add_le_add
@@ -279,7 +287,7 @@ lemma wordRange_correct
             · rw [Nat.mul_comm]; exact Nat.mul_le_mul_left _ (Nat.lt_succ_iff.mp h₂₁)
             · rw [Nat.mul_comm]; exact Nat.mul_le_mul_left _ (Nat.lt_succ_iff.mp h₂₂)
             · {
-              have h_le : value_3 ≤ 125 := Nat.lt_succ_iff.mp this
+              have h_le : value_3.val ≤ 125 := Nat.lt_succ_iff.mp this
               rw [Nat.mul_comm]
               exact Nat.mul_le_mul_left _ h_le
             }
@@ -288,13 +296,16 @@ lemma wordRange_correct
   }
   {
     rename_i h
-    rw[h] at h₁₇ h₁₈ h₁₉
+    have : and_most_sig_byte_decomp_0_to_7 = 1 := by {
+      sorry
+    }
+    rw[this] at h₁₇ h₁₈ h₁₉
     simp at h₁₇ h₁₈ h₁₉
     rw[h₁₇, h₁₈, h₁₉]
     simp
     rw [Nat.mul_comm]
     calc
-      16777216 * value_3 ≤ 16777216 * 127 := Nat.mul_le_mul_left 16777216 v3_le_127
+      16777216 * value_3.val ≤ 16777216 * 127 := Nat.mul_le_mul_left 16777216 v3_le_127
       _ < 127 * 16777216 + 1 := by norm_num
   }
 }
