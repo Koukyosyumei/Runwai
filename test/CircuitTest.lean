@@ -3,6 +3,10 @@ import Runwai.Gadget
 --import Runwai.PP
 import Runwai.Tactic
 
+import Lean.Parser.Tactic
+
+open Lean Elab Tactic
+
 @[simp]
 def assertCircuit : Ast.Circuit := {
   name    := "assert",
@@ -385,6 +389,207 @@ abbrev is_eq_mul_type (i₁ i₂ i₃: String): Ast.Ty := Ast.Ty.unit.refin
                             ((Ast.Expr.var i₂).fieldExpr Ast.FieldOp.mul
                               (Ast.Expr.var i₃))))
 
+syntax "process_binary_hyp" : tactic
+macro_rules
+| `(tactic| process_binary_hyp) =>
+  -- `hyp` には `hb₁'` や `hb₂'` などの仮説名が入ります
+  `(tactic|
+      rename_i ih₁ ih₂ r₁;
+      cases ih₁;
+      rename_i ih₃ ih₄ r₂;
+      cases ih₂;
+      cases ih₃;
+      cases ih₄;
+      rename_i ih₁ ih₂ r₂;
+      cases ih₁;
+      cases ih₂;
+      cases r₂;
+      simp at r₂;
+      unfold Eval.evalRelOp at r₁;
+      simp at r₁;
+      rw [← r₂] at r₁;
+      simp at r₁;
+  )
+
+lemma is_mul_expr_val (h: Eval.EvalProp σ Δ
+  (Ast.exprEq (Ast.Expr.var x)
+    ((Ast.Expr.var y).fieldExpr Ast.FieldOp.mul (Ast.Expr.var z)))
+  (Ast.Value.vBool true)) :
+  ∃ v₁ v₂ v₃: F, Env.lookupVal σ x = some (Ast.Value.vF v₁) ∧
+                 Env.lookupVal σ y = some (Ast.Value.vF v₂) ∧
+                 Env.lookupVal σ z = some (Ast.Value.vF v₃) ∧
+                 (v₁ = v₂ * v₃) := by {
+    cases h
+    rename_i v₁ v₂ ih₁ ih₂ r₂
+    cases ih₁
+    cases ih₂
+    rename_i v₃ v₄ ih₁ ih₂ r₂'
+    cases ih₁
+    cases ih₂
+    cases r₂'
+    simp at r₂
+    cases v₁ with
+    | vF vf₁ => {
+      simp at r₂
+      use vf₁
+      use v₃
+      use v₄
+      apply And.intro
+      simp_all
+      apply And.intro
+      simp_all
+      apply And.intro
+      simp_all
+      exact r₂
+    }
+    | _ => simp at r₂
+                 }
+
+lemma is_binary_expr_val (h: Eval.EvalProp σ Δ
+  (Ast.exprEq
+    ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul
+      ((Ast.Expr.var x).fieldExpr Ast.FieldOp.sub (Ast.Expr.constF 1)))
+    (Ast.Expr.constF 0))
+  (Ast.Value.vBool true)) : ∃ v: F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ (v = 0 ∨ v - 1 = 0) := by {
+    cases h
+    rename_i ih₁ ih₂ r₁;
+    cases ih₁;
+    rename_i ih₃ ih₄ r₂;
+    cases ih₂;
+    cases ih₃;
+    cases ih₄;
+    rename_i ih₁ ih₂ r₂;
+    cases ih₁;
+    cases ih₂;
+    cases r₂;
+    simp at r₂;
+    unfold Eval.evalRelOp at r₁;
+    simp at r₁;
+    rw [← r₂] at r₁;
+    simp at r₁;
+    rename_i v₁ vf₁ h₁ vf₂ h₂
+    use vf₁
+    have h_eq : vf₁ = vf₂ := by {
+      rw[h₂] at h₁
+      simp_all
+    }
+    rw [← h_eq] at r₁
+    apply And.intro
+    simp_all
+    exact r₁
+  }
+
+lemma eq_mul_val (h: Eval.EvalProp σ Δ
+  (Ast.exprEq (Ast.Expr.constF v)
+    ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul (Ast.Expr.var y)))
+  (Ast.Value.vBool true)):
+  ∃ v₀ v₁: F,
+  Env.lookupVal σ x = some (Ast.Value.vF v₀) ∧ Env.lookupVal σ y = some (Ast.Value.vF v₁) ∧
+  v = v₀ * v₁ := by {
+    cases h
+    rename_i v₈ u₈ ih₁ ih₂ r₈
+    cases ih₁
+    cases ih₂
+    rename_i v₈' u₈' ih₁ ih₂ r₈'
+    cases ih₁
+    cases ih₂
+    unfold Eval.evalFieldOp at r₈'
+    simp at r₈'
+    unfold Eval.evalRelOp at r₈
+    cases u₈ <;> simp at r₈
+    use v₈'
+    use u₈'
+    simp_all
+  }
+
+lemma binary_word_reduce_val (h: Eval.EvalProp σ Δ
+  (Ast.exprEq
+    (bits_word_reduce x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇)
+    (Ast.Expr.var x₈))
+  (Ast.Value.vBool true)) : ∃ v₀ v₁ v₂ v₃ v₄ v₅ v₆ v₇ v₈: F,
+    Env.lookupVal σ x₀ = some (Ast.Value.vF v₀) ∧ Env.lookupVal σ x₁ = some (Ast.Value.vF v₁) ∧
+    Env.lookupVal σ x₂ = some (Ast.Value.vF v₂) ∧ Env.lookupVal σ x₃ = some (Ast.Value.vF v₃) ∧
+    Env.lookupVal σ x₄ = some (Ast.Value.vF v₄) ∧ Env.lookupVal σ x₅ = some (Ast.Value.vF v₅) ∧
+    Env.lookupVal σ x₆ = some (Ast.Value.vF v₆) ∧ Env.lookupVal σ x₇ = some (Ast.Value.vF v₇) ∧
+    v₀ + v₁ * 2 + v₂ * 4 + v₃ * 8 + v₄ * 16 + v₅ * 32 + v₆ * 64 + v₇ * 128 = v₈ := by {
+    cases h
+    rename_i ih₁ ih₂ r₁
+    cases ih₁
+    rename_i ih₃ ih₄ r₂
+    cases ih₂
+    cases ih₃
+    rename_i ih₇ ih₈ r₄
+    cases ih₄
+    rename_i ih₉ ih₁₀ r₅
+    cases ih₇
+    rename_i ih₁₃ ih₁₄ r₇
+    cases ih₈
+    rename_i ih₁₅ ih₁₆ r₈
+    cases ih₉
+    cases ih₁₀
+    cases ih₁₃
+    rename_i ih₁₇ ih₁₈ r₉
+    cases ih₁₄
+    rename_i ih₁₉ ih₂₀ r₁₀
+    cases ih₁₅
+    cases ih₁₆
+    cases ih₁₇
+    rename_i ih₂₁ ih₂₂ r₁₁
+    cases ih₁₈
+    rename_i ih₂₂ ih₂₃ r₁₂
+    cases ih₁₉
+    cases ih₂₀
+    cases ih₂₁
+    rename_i ih₂₄ ih₂₅ r₁₃
+    cases ih₂₂
+    cases ih₂₃
+    cases ih₂₄
+    rename_i ih₂₅ ih₂₆ r₁₄
+    cases ih₂₅
+    cases ih₂₆
+    rename_i ih₂₇ ih₂₈ r₁₅
+    cases ih₂₇
+    cases ih₂₈
+    cases ih₂₂
+    rename_i ih₂₉ ih₃₀ r₁₆
+    cases ih₂₉
+    cases ih₃₀
+    cases ih₂₅
+    rename_i ih₃₁ ih₃₂ r₁₇
+    cases ih₃₁
+    cases ih₃₂
+    unfold Eval.evalFieldOp at r₂ r₄ r₅ r₇ r₈ r₉ r₁₀ r₁₁ r₁₂ r₁₃ r₁₄ r₁₅
+    simp at r₂ r₄ r₅ r₇ r₈ r₉ r₁₀ r₁₁ r₁₂ r₁₃ r₁₄ r₁₅ r₁₆ r₁₇
+    rw[← r₁₅] at r₁₄
+    rw[← r₁₄] at r₁₃
+    rw[← r₁₃] at r₁₁
+    rw[← r₁₂] at r₉
+    rw[← r₁₁] at r₉
+    rw[← r₁₀] at r₇
+    rw[← r₉] at r₇
+    rw[← r₈] at r₄
+    rw[← r₇] at r₄
+    rw[← r₁₆] at r₄
+    rw[← r₅] at r₂
+    rw[← r₄] at r₂
+    rw[← r₁₇] at r₂
+    rename_i e₀ v₀ fff₀ fff₁ v₂ ff₀ ff₁ ff₂ ff₃ ff₄ ff₅ h₀ f₀ f₁ f₂ h₁ f₃ f₄ f₅ h₂ f₆ f₇ h₃ f₈ f₉ h₄ f₁₀ h₅ f₁₁ h₆ f₁₂ h₇
+    unfold Eval.evalRelOp at r₁
+    rw[← r₂] at r₁
+    cases v₀ <;> simp at r₁;
+    rename_i v₉
+    use f₈
+    use f₁₀
+    use f₁₂
+    use f₁₁
+    use f₅
+    use f₂
+    use ff₅
+    use ff₂
+    use v₉
+    simp_all
+  }
+
 lemma subtype_wordrage_check
   (hb₁: Env.lookupTy Γ "b₀" = some (is_binary_type "most_sig_byte_decomp_0"))
   (hb₂ : Env.lookupTy Γ "b₁" = some (is_binary_type "most_sig_byte_decomp_1"))
@@ -552,294 +757,31 @@ lemma subtype_wordrage_check
     rw[hl₀] at hl₀'
     simp at hl₀'
 
-    cases hb₁'
-    rename_i ih₁ ih₂ r₁
-    cases ih₁
-    rename_i ih₃ ih₄ r₂
-    cases ih₂
-    cases ih₃
-    cases ih₄
-    rename_i ih₁ ih₂ r₂
-    cases ih₁
-    cases ih₂
-    cases r₂
-    simp at r₂
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
-    rw[← r₂] at r₁
-    simp at r₁
+    have hb₁'' := is_binary_expr_val hb₁'
+    have hb₂'' := is_binary_expr_val hb₂'
+    have hb₃'' := is_binary_expr_val hb₃'
+    have hb₄'' := is_binary_expr_val hb₄'
+    have hb₅'' := is_binary_expr_val hb₅'
+    have hb₆'' := is_binary_expr_val hb₆'
+    have hb₇'' := is_binary_expr_val hb₇'
+    have hb₈'' := is_binary_expr_val hb₈'
 
-    cases hb₂'
-    rename_i ih₁ ih₂ r₁
-    cases ih₁
-    rename_i ih₃ ih₄ r₂
-    cases ih₂
-    cases ih₃
-    cases ih₄
-    rename_i ih₁ ih₂ r₂
-    cases ih₁
-    cases ih₂
-    cases r₂
-    simp at r₂
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
-    rw[← r₂] at r₁
-    simp at r₁
-
-    cases hb₃'
-    rename_i ih₁ ih₂ r₁
-    cases ih₁
-    rename_i ih₃ ih₄ r₂
-    cases ih₂
-    cases ih₃
-    cases ih₄
-    rename_i ih₁ ih₂ r₂
-    cases ih₁
-    cases ih₂
-    cases r₂
-    simp at r₂
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
-    rw[← r₂] at r₁
-    simp at r₁
-
-    cases hb₄'
-    rename_i ih₁ ih₂ r₁
-    cases ih₁
-    rename_i ih₃ ih₄ r₂
-    cases ih₂
-    cases ih₃
-    cases ih₄
-    rename_i ih₁ ih₂ r₂
-    cases ih₁
-    cases ih₂
-    cases r₂
-    simp at r₂
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
-    rw[← r₂] at r₁
-    simp at r₁
-
-    cases hb₅'
-    rename_i ih₁ ih₂ r₁
-    cases ih₁
-    rename_i ih₃ ih₄ r₂
-    cases ih₂
-    cases ih₃
-    cases ih₄
-    rename_i ih₁ ih₂ r₂
-    cases ih₁
-    cases ih₂
-    cases r₂
-    simp at r₂
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
-    rw[← r₂] at r₁
-    simp at r₁
-
-    cases hb₆'
-    rename_i ih₁ ih₂ r₁
-    cases ih₁
-    rename_i ih₃ ih₄ r₂
-    cases ih₂
-    cases ih₃
-    cases ih₄
-    rename_i ih₁ ih₂ r₂
-    cases ih₁
-    cases ih₂
-    cases r₂
-    simp at r₂
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
-    rw[← r₂] at r₁
-    simp at r₁
-
-    cases hb₇'
-    rename_i ih₁ ih₂ r₁
-    cases ih₁
-    rename_i ih₃ ih₄ r₂
-    cases ih₂
-    cases ih₃
-    cases ih₄
-    rename_i ih₁ ih₂ r₂
-    cases ih₁
-    cases ih₂
-    cases r₂
-    simp at r₂
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
-    rw[← r₂] at r₁
-    simp at r₁
-
-    cases hb₈'
-    rename_i ih₁ ih₂ r₁
-    cases ih₁
-    rename_i ih₃ ih₄ r₂
-    cases ih₂
-    cases ih₃
-    cases ih₄
-    rename_i ih₁ ih₂ r₂
-    cases ih₁
-    cases ih₂
-    cases r₂
-    simp at r₂
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
-    rw[← r₂] at r₁
-    simp at r₁
-
-    cases hu₁'
-    rename_i ih₁ ih₂ r₁
-    cases ih₁
-    rename_i ih₃ ih₄ r₂
-    cases ih₂
-    cases ih₃
-    rename_i ih₇ ih₈ r₄
-    cases ih₄
-    rename_i ih₉ ih₁₀ r₅
-    cases ih₇
-    rename_i ih₁₃ ih₁₄ r₇
-    cases ih₈
-    rename_i ih₁₅ ih₁₆ r₈
-    cases ih₉
-    cases ih₁₀
-    cases ih₁₃
-    rename_i ih₁₇ ih₁₈ r₉
-    cases ih₁₄
-    rename_i ih₁₉ ih₂₀ r₁₀
-    cases ih₁₅
-    cases ih₁₆
-    cases ih₁₇
-    rename_i ih₂₁ ih₂₂ r₁₁
-    cases ih₁₈
-    rename_i ih₂₂ ih₂₃ r₁₂
-    cases ih₁₉
-    cases ih₂₀
-    cases ih₂₁
-    rename_i ih₂₄ ih₂₅ r₁₃
-    cases ih₂₂
-    cases ih₂₃
-    cases ih₂₄
-    rename_i ih₂₅ ih₂₆ r₁₄
-    cases ih₂₅
-    cases ih₂₆
-    rename_i ih₂₇ ih₂₈ r₁₅
-    cases ih₂₇
-    cases ih₂₈
-    cases ih₂₂
-    rename_i ih₂₉ ih₃₀ r₁₆
-    cases ih₂₉
-    cases ih₃₀
-    cases ih₂₅
-    rename_i ih₃₁ ih₃₂ r₁₇
-    cases ih₃₁
-    cases ih₃₂
-    unfold Eval.evalFieldOp at r₂ r₄ r₅ r₇ r₈ r₉ r₁₀ r₁₁ r₁₂ r₁₃ r₁₄ r₁₅
-    simp at r₂ r₄ r₅ r₇ r₈ r₉ r₁₀ r₁₁ r₁₂ r₁₃ r₁₄ r₁₅ r₁₆ r₁₇
-    rw[← r₁₅] at r₁₄
-    rw[← r₁₄] at r₁₃
-    rw[← r₁₃] at r₁₁
-    rw[← r₁₂] at r₉
-    rw[← r₁₁] at r₉
-    rw[← r₁₀] at r₇
-    rw[← r₉] at r₇
-    rw[← r₈] at r₄
-    rw[← r₇] at r₄
-    rw[← r₁₆] at r₄
-    rw[← r₅] at r₂
-    rw[← r₄] at r₂
+    have hu₁' := binary_word_reduce_val hu₁'
 
     cases hu₂'
     rename_i v₁ u₁ ih₁ ih₂ r₁
     cases ih₁
     cases ih₂
 
-    cases hu₃'
-    rename_i v₂ u₂ ih₁ ih₂ r₂
-    cases ih₁
-    cases ih₂
-    rename_i v₂' u₂' ih₁ ih₂ r₂'
-    cases ih₁
-    cases ih₂
-
-    cases hu₄'
-    rename_i v₃ u₃ ih₁ ih₂ r₃
-    cases ih₁
-    cases ih₂
-    rename_i v₃' u₃' ih₁ ih₂ r₃'
-    cases ih₁
-    cases ih₂
-
-    cases hu₅'
-    rename_i v₄ u₄ ih₁ ih₂ r₄
-    cases ih₁
-    cases ih₂
-    rename_i v₄' u₄' ih₁ ih₂ r₄'
-    cases ih₁
-    cases ih₂
-
-    cases hu₆'
-    rename_i v₅ u₅ ih₁ ih₂ r₅
-    cases ih₁
-    cases ih₂
-    rename_i v₅' u₅' ih₁ ih₂ r₅'
-    cases ih₁
-    cases ih₂
-
-    cases hu₇'
-    rename_i v₆ u₆ ih₁ ih₂ r₆
-    cases ih₁
-    cases ih₂
-    rename_i v₆' u₆' ih₁ ih₂ r₆'
-    cases ih₁
-    cases ih₂
-
-    cases hu₈'
-    rename_i v₇ u₇ ih₁ ih₂ r₇
-    cases ih₁
-    cases ih₂
-    rename_i v₇' u₇' ih₁ ih₂ r₇'
-    cases ih₁
-    cases ih₂
-
-    cases hu₉'
-    rename_i v₈ u₈ ih₁ ih₂ r₈
-    cases ih₁
-    cases ih₂
-    rename_i v₈' u₈' ih₁ ih₂ r₈'
-    cases ih₁
-    cases ih₂
-
-    cases hu₁₀'
-    rename_i v₉ u₉ ih₁ ih₂ r₉
-    cases ih₁
-    cases ih₂
-    rename_i ih₁ ih₂ r₉'
-    cases ih₁
-    cases ih₂
-
-    cases hu₁₁'
-    rename_i v₁₀ u₁₀ ih₁ ih₂ r₁₀
-    cases ih₁
-    cases ih₂
-    rename_i ih₁ ih₂ r₁₀'
-    cases ih₁
-    cases ih₂
-
-    unfold Eval.evalFieldOp at r₂' r₃' r₄' r₅' r₆' r₇' r₈' r₉' r₁₀'
-    simp at r₂' r₃' r₄' r₅' r₆' r₇' r₈' r₉' r₁₀'
-
-    unfold Eval.evalRelOp at r₁ r₂ r₃ r₄ r₅ r₆ r₇ r₈ r₉ r₁₀
-    cases v₁ <;> simp at r₁
-    cases v₂ <;> simp at r₂
-    cases v₃ <;> simp at r₃
-    cases v₄ <;> simp at r₄
-    cases v₅ <;> simp at r₅
-    cases v₆ <;> simp at r₆
-    cases v₇ <;> simp at r₇
-    cases u₈ <;> simp at r₈
-    cases u₉ <;> simp at r₉
-    cases u₁₀ <;> simp at r₁₀
+    have hu₃'' := is_mul_expr_val hu₃'
+    have hu₄'' := is_mul_expr_val hu₄'
+    have hu₅'' := is_mul_expr_val hu₅'
+    have hu₆'' := is_mul_expr_val hu₆'
+    have hu₇'' := is_mul_expr_val hu₇'
+    have hu₈'' := is_mul_expr_val hu₈'
+    have hu₉'' := eq_mul_val hu₉'
+    have hu₁₀'' := eq_mul_val hu₁₀'
+    have hu₁₁'' := eq_mul_val hu₁₁'
 
     unfold Ty.lookup_pred Env.lookupCircuit Δ at hl₀'
     simp at hl₀'
@@ -860,7 +802,6 @@ lemma subtype_wordrage_check
     cases ih₁
     unfold Eval.evalRelOp at r₁
     simp at r₁
-
 }
 
 /-
