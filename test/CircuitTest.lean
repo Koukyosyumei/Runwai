@@ -590,6 +590,26 @@ lemma binary_word_reduce_val (h: Eval.EvalProp σ Δ
     simp_all
   }
 
+lemma tyenv_prop_to_expr (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind e))):
+  (Eval.EvalProp σ Δ e (Ast.Value.vBool true)) := by {
+    unfold PropSemantics.tyenvToProp PropSemantics.varToProp PropSemantics.predToProp at h₁
+    have h₁' := h₁ x (Ast.Ty.unit.refin (Ast.Predicate.ind e)) h₂
+    rw[h₂] at h₁'
+    simp at h₁'
+    unfold PropSemantics.exprToProp at h₁'
+    exact h₁'
+  }
+
+lemma tyenv_and_prop_to_expr (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.and (Ast.Predicate.ind e₁) (Ast.Predicate.ind e₂)))):
+  (Eval.EvalProp σ Δ e₁ (Ast.Value.vBool true)) ∧ (Eval.EvalProp σ Δ e₂ (Ast.Value.vBool true)) := by {
+    unfold PropSemantics.tyenvToProp PropSemantics.varToProp PropSemantics.predToProp at h₁
+    have h₁' := h₁ x (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.and (Ast.Predicate.ind e₁) (Ast.Predicate.ind e₂))) h₂
+    rw[h₂] at h₁'
+    simp at h₁'
+    unfold PropSemantics.predToProp PropSemantics.exprToProp at h₁'
+    exact h₁'
+  }
+
 lemma subtype_wordrage_check
   (hb₁: Env.lookupTy Γ "b₀" = some (is_binary_type "most_sig_byte_decomp_0"))
   (hb₂ : Env.lookupTy Γ "b₁" = some (is_binary_type "most_sig_byte_decomp_1"))
@@ -642,121 +662,26 @@ lemma subtype_wordrage_check
               [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))) wordRangeCheckerCircuit.goal := by {
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl
-    unfold PropSemantics.tyenvToProp PropSemantics.predToProp PropSemantics.exprToProp PropSemantics.varToProp
-    unfold Ty.lookup_pred Ast.renameVarinPred Ast.renameVar Env.freshName Ty.update_UsedNames
-    simp
-    unfold PropSemantics.predToProp PropSemantics.exprToProp
-    unfold Ast.renameVarinPred Ast.renameVar Env.freshName
-    simp
-    have hu8_i : (Env.lookupCircuit Δ "u8").ident_i = "i" := by {
-      unfold Env.lookupCircuit Δ
-      simp
-    }
-    have hu8_t : (Env.lookupCircuit Δ "u8").ident_t = "trace" := by {
-      unfold Env.lookupCircuit Δ
-      simp
-    }
-    --unfold Env.lookupCircuit Δ
-    rw[hu8_i, hu8_t]
-    simp
-    repeat
-      unfold Ast.renameVar
-      simp
-    intro v h₁ h₂ h₃
-    have hb₁' := h₁ "b₀" (is_binary_type "most_sig_byte_decomp_0") hb₁
-    rw[hb₁] at hb₁'
-    simp at hb₁'
-    have hb₂' := h₁ "b₁" (is_binary_type "most_sig_byte_decomp_1") hb₂
-    rw[hb₂] at hb₂'
-    simp at hb₂'
-    have hb₃' := h₁ "b₂" (is_binary_type "most_sig_byte_decomp_2") hb₃
-    rw[hb₃] at hb₃'
-    simp at hb₃'
-    have hb₄' := h₁ "b₃" (is_binary_type "most_sig_byte_decomp_3") hb₄
-    rw[hb₄] at hb₄'
-    simp at hb₄'
-    have hb₅' := h₁ "b₄" (is_binary_type "most_sig_byte_decomp_4") hb₅
-    rw[hb₅] at hb₅'
-    simp at hb₅'
-    have hb₆' := h₁ "b₅" (is_binary_type "most_sig_byte_decomp_5") hb₆
-    rw[hb₆] at hb₆'
-    simp at hb₆'
-    have hb₇' := h₁ "b₆" (is_binary_type "most_sig_byte_decomp_6") hb₇
-    rw[hb₇] at hb₇'
-    simp at hb₇'
-    have hb₈' := h₁ "b₇" (is_binary_type "most_sig_byte_decomp_7") hb₈
-    rw[hb₈] at hb₈'
-    simp at hb₈'
-    have hu₁' := h₁ "u₁" (Ast.Ty.unit.refin (Ast.Predicate.ind
-                                    (Ast.exprEq
-                                      (bits_word_reduce "most_sig_byte_decomp_0" "most_sig_byte_decomp_1" "most_sig_byte_decomp_2" "most_sig_byte_decomp_3"
-                                                        "most_sig_byte_decomp_4" "most_sig_byte_decomp_5" "most_sig_byte_decomp_6" "most_sig_byte_decomp_7")
-                                      (Ast.Expr.var "value_3")))) hu₁
-    rw[hu₁] at hu₁'
-    simp at hu₁'
-    have hu₂' := h₁ "u₂" (Ast.Ty.unit.refin
-                            (Ast.Predicate.ind
-                              (Ast.exprEq (Ast.Expr.var "most_sig_byte_decomp_7") (Ast.Expr.constF 0)))) hu₂
-    rw[hu₂] at hu₂'
-    simp at hu₂'
-    have hu₃' := h₁ "u₃" (is_eq_mul_type "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_0" "most_sig_byte_decomp_1") hu₃
-    rw[hu₃] at hu₃'
-    simp at hu₃'
-    have hu₄' := h₁ "u₄" (is_eq_mul_type "and_most_sig_byte_decomp_0_to_3" "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_2") hu₄
-    rw[hu₄] at hu₄'
-    simp at hu₄'
-    have hu₅' := h₁ "u₅" (Ast.Ty.unit.refin (Ast.Predicate.ind
-                        (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_4")
-                          ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_3").fieldExpr Ast.FieldOp.mul
-                            (Ast.Expr.var "most_sig_byte_decomp_3"))))) hu₅
-    rw[hu₅] at hu₅'
-    simp at hu₅'
-    have hu₆' := h₁ "u₆" (Ast.Ty.unit.refin (Ast.Predicate.ind
-                      (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_5")
-                        ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_4").fieldExpr Ast.FieldOp.mul
-                          (Ast.Expr.var "most_sig_byte_decomp_4"))))) hu₆
-    rw[hu₆] at hu₆'
-    simp at hu₆'
-    have hu₇' := h₁ "u₇" (Ast.Ty.unit.refin (Ast.Predicate.ind
-                    (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_6")
-                      ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_5").fieldExpr Ast.FieldOp.mul
-                        (Ast.Expr.var "most_sig_byte_decomp_5"))))) hu₇
-    rw[hu₇] at hu₇'
-    simp at hu₇'
-    have hu₈' := h₁ "u₈" (Ast.Ty.unit.refin (Ast.Predicate.ind
-                  (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_7")
-                    ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_6").fieldExpr Ast.FieldOp.mul
-                      (Ast.Expr.var "most_sig_byte_decomp_6"))))) hu₈
-    rw[hu₈] at hu₈'
-    simp at hu₈'
-    have hu₉' := h₁ "u₉" (Ast.Ty.unit.refin
-              (Ast.Predicate.ind
-                (Ast.exprEq (Ast.Expr.constF 0)
-                  ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
-                    (Ast.Expr.var "value_0"))))) hu₉
-    rw[hu₉] at hu₉'
-    simp at hu₉'
-    have hu₁₀' := h₁ "u₁₀" (Ast.Ty.unit.refin
-              (Ast.Predicate.ind
-                (Ast.exprEq (Ast.Expr.constF 0)
-                  ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
-                    (Ast.Expr.var "value_1"))))) hu₁₀
-    rw[hu₁₀] at hu₁₀'
-    simp at hu₁₀'
-    have hu₁₁' := h₁ "u₁₁" (Ast.Ty.unit.refin
-              (Ast.Predicate.ind
-                (Ast.exprEq (Ast.Expr.constF 0)
-                  ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
-                    (Ast.Expr.var "value_2"))))) hu₁₁
-    rw[hu₁₁] at hu₁₁'
-    simp at hu₁₁'
-    have hl₀' := h₁ "l₀" ((Ast.Ty.unit.refin
-        (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
-          (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-          [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))) hl₀
-    rw[hl₀] at hl₀'
-    simp at hl₀'
-
+    intro v h₁ h₂
+    have hb₁' := tyenv_prop_to_expr h₁ hb₁
+    have hb₂' := tyenv_prop_to_expr h₁ hb₂
+    have hb₃' := tyenv_prop_to_expr h₁ hb₃
+    have hb₄' := tyenv_prop_to_expr h₁ hb₄
+    have hb₅' := tyenv_prop_to_expr h₁ hb₅
+    have hb₆' := tyenv_prop_to_expr h₁ hb₆
+    have hb₇' := tyenv_prop_to_expr h₁ hb₇
+    have hb₈' := tyenv_prop_to_expr h₁ hb₈
+    have hu₁' := tyenv_prop_to_expr h₁ hu₁
+    have hu₂' := tyenv_prop_to_expr h₁ hu₂
+    have hu₃' := tyenv_prop_to_expr h₁ hu₃
+    have hu₄' := tyenv_prop_to_expr h₁ hu₄
+    have hu₅' := tyenv_prop_to_expr h₁ hu₅
+    have hu₆' := tyenv_prop_to_expr h₁ hu₆
+    have hu₇' := tyenv_prop_to_expr h₁ hu₇
+    have hu₈' := tyenv_prop_to_expr h₁ hu₈
+    have hu₉' := tyenv_prop_to_expr h₁ hu₉
+    have hu₁₀' := tyenv_prop_to_expr h₁ hu₁₀
+    have hu₁₁' := tyenv_prop_to_expr h₁ hu₁₁
     have hb₁'' := is_binary_expr_val hb₁'
     have hb₂'' := is_binary_expr_val hb₂'
     have hb₃'' := is_binary_expr_val hb₃'
@@ -765,14 +690,7 @@ lemma subtype_wordrage_check
     have hb₆'' := is_binary_expr_val hb₆'
     have hb₇'' := is_binary_expr_val hb₇'
     have hb₈'' := is_binary_expr_val hb₈'
-
     have hu₁' := binary_word_reduce_val hu₁'
-
-    cases hu₂'
-    rename_i v₁ u₁ ih₁ ih₂ r₁
-    cases ih₁
-    cases ih₂
-
     have hu₃'' := is_mul_expr_val hu₃'
     have hu₄'' := is_mul_expr_val hu₄'
     have hu₅'' := is_mul_expr_val hu₅'
@@ -783,15 +701,29 @@ lemma subtype_wordrage_check
     have hu₁₀'' := eq_mul_val hu₁₀'
     have hu₁₁'' := eq_mul_val hu₁₁'
 
-    unfold Ty.lookup_pred Env.lookupCircuit Δ at hl₀'
-    simp at hl₀'
-    unfold PropSemantics.predToProp Ast.renameVarinPred Ast.renameVar Env.freshName at hl₀'
-    simp at hl₀'
-    unfold Ast.renameVarinPred Ast.renameVar PropSemantics.exprToProp at hl₀'
-    simp at hl₀'
+    have hu8_i : (Env.lookupCircuit Δ "u8").ident_i = "i" := by {
+      unfold Env.lookupCircuit Δ
+      simp
+    }
+    have hu8_t : (Env.lookupCircuit Δ "u8").ident_t = "trace" := by {
+      unfold Env.lookupCircuit Δ
+      simp
+    }
+    unfold Ty.lookup_pred Ast.renameVarinPred Ast.renameVar Env.freshName at hl₀
+    unfold Ast.renameVarinPred Ast.renameVar at hl₀
+    rw[hu8_i, hu8_t] at hl₀
+    simp at hl₀
     repeat
-      unfold Ast.renameVar at hl₀'
-      simp at hl₀'
+      unfold Ast.renameVar at hl₀
+      simp at hl₀
+    have hl₀' := tyenv_and_prop_to_expr h₁ hl₀
+    unfold PropSemantics.predToProp PropSemantics.exprToProp
+
+    cases hu₂'
+    rename_i v₁ u₁ ih₁ ih₂ r₁
+    cases ih₁
+    cases ih₂
+
     obtain ⟨hl₀₁',hl₀₂'⟩ := hl₀'
     have hvl₀ := eval_eq_lt hl₀₂' hl₀₁'
     cases hvl₀
