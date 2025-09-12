@@ -7,6 +7,42 @@ import Lean.Parser.Tactic
 
 open Lean Elab Tactic
 
+abbrev bit_value_type (ident: String): Ast.Ty := (Ast.Ty.unit.refin
+                                                  (Ast.Predicate.ind
+                                                    (Ast.exprEq
+                                                      ((Ast.Expr.var ident).fieldExpr Ast.FieldOp.mul
+                                                        ((Ast.Expr.var ident).fieldExpr
+                                                          Ast.FieldOp.sub (Ast.Expr.constF 1)))
+                                                      (Ast.Expr.constF 0))))
+
+abbrev bits_to_byte_expr (i₀ i₁ i₂ i₃ i₄ i₅ i₆ i₇: String) : Ast.Expr :=
+                                      ((((((((Ast.Expr.var i₀).fieldExpr Ast.FieldOp.add
+                                                                ((Ast.Expr.var i₁).fieldExpr
+                                                                  Ast.FieldOp.mul (Ast.Expr.constF 2))).fieldExpr
+                                                            Ast.FieldOp.add
+                                                            ((Ast.Expr.var i₂).fieldExpr
+                                                              Ast.FieldOp.mul (Ast.Expr.constF 4))).fieldExpr
+                                                        Ast.FieldOp.add
+                                                        ((Ast.Expr.var i₃).fieldExpr
+                                                          Ast.FieldOp.mul (Ast.Expr.constF 8))).fieldExpr
+                                                    Ast.FieldOp.add
+                                                    ((Ast.Expr.var i₄).fieldExpr Ast.FieldOp.mul
+                                                      (Ast.Expr.constF 16))).fieldExpr
+                                                Ast.FieldOp.add
+                                                ((Ast.Expr.var i₅).fieldExpr Ast.FieldOp.mul
+                                                  (Ast.Expr.constF 32))).fieldExpr
+                                            Ast.FieldOp.add
+                                            ((Ast.Expr.var i₆).fieldExpr Ast.FieldOp.mul
+                                              (Ast.Expr.constF 64))).fieldExpr
+                                        Ast.FieldOp.add
+                                        ((Ast.Expr.var i₇).fieldExpr Ast.FieldOp.mul
+                                          (Ast.Expr.constF 128)))
+abbrev eq_mul_refinement (i₁ i₂ i₃: String): Ast.Ty := Ast.Ty.unit.refin
+                        (Ast.Predicate.ind
+                          (Ast.exprEq (Ast.Expr.var i₁)
+                            ((Ast.Expr.var i₂).fieldExpr Ast.FieldOp.mul
+                              (Ast.Expr.var i₃))))
+
 @[simp]
 def assertCircuit : Ast.Circuit := {
   name    := "assert",
@@ -88,34 +124,8 @@ def wordRangeCheckerCircuit : Ast.Circuit := {
           (.letIn "b₆" (.assertE (.fieldExpr (.var "most_sig_byte_decomp_6") .mul (.fieldExpr (.var "most_sig_byte_decomp_6") .sub (.constF 1))) (.constF 0))
           (.letIn "b₇" (.assertE (.fieldExpr (.var "most_sig_byte_decomp_7") .mul (.fieldExpr (.var "most_sig_byte_decomp_7") .sub (.constF 1))) (.constF 0))
           (.letIn "u₁"
-            (.assertE (.fieldExpr
-                        (.fieldExpr
-                          (.fieldExpr
-                            (.fieldExpr
-                              (.fieldExpr
-                                (.fieldExpr
-                                  (.fieldExpr
-                                    (.var "most_sig_byte_decomp_0")
-                                    .add
-                                    (.fieldExpr (.var "most_sig_byte_decomp_1") .mul (.constF 2)))
-                                  .add
-                                  (.fieldExpr
-                                    (.var "most_sig_byte_decomp_2") .mul (.constF 4)))
-                                    .add
-                                    (.fieldExpr (.var "most_sig_byte_decomp_3") .mul (.constF 8))
-                                )
-                              .add
-                              (.fieldExpr (.var "most_sig_byte_decomp_4") .mul (.constF 16))
-                            )
-                            .add
-                            (.fieldExpr (.var "most_sig_byte_decomp_5") .mul (.constF 32))
-                          )
-                          .add
-                          (.fieldExpr (.var "most_sig_byte_decomp_6") .mul (.constF 64))
-                        )
-                        .add
-                        (.fieldExpr (.var "most_sig_byte_decomp_7") .mul (.constF 128))
-                      )
+            (.assertE (bits_to_byte_expr "most_sig_byte_decomp_0" "most_sig_byte_decomp_1" "most_sig_byte_decomp_2" "most_sig_byte_decomp_3"
+                                        "most_sig_byte_decomp_4" "most_sig_byte_decomp_5" "most_sig_byte_decomp_6" "most_sig_byte_decomp_7")
               (.var "value_3")
             )
             (.letIn "u₂" (.assertE (.var "most_sig_byte_decomp_7") (.constF 0))
@@ -137,7 +147,7 @@ def wordRangeCheckerCircuit : Ast.Circuit := {
 
 def Δ : Env.CircuitEnv := [("assert", assertCircuit), ("u8", u8chip)]
 
-lemma is_binary {x: F} (h: x * (x - 1) = 0): x = 0 ∨ x = 1 := by {
+lemma bit_value_0_or_1 {x: F} (h: x * (x - 1) = 0): x = 0 ∨ x = 1 := by {
   simp_all
   rcases h with h_case | h_case
   {
@@ -151,7 +161,7 @@ lemma is_binary {x: F} (h: x * (x - 1) = 0): x = 0 ∨ x = 1 := by {
 }
 
 
-lemma is_binary_f_to_z {x: F} (h: x = 0 ∨ x = 1) : x.val = 0 ∨ x.val = 1 := by {
+lemma bit_val_to_nat {x: F} (h: x = 0 ∨ x = 1) : x.val = 0 ∨ x.val = 1 := by {
   rcases h with h_case | h_case
   {
     left
@@ -165,7 +175,7 @@ lemma is_binary_f_to_z {x: F} (h: x = 0 ∨ x = 1) : x.val = 0 ∨ x.val = 1 := 
   }
 }
 
-lemma is_binary_less_than_one {x: ℕ} (h: x = 0 ∨ x = 1): x ≤ 1 := by {
+lemma bit_le_one {x: ℕ} (h: x = 0 ∨ x = 1): x ≤ 1 := by {
   cases h
   {
     rename_i h
@@ -178,7 +188,7 @@ lemma is_binary_less_than_one {x: ℕ} (h: x = 0 ∨ x = 1): x ≤ 1 := by {
   }
 }
 
-lemma is_binary_mul_is_binary {x y z: ℕ} (h₁: x = 0 ∨ x = 1) (h₂: y = 0 ∨ y = 1) (h₃: z = x * y): z = 0 ∨ z = 1 := by {
+lemma binary_mul_binary_nat {x y z: ℕ} (h₁: x = 0 ∨ x = 1) (h₂: y = 0 ∨ y = 1) (h₃: z = x * y): z = 0 ∨ z = 1 := by {
   cases h₁
   cases h₂
   simp_all
@@ -186,7 +196,7 @@ lemma is_binary_mul_is_binary {x y z: ℕ} (h₁: x = 0 ∨ x = 1) (h₂: y = 0 
   simp_all
 }
 
-lemma is_binary_mul_is_binary_f {x y z: F} (h₁: x = 0 ∨ x = 1) (h₂: y = 0 ∨ y = 1) (h₃: z = x * y): z = 0 ∨ z = 1 := by {
+lemma binary_mul_binary_F {x y z: F} (h₁: x = 0 ∨ x = 1) (h₂: y = 0 ∨ y = 1) (h₃: z = x * y): z = 0 ∨ z = 1 := by {
   cases h₁
   cases h₂
   simp_all
@@ -194,7 +204,7 @@ lemma is_binary_mul_is_binary_f {x y z: F} (h₁: x = 0 ∨ x = 1) (h₂: y = 0 
   simp_all
 }
 
-lemma wordRange_correct
+lemma word_range_val_bound
   {value_0 value_1 value_2 value_3 most_sig_byte_decomp_0
    most_sig_byte_decomp_1 most_sig_byte_decomp_2 most_sig_byte_decomp_3
    most_sig_byte_decomp_4 most_sig_byte_decomp_5 most_sig_byte_decomp_6 most_sig_byte_decomp_7
@@ -225,27 +235,27 @@ lemma wordRange_correct
   (h₂₃: value_3.val < 256)
   : value_0.val + value_1.val * 256 + value_2.val * (256 ^ 2) + value_3.val * (256 ^ 3) < 2130706433 := by {
   -- 1) each decomposed bit is 0 or 1
-  have b0 : most_sig_byte_decomp_0 = 0 ∨ most_sig_byte_decomp_0 = 1 := is_binary h₀
-  have b1 : most_sig_byte_decomp_1 = 0 ∨ most_sig_byte_decomp_1 = 1 := is_binary h₁
-  have b2 : most_sig_byte_decomp_2 = 0 ∨ most_sig_byte_decomp_2 = 1 := is_binary h₂
-  have b3 : most_sig_byte_decomp_3 = 0 ∨ most_sig_byte_decomp_3 = 1 := is_binary h₃
-  have b4 : most_sig_byte_decomp_4 = 0 ∨ most_sig_byte_decomp_4 = 1 := is_binary h₄
-  have b5 : most_sig_byte_decomp_5 = 0 ∨ most_sig_byte_decomp_5 = 1 := is_binary h₅
-  have b6 : most_sig_byte_decomp_6 = 0 ∨ most_sig_byte_decomp_6 = 1 := is_binary h₆
-  have b7 : most_sig_byte_decomp_7 = 0 ∨ most_sig_byte_decomp_7 = 1 := is_binary h₇
+  have b0 : most_sig_byte_decomp_0 = 0 ∨ most_sig_byte_decomp_0 = 1 := bit_value_0_or_1 h₀
+  have b1 : most_sig_byte_decomp_1 = 0 ∨ most_sig_byte_decomp_1 = 1 := bit_value_0_or_1 h₁
+  have b2 : most_sig_byte_decomp_2 = 0 ∨ most_sig_byte_decomp_2 = 1 := bit_value_0_or_1 h₂
+  have b3 : most_sig_byte_decomp_3 = 0 ∨ most_sig_byte_decomp_3 = 1 := bit_value_0_or_1 h₃
+  have b4 : most_sig_byte_decomp_4 = 0 ∨ most_sig_byte_decomp_4 = 1 := bit_value_0_or_1 h₄
+  have b5 : most_sig_byte_decomp_5 = 0 ∨ most_sig_byte_decomp_5 = 1 := bit_value_0_or_1 h₅
+  have b6 : most_sig_byte_decomp_6 = 0 ∨ most_sig_byte_decomp_6 = 1 := bit_value_0_or_1 h₆
+  have b7 : most_sig_byte_decomp_7 = 0 ∨ most_sig_byte_decomp_7 = 1 := bit_value_0_or_1 h₇
   -- 2) because bit7 = 0, value_3 ≤ 127
   have v3_le_127 : value_3.val ≤ 127 := by
     { -- value_3 = sum_{i=0..7} bit_i * 2^i and bit7 = 0 so upper bound is when bits0..6 = 1
       rw [← h₉, h₁₀]
       have : most_sig_byte_decomp_0.val + most_sig_byte_decomp_1.val * 2 + most_sig_byte_decomp_2.val * 4 + most_sig_byte_decomp_3.val * 8 +
             most_sig_byte_decomp_4.val * 16 + most_sig_byte_decomp_5.val * 32 + most_sig_byte_decomp_6.val * 64 ≤ 1 + 2 + 4 + 8 + 16 + 32 + 64 := by
-      { have b0' : most_sig_byte_decomp_0.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b0)
-        have b1' : most_sig_byte_decomp_1.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b1)
-        have b2' : most_sig_byte_decomp_2.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b2)
-        have b3' : most_sig_byte_decomp_3.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b3)
-        have b4' : most_sig_byte_decomp_4.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b4)
-        have b5' : most_sig_byte_decomp_5.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b5)
-        have b6' : most_sig_byte_decomp_6.val ≤ 1 := is_binary_less_than_one (is_binary_f_to_z b6)
+      { have b0' : most_sig_byte_decomp_0.val ≤ 1 := bit_le_one (bit_val_to_nat b0)
+        have b1' : most_sig_byte_decomp_1.val ≤ 1 := bit_le_one (bit_val_to_nat b1)
+        have b2' : most_sig_byte_decomp_2.val ≤ 1 := bit_le_one (bit_val_to_nat b2)
+        have b3' : most_sig_byte_decomp_3.val ≤ 1 := bit_le_one (bit_val_to_nat b3)
+        have b4' : most_sig_byte_decomp_4.val ≤ 1 := bit_le_one (bit_val_to_nat b4)
+        have b5' : most_sig_byte_decomp_5.val ≤ 1 := bit_le_one (bit_val_to_nat b5)
+        have b6' : most_sig_byte_decomp_6.val ≤ 1 := bit_le_one (bit_val_to_nat b6)
         gcongr
         simp
         exact b1'
@@ -269,12 +279,12 @@ lemma wordRange_correct
       unfold p
       simp
     }
-  have c0 := is_binary_mul_is_binary_f b0 b1 h₁₁
-  have c1 := is_binary_mul_is_binary_f c0 b2 h₁₂
-  have c2 := is_binary_mul_is_binary_f c1 b3 h₁₃
-  have c3 := is_binary_mul_is_binary_f c2 b4 h₁₄
-  have c4 := is_binary_mul_is_binary_f c3 b5 h₁₅
-  have c5 := is_binary_f_to_z (is_binary_mul_is_binary_f c4 b6 h₁₆)
+  have c0 := binary_mul_binary_F b0 b1 h₁₁
+  have c1 := binary_mul_binary_F c0 b2 h₁₂
+  have c2 := binary_mul_binary_F c1 b3 h₁₃
+  have c3 := binary_mul_binary_F c2 b4 h₁₄
+  have c4 := binary_mul_binary_F c3 b5 h₁₅
+  have c5 := bit_val_to_nat (binary_mul_binary_F c4 b6 h₁₆)
   cases c5
   {
     rename_i h
@@ -343,7 +353,7 @@ lemma wordRange_correct
   }
 }
 
-lemma eval_eq_lt
+lemma eval_eq_then_lt
   (h₁: Eval.EvalProp σ Δ (Ast.exprEq e₁ e₂) (Ast.Value.vBool true))
   (h₂: Eval.EvalProp σ Δ (Ast.Expr.binRel (Ast.Expr.toZ e₂) Ast.RelOp.lt e₃) (Ast.Value.vBool true))
   : Eval.EvalProp σ Δ (Ast.Expr.binRel (Ast.Expr.toZ e₁) Ast.RelOp.lt e₃) (Ast.Value.vBool true) := by {
@@ -380,65 +390,7 @@ lemma eval_eq_lt
     | _ => simp at hlt
   }
 
-abbrev is_binary_type (ident: String): Ast.Ty := (Ast.Ty.unit.refin
-                                                  (Ast.Predicate.ind
-                                                    (Ast.exprEq
-                                                      ((Ast.Expr.var ident).fieldExpr Ast.FieldOp.mul
-                                                        ((Ast.Expr.var ident).fieldExpr
-                                                          Ast.FieldOp.sub (Ast.Expr.constF 1)))
-                                                      (Ast.Expr.constF 0))))
-
-abbrev bits_word_reduce (i₀ i₁ i₂ i₃ i₄ i₅ i₆ i₇: String) : Ast.Expr :=
-                                      ((((((((Ast.Expr.var i₀).fieldExpr Ast.FieldOp.add
-                                                                ((Ast.Expr.var i₁).fieldExpr
-                                                                  Ast.FieldOp.mul (Ast.Expr.constF 2))).fieldExpr
-                                                            Ast.FieldOp.add
-                                                            ((Ast.Expr.var i₂).fieldExpr
-                                                              Ast.FieldOp.mul (Ast.Expr.constF 4))).fieldExpr
-                                                        Ast.FieldOp.add
-                                                        ((Ast.Expr.var i₃).fieldExpr
-                                                          Ast.FieldOp.mul (Ast.Expr.constF 8))).fieldExpr
-                                                    Ast.FieldOp.add
-                                                    ((Ast.Expr.var i₄).fieldExpr Ast.FieldOp.mul
-                                                      (Ast.Expr.constF 16))).fieldExpr
-                                                Ast.FieldOp.add
-                                                ((Ast.Expr.var i₅).fieldExpr Ast.FieldOp.mul
-                                                  (Ast.Expr.constF 32))).fieldExpr
-                                            Ast.FieldOp.add
-                                            ((Ast.Expr.var i₆).fieldExpr Ast.FieldOp.mul
-                                              (Ast.Expr.constF 64))).fieldExpr
-                                        Ast.FieldOp.add
-                                        ((Ast.Expr.var i₇).fieldExpr Ast.FieldOp.mul
-                                          (Ast.Expr.constF 128)))
-abbrev is_eq_mul_type (i₁ i₂ i₃: String): Ast.Ty := Ast.Ty.unit.refin
-                        (Ast.Predicate.ind
-                          (Ast.exprEq (Ast.Expr.var i₁)
-                            ((Ast.Expr.var i₂).fieldExpr Ast.FieldOp.mul
-                              (Ast.Expr.var i₃))))
-
-syntax "process_binary_hyp" : tactic
-macro_rules
-| `(tactic| process_binary_hyp) =>
-  -- `hyp` には `hb₁'` や `hb₂'` などの仮説名が入ります
-  `(tactic|
-      rename_i ih₁ ih₂ r₁;
-      cases ih₁;
-      rename_i ih₃ ih₄ r₂;
-      cases ih₂;
-      cases ih₃;
-      cases ih₄;
-      rename_i ih₁ ih₂ r₂;
-      cases ih₁;
-      cases ih₂;
-      cases r₂;
-      simp at r₂;
-      unfold Eval.evalRelOp at r₁;
-      simp at r₁;
-      rw [← r₂] at r₁;
-      simp at r₁;
-  )
-
-lemma is_mul_expr_val (h: Eval.EvalProp σ Δ
+lemma eval_mul_expr_val (h: Eval.EvalProp σ Δ
   (Ast.exprEq (Ast.Expr.var x)
     ((Ast.Expr.var y).fieldExpr Ast.FieldOp.mul (Ast.Expr.var z)))
   (Ast.Value.vBool true)) :
@@ -472,7 +424,7 @@ lemma is_mul_expr_val (h: Eval.EvalProp σ Δ
     | _ => simp at r₂
                  }
 
-lemma is_binary_expr_val (h: Eval.EvalProp σ Δ
+lemma eval_bit_expr_val (h: Eval.EvalProp σ Δ
   (Ast.exprEq
     ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul
       ((Ast.Expr.var x).fieldExpr Ast.FieldOp.sub (Ast.Expr.constF 1)))
@@ -506,7 +458,7 @@ lemma is_binary_expr_val (h: Eval.EvalProp σ Δ
     exact r₁
   }
 
-lemma eq_mul_val (h: Eval.EvalProp σ Δ
+lemma eval_eq_const_mul_val (h: Eval.EvalProp σ Δ
   (Ast.exprEq (Ast.Expr.constF v)
     ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul (Ast.Expr.var y)))
   (Ast.Value.vBool true)):
@@ -529,9 +481,9 @@ lemma eq_mul_val (h: Eval.EvalProp σ Δ
     simp_all
   }
 
-lemma binary_word_reduce_val (h: Eval.EvalProp σ Δ
+lemma eval_bits_to_byte_expr_val (h: Eval.EvalProp σ Δ
   (Ast.exprEq
-    (bits_word_reduce x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇)
+    (bits_to_byte_expr x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇)
     (Ast.Expr.var x₈))
   (Ast.Value.vBool true)) : ∃ v₀ v₁ v₂ v₃ v₄ v₅ v₆ v₇ v₈: F,
     Env.lookupVal σ x₀ = some (Ast.Value.vF v₀) ∧ Env.lookupVal σ x₁ = some (Ast.Value.vF v₁) ∧
@@ -618,7 +570,7 @@ lemma binary_word_reduce_val (h: Eval.EvalProp σ Δ
     simp_all
   }
 
-lemma tyenv_prop_to_expr (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind e))):
+lemma tyenv_to_eval_expr (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind e))):
   (Eval.EvalProp σ Δ e (Ast.Value.vBool true)) := by {
     unfold PropSemantics.tyenvToProp PropSemantics.varToProp PropSemantics.predToProp at h₁
     have h₁' := h₁ x (Ast.Ty.unit.refin (Ast.Predicate.ind e)) h₂
@@ -628,7 +580,7 @@ lemma tyenv_prop_to_expr (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.l
     exact h₁'
   }
 
-lemma tyenv_and_prop_to_expr (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.and (Ast.Predicate.ind e₁) (Ast.Predicate.ind e₂)))):
+lemma tyenv_and_to_eval_exprs (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.and (Ast.Predicate.ind e₁) (Ast.Predicate.ind e₂)))):
   (Eval.EvalProp σ Δ e₁ (Ast.Value.vBool true)) ∧ (Eval.EvalProp σ Δ e₂ (Ast.Value.vBool true)) := by {
     unfold PropSemantics.tyenvToProp PropSemantics.varToProp PropSemantics.predToProp at h₁
     have h₁' := h₁ x (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.and (Ast.Predicate.ind e₁) (Ast.Predicate.ind e₂))) h₂
@@ -638,7 +590,7 @@ lemma tyenv_and_prop_to_expr (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: E
     exact h₁'
   }
 
-lemma lt_val (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
+lemma eval_lt_val (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
   ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h
     rename_i ih₀ ih₁ r₁
@@ -653,7 +605,7 @@ lemma lt_val (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (
     simp_all
   }
 
-lemma lookup_u8
+lemma lookup_u8_val_lt_256
   (h₁: PropSemantics.tyenvToProp σ Δ Γ)
   (h₂: Env.lookupTy Γ u = some ((Ast.Ty.unit.refin
           (Ty.lookup_pred [(Ast.Expr.var x, Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
@@ -689,38 +641,38 @@ lemma lookup_u8
     unfold Ast.renameVar at h₂
     simp at h₂
     rw [if_neg h₇] at h₂
-    have hl₀' := tyenv_and_prop_to_expr h₁ h₂
+    have hl₀' := tyenv_and_to_eval_exprs h₁ h₂
 
     obtain ⟨hl₀₁',hl₀₂'⟩ := hl₀'
-    have hvl₀ := eval_eq_lt hl₀₂' hl₀₁'
-    have hvl₀' := lt_val hvl₀
+    have hvl₀ := eval_eq_then_lt hl₀₂' hl₀₁'
+    have hvl₀' := eval_lt_val hvl₀
     exact hvl₀'
   }
 
 lemma subtype_wordrage_check
-  (hb₁: Env.lookupTy Γ "b₀" = some (is_binary_type "most_sig_byte_decomp_0"))
-  (hb₂ : Env.lookupTy Γ "b₁" = some (is_binary_type "most_sig_byte_decomp_1"))
-  (hb₃: Env.lookupTy Γ "b₂" = some (is_binary_type "most_sig_byte_decomp_2"))
-  (hb₄ : Env.lookupTy Γ "b₃" = some (is_binary_type "most_sig_byte_decomp_3"))
-  (hb₅: Env.lookupTy Γ "b₄" = some (is_binary_type "most_sig_byte_decomp_4"))
-  (hb₆ : Env.lookupTy Γ "b₅" = some (is_binary_type "most_sig_byte_decomp_5"))
-  (hb₇: Env.lookupTy Γ "b₆" = some (is_binary_type "most_sig_byte_decomp_6"))
-  (hb₈ : Env.lookupTy Γ "b₇" = some (is_binary_type "most_sig_byte_decomp_7"))
+  (hb₁: Env.lookupTy Γ "b₀" = some (bit_value_type "most_sig_byte_decomp_0"))
+  (hb₂ : Env.lookupTy Γ "b₁" = some (bit_value_type "most_sig_byte_decomp_1"))
+  (hb₃: Env.lookupTy Γ "b₂" = some (bit_value_type "most_sig_byte_decomp_2"))
+  (hb₄ : Env.lookupTy Γ "b₃" = some (bit_value_type "most_sig_byte_decomp_3"))
+  (hb₅: Env.lookupTy Γ "b₄" = some (bit_value_type "most_sig_byte_decomp_4"))
+  (hb₆ : Env.lookupTy Γ "b₅" = some (bit_value_type "most_sig_byte_decomp_5"))
+  (hb₇: Env.lookupTy Γ "b₆" = some (bit_value_type "most_sig_byte_decomp_6"))
+  (hb₈ : Env.lookupTy Γ "b₇" = some (bit_value_type "most_sig_byte_decomp_7"))
   (hu₁: Env.lookupTy Γ "u₁" = some (Ast.Ty.unit.refin
                                   (Ast.Predicate.ind
                                     (Ast.exprEq
-                                      (bits_word_reduce "most_sig_byte_decomp_0" "most_sig_byte_decomp_1" "most_sig_byte_decomp_2" "most_sig_byte_decomp_3"
+                                      (bits_to_byte_expr "most_sig_byte_decomp_0" "most_sig_byte_decomp_1" "most_sig_byte_decomp_2" "most_sig_byte_decomp_3"
                                                         "most_sig_byte_decomp_4" "most_sig_byte_decomp_5" "most_sig_byte_decomp_6" "most_sig_byte_decomp_7")
                                       (Ast.Expr.var "value_3")))))
   (hu₂: Env.lookupTy Γ "u₂" = some                               (Ast.Ty.unit.refin
                                 (Ast.Predicate.ind
                                   (Ast.exprEq (Ast.Expr.var "most_sig_byte_decomp_7") (Ast.Expr.constF 0)))))
-  (hu₃: Env.lookupTy Γ "u₃" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_0" "most_sig_byte_decomp_1"))
-  (hu₄: Env.lookupTy Γ "u₄" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_3" "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_2"))
-  (hu₅: Env.lookupTy Γ "u₅" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_4" "and_most_sig_byte_decomp_0_to_3" "most_sig_byte_decomp_3"))
-  (hu₆: Env.lookupTy Γ "u₆" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_5" "and_most_sig_byte_decomp_0_to_4" "most_sig_byte_decomp_4"))
-  (hu₇: Env.lookupTy Γ "u₇" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_6" "and_most_sig_byte_decomp_0_to_5" "most_sig_byte_decomp_5"))
-  (hu₈: Env.lookupTy Γ "u₈" = some (is_eq_mul_type "and_most_sig_byte_decomp_0_to_7" "and_most_sig_byte_decomp_0_to_6" "most_sig_byte_decomp_6"))
+  (hu₃: Env.lookupTy Γ "u₃" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_0" "most_sig_byte_decomp_1"))
+  (hu₄: Env.lookupTy Γ "u₄" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_3" "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_2"))
+  (hu₅: Env.lookupTy Γ "u₅" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_4" "and_most_sig_byte_decomp_0_to_3" "most_sig_byte_decomp_3"))
+  (hu₆: Env.lookupTy Γ "u₆" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_5" "and_most_sig_byte_decomp_0_to_4" "most_sig_byte_decomp_4"))
+  (hu₇: Env.lookupTy Γ "u₇" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_6" "and_most_sig_byte_decomp_0_to_5" "most_sig_byte_decomp_5"))
+  (hu₈: Env.lookupTy Γ "u₈" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_7" "and_most_sig_byte_decomp_0_to_6" "most_sig_byte_decomp_6"))
   (hu₉: Env.lookupTy Γ "u₉" = some                           (Ast.Ty.unit.refin
                   (Ast.Predicate.ind
                     (Ast.exprEq (Ast.Expr.constF 0)
@@ -768,43 +720,43 @@ lemma subtype_wordrage_check
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl
     intro v h₁ h₂
-    have hb₁' := tyenv_prop_to_expr h₁ hb₁
-    have hb₂' := tyenv_prop_to_expr h₁ hb₂
-    have hb₃' := tyenv_prop_to_expr h₁ hb₃
-    have hb₄' := tyenv_prop_to_expr h₁ hb₄
-    have hb₅' := tyenv_prop_to_expr h₁ hb₅
-    have hb₆' := tyenv_prop_to_expr h₁ hb₆
-    have hb₇' := tyenv_prop_to_expr h₁ hb₇
-    have hb₈' := tyenv_prop_to_expr h₁ hb₈
-    have hu₁' := tyenv_prop_to_expr h₁ hu₁
-    have hu₂' := tyenv_prop_to_expr h₁ hu₂
-    have hu₃' := tyenv_prop_to_expr h₁ hu₃
-    have hu₄' := tyenv_prop_to_expr h₁ hu₄
-    have hu₅' := tyenv_prop_to_expr h₁ hu₅
-    have hu₆' := tyenv_prop_to_expr h₁ hu₆
-    have hu₇' := tyenv_prop_to_expr h₁ hu₇
-    have hu₈' := tyenv_prop_to_expr h₁ hu₈
-    have hu₉' := tyenv_prop_to_expr h₁ hu₉
-    have hu₁₀' := tyenv_prop_to_expr h₁ hu₁₀
-    have hu₁₁' := tyenv_prop_to_expr h₁ hu₁₁
-    have hb₁'' := is_binary_expr_val hb₁'
-    have hb₂'' := is_binary_expr_val hb₂'
-    have hb₃'' := is_binary_expr_val hb₃'
-    have hb₄'' := is_binary_expr_val hb₄'
-    have hb₅'' := is_binary_expr_val hb₅'
-    have hb₆'' := is_binary_expr_val hb₆'
-    have hb₇'' := is_binary_expr_val hb₇'
-    have hb₈'' := is_binary_expr_val hb₈'
-    have hu₁' := binary_word_reduce_val hu₁'
-    have hu₃'' := is_mul_expr_val hu₃'
-    have hu₄'' := is_mul_expr_val hu₄'
-    have hu₅'' := is_mul_expr_val hu₅'
-    have hu₆'' := is_mul_expr_val hu₆'
-    have hu₇'' := is_mul_expr_val hu₇'
-    have hu₈'' := is_mul_expr_val hu₈'
-    have hu₉'' := eq_mul_val hu₉'
-    have hu₁₀'' := eq_mul_val hu₁₀'
-    have hu₁₁'' := eq_mul_val hu₁₁'
+    have hb₁' := tyenv_to_eval_expr h₁ hb₁
+    have hb₂' := tyenv_to_eval_expr h₁ hb₂
+    have hb₃' := tyenv_to_eval_expr h₁ hb₃
+    have hb₄' := tyenv_to_eval_expr h₁ hb₄
+    have hb₅' := tyenv_to_eval_expr h₁ hb₅
+    have hb₆' := tyenv_to_eval_expr h₁ hb₆
+    have hb₇' := tyenv_to_eval_expr h₁ hb₇
+    have hb₈' := tyenv_to_eval_expr h₁ hb₈
+    have hu₁' := tyenv_to_eval_expr h₁ hu₁
+    have hu₂' := tyenv_to_eval_expr h₁ hu₂
+    have hu₃' := tyenv_to_eval_expr h₁ hu₃
+    have hu₄' := tyenv_to_eval_expr h₁ hu₄
+    have hu₅' := tyenv_to_eval_expr h₁ hu₅
+    have hu₆' := tyenv_to_eval_expr h₁ hu₆
+    have hu₇' := tyenv_to_eval_expr h₁ hu₇
+    have hu₈' := tyenv_to_eval_expr h₁ hu₈
+    have hu₉' := tyenv_to_eval_expr h₁ hu₉
+    have hu₁₀' := tyenv_to_eval_expr h₁ hu₁₀
+    have hu₁₁' := tyenv_to_eval_expr h₁ hu₁₁
+    have hb₁'' := eval_bit_expr_val hb₁'
+    have hb₂'' := eval_bit_expr_val hb₂'
+    have hb₃'' := eval_bit_expr_val hb₃'
+    have hb₄'' := eval_bit_expr_val hb₄'
+    have hb₅'' := eval_bit_expr_val hb₅'
+    have hb₆'' := eval_bit_expr_val hb₆'
+    have hb₇'' := eval_bit_expr_val hb₇'
+    have hb₈'' := eval_bit_expr_val hb₈'
+    have hu₁' := eval_bits_to_byte_expr_val hu₁'
+    have hu₃'' := eval_mul_expr_val hu₃'
+    have hu₄'' := eval_mul_expr_val hu₄'
+    have hu₅'' := eval_mul_expr_val hu₅'
+    have hu₆'' := eval_mul_expr_val hu₆'
+    have hu₇'' := eval_mul_expr_val hu₇'
+    have hu₈'' := eval_mul_expr_val hu₈'
+    have hu₉'' := eval_eq_const_mul_val hu₉'
+    have hu₁₀'' := eval_eq_const_mul_val hu₁₀'
+    have hu₁₁'' := eval_eq_const_mul_val hu₁₁'
 
     cases hu₂'
     rename_i v₁ u₁ ih₁ ih₂ h_most_sig_byte_decomp_7_is_0
@@ -833,8 +785,8 @@ lemma subtype_wordrage_check
       simp
     }
     have h₃' : "trace'" ≠ "i" := by simp
-    have hl₀' := tyenv_and_prop_to_expr h₁ hl₀
-    have hvl₀ := lookup_u8 h₁ hl₀ h₂' h₁' h₃'
+    have hl₀' := tyenv_and_to_eval_exprs h₁ hl₀
+    have hvl₀ := lookup_u8_val_lt_256 h₁ hl₀ h₂' h₁' h₃'
     have h₁' : (Env.freshName (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
               [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]) (Env.lookupCircuit Δ "u8").ident_t) = "trace'" := by {
       unfold Env.freshName
@@ -851,8 +803,8 @@ lemma subtype_wordrage_check
       unfold Ty.update_UsedNames
       simp
     }
-    have hl₁' := tyenv_and_prop_to_expr h₁ hl₁
-    have hvl₁ := lookup_u8 h₁ hl₁ h₂' h₁' h₃'
+    have hl₁' := tyenv_and_to_eval_exprs h₁ hl₁
+    have hvl₁ := lookup_u8_val_lt_256 h₁ hl₁ h₂' h₁' h₃'
     have h₁' : (Env.freshName (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
           (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
             (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
@@ -873,10 +825,10 @@ lemma subtype_wordrage_check
       unfold Ty.update_UsedNames
       simp
     }
-    have hl₂' := tyenv_and_prop_to_expr h₁ hl₂
-    have hvl₂ := lookup_u8 h₁ hl₂ h₂' h₁' h₃'
-    have hl₃' := tyenv_and_prop_to_expr h₁ hl₃
-    have hvl₃ := lookup_u8 h₁ hl₃ h₂' h₁' h₃'
+    have hl₂' := tyenv_and_to_eval_exprs h₁ hl₂
+    have hvl₂ := lookup_u8_val_lt_256 h₁ hl₂ h₂' h₁' h₃'
+    have hl₃' := tyenv_and_to_eval_exprs h₁ hl₃
+    have hvl₃ := lookup_u8_val_lt_256 h₁ hl₃ h₂' h₁' h₃'
 
     unfold PropSemantics.predToProp PropSemantics.exprToProp
     obtain ⟨most_sig_byte_decomp_0, h⟩ := hb₁''
@@ -1054,7 +1006,7 @@ lemma subtype_wordrage_check
     . apply Eval.EvalProp.ConstZ
     . unfold Eval.evalRelOp
       simp
-      apply wordRange_correct
+      apply word_range_val_bound
       simp
       exact h_most_sig_byte_decomp_0
       simp
