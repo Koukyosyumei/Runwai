@@ -85,9 +85,9 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.var f) (Ast.Ty.func x τ₁ τ₂)
 
   -- TE-ARRY-INDEX
-  | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n: Int} {i: ℕ} {φ: Ast.Predicate}:
+  | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n i: ℕ} {φ: Ast.Predicate}:
     TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
-    TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.int) φ₁) →
+    TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ n)))) →
     TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
@@ -136,8 +136,8 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
 
   -- TE_SUB
   | TE_SUB {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
-    (h₀ : SubtypeJudgment Δ Γ τ₁ τ₂)
-    (ht : @TypeJudgment Δ Γ Η e τ₁) :
+    (ht : @TypeJudgment Δ Γ Η e τ₁)
+    (h₀ : SubtypeJudgment Δ Γ τ₁ τ₂) :
     TypeJudgment Γ Η e τ₂
 
   -- TE-LETIN

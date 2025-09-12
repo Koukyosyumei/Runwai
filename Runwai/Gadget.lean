@@ -444,11 +444,11 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       apply ih₂
       exact h
        --(ih₁ Γ₂ h) h₂ (ih₂ Γ₂ h)
-    | TE_SUB h₀ _ ih =>
+    | TE_SUB h₀ h₁ ih =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_SUB
-      · exact subtyping_pointwise_preserve Δ _ _ _ h₀ Γ₂ h
       · apply ih; assumption
+      . exact subtyping_pointwise_preserve Δ _ _ _ h₁ Γ₂ h
     | TE_LetIn h₁ h₂ ih₁ ih₂ =>
       rename_i Γ' Η' x₁ e₁ e₂ τ₁ τ₂ h'
       intro Γ₂ h
@@ -585,9 +585,10 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
         apply isZero_eval_eq_branch_semantics h₅ h₁
         repeat apply Eval.EvalProp.Var; rfl
       }
-    apply Ty.TypeJudgment.TE_SUB h_sub
+    apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_VarEnv
     apply lookup_update_self
+    exact h_sub
 }
 
 abbrev bit_value_type (ident: String): Ast.Ty := (Ast.Ty.unit.refin
