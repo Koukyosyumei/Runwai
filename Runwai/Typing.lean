@@ -57,9 +57,8 @@ inductive SubtypeJudgment :
 
 def lookup_pred (args: List (Ast.Expr × Ast.Expr)) (c: Ast.Chip) (φ: Ast.Predicate) (Η: Env.UsedNames): Ast.Predicate :=
   args.foldl
-  (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst (Ast.renameVar (Ast.renameVar y.snd c.ident_t (Env.freshName Η c.ident_t) 1000) c.ident_i (Env.freshName Η c.ident_i) 1000))))
-  (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))
-                        c.ident_i (Env.freshName Η c.ident_i))
+  (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst (Ast.renameVar (Ast.renameVar y.snd c.ident_t (Ast.Expr.var (Env.freshName Η c.ident_t)) 1000) c.ident_i (Ast.Expr.var (Env.freshName Η c.ident_i)) 1000))))
+  (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Ast.Expr.var (Env.freshName Η c.ident_t))) c.ident_i (Ast.Expr.var (Env.freshName Η c.ident_i)))
 
 def update_UsedNames (c: Ast.Chip) (Η: Env.UsedNames) : Env.UsedNames :=
   [Env.freshName Η c.ident_i, Env.freshName Η c.ident_t] ++ Η
