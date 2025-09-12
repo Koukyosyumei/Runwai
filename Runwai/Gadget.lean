@@ -367,10 +367,10 @@ theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁
     exact varToProp_pointwise_preserve σ Δ Γ₁ Γ₂ x h₁ h₅
   }
 
-theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁ τ₂: Ast.Ty)
-  (h₂: Ty.SubtypeJudgment σ Δ Γ₁ τ₁ τ₂) :
+theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁ τ₂: Ast.Ty)
+  (h₂: Ty.SubtypeJudgment Δ Γ₁ τ₁ τ₂) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
-    Ty.SubtypeJudgment σ Δ Γ₂ τ₁ τ₂ := by {
+    Ty.SubtypeJudgment Δ Γ₂ τ₁ τ₂ := by {
       induction h₂ with
       | TSub_Refl => intros; constructor
       | TSub_Trans h₁ h₂ ih₁ ih₂ => {
@@ -383,15 +383,15 @@ theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁: 
         intro Γ₂ h
         apply Ty.SubtypeJudgment.TSub_Refine
         apply ih₂; exact h
-        intro v h'₁ h'₂
+        intro σ e h₂
         apply ih₁
-        rename_i σ' Δ' Γ' τ₁' τ₂' φ₁' φ₂'
-        exact tyenvToProp_pointwise_preserve σ' Δ' Γ₂ Γ' (lookupTy_pointwise_symm Γ' Γ₂ h) h'₁
-        exact h'₂
+        exact tyenvToProp_pointwise_preserve σ Δ Γ₂ Γ₁ (lookupTy_pointwise_symm Γ₁ Γ₂ h) h₂
       }
       | TSub_Fun h₁ h₂ ih₁ ih₂ => {
         intro Γ₂ h
         apply Ty.SubtypeJudgment.TSub_Fun
+        rename_i x y z τx τy τs τr
+        exact z
         apply ih₁; exact h
         apply ih₂; exact h
       }
@@ -401,13 +401,13 @@ theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁: 
       }
     }
 
-theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
-  (h₂: @Ty.TypeJudgment σ Δ Γ₁ Η e τ) :
+theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
+  (h₂: @Ty.TypeJudgment Δ Γ₁ Η e τ) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
-        @Ty.TypeJudgment σ Δ Γ₂ Η e τ := by {
+        @Ty.TypeJudgment Δ Γ₂ Η e τ := by {
     induction h₂ with
-    | TE_Var _ ha => intro Γ₂ h; apply Ty.TypeJudgment.TE_Var; rwa [← h]
-    | TE_VarEnv _ h₁ => intro Γ₂ h; apply Ty.TypeJudgment.TE_VarEnv; rwa [← h]
+    | TE_Var ha => intro Γ₂ h; apply Ty.TypeJudgment.TE_Var; rwa [← h]
+    | TE_VarEnv h₁ => intro Γ₂ h; apply Ty.TypeJudgment.TE_VarEnv; rwa [← h]
     | TE_VarFunc _ =>
       rename_i Γ' x₁ x₂ τ₁ τ₂ h
       intro Γ₂ h'
@@ -415,7 +415,16 @@ theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Η: Env.Us
       have h₃ := h' x₁
       rw[← h₃]
       exact h
-    | TE_ArrayIndex _ h₂ h₃ a_ih => intro Γ₂ h; apply Ty.TypeJudgment.TE_ArrayIndex (a_ih Γ₂ h) h₂ h₃
+    | TE_ArrayIndex _ h₂ h₃ a_ih => {
+      intro Γ₂ h
+      rename_i i φ h₁
+      apply Ty.TypeJudgment.TE_ArrayIndex
+      exact i
+      apply h₃
+      exact h
+      apply a_ih
+      exact h
+    }
     | TE_Branch _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Branch (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_ConstF => intros; constructor
     | TE_ConstZ => intros; constructor
@@ -427,14 +436,19 @@ theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Η: Env.Us
       apply Ty.TypeJudgment.TE_Abs
       · rwa [← update_preserve_pointwise _ _ _ _ h]
       · apply ih₂; exact update_preserve_pointwise _ _ _ _ h
-    | TE_App _ h₂ _ ih₁ ih₂ =>
+    | TE_App h₂ _ ih₁ ih₂ =>
       intro Γ₂ h
-      apply Ty.TypeJudgment.TE_App (ih₁ Γ₂ h) h₂ (ih₂ Γ₂ h)
-    | TE_SUB h₀ _ ih =>
+      apply Ty.TypeJudgment.TE_App
+      apply ih₁
+      exact h
+      apply ih₂
+      exact h
+       --(ih₁ Γ₂ h) h₂ (ih₂ Γ₂ h)
+    | TE_SUB h₀ h₁ ih =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_SUB
-      · exact subtyping_pointwise_preserve σ Δ _ _ _ h₀ Γ₂ h
       · apply ih; assumption
+      . exact subtyping_pointwise_preserve Δ _ _ _ h₁ Γ₂ h
     | TE_LetIn h₁ h₂ ih₁ ih₂ =>
       rename_i Γ' Η' x₁ e₁ e₂ τ₁ τ₂ h'
       intro Γ₂ h
@@ -515,15 +529,15 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.
   . simp_all; rw[← ih₄]; simp
 }
 
-lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
+lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
   (x y inv u₁ u₂: String)
   (htx: Env.lookupTy Γ x = (Ty.refin Ast.Ty.field φ₁))
   (hty: Env.lookupTy Γ y = (Ty.refin Ast.Ty.field φ₂))
-  (htinv: @Ty.TypeJudgment σ Δ Γ Η (.var inv) (Ty.refin Ast.Ty.field φ₃))
+  (htinv: @Ty.TypeJudgment Δ Γ Η (.var inv) (Ty.refin Ast.Ty.field φ₃))
   (hne₁: ¬ x = u₁)
   (hne₂: ¬ y = u₁)
   (hne₃: ¬ u₁ = u₂):
-  @Ty.TypeJudgment σ Δ Γ Η
+  @Ty.TypeJudgment Δ Γ Η
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
@@ -537,7 +551,7 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Η: Env.UsedNa
     apply Ty.TypeJudgment.TE_VarEnv
     rw[← hty]; apply lookup_update_ne; exact hne₂
     apply Ty.TypeJudgment.TE_ConstF
-    have h_sub : @Ty.SubtypeJudgment σ Δ (Env.updateTy
+    have h_sub : @Ty.SubtypeJudgment Δ (Env.updateTy
       (Env.updateTy Γ u₁
         (Ty.unit.refin
           (Ast.Predicate.ind
@@ -551,27 +565,30 @@ lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Η: Env.UsedNa
         apply Ty.SubtypeJudgment.TSub_Refine
         apply Ty.SubtypeJudgment.TSub_Refl
         unfold PropSemantics.tyenvToProp PropSemantics.predToProp PropSemantics.exprToProp PropSemantics.varToProp
-        intro v h₁ h₂
+        intro σ e h₂
         set φ₁ := (Ast.Predicate.ind
           (exprEq (Expr.var y)
             ((((Expr.constF 0).fieldExpr FieldOp.sub (Expr.var x)).fieldExpr FieldOp.mul (Expr.var inv)).fieldExpr FieldOp.add
               (Expr.constF 1))))
         set φ₂ := (Ast.Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))
-        have h₃ := h₁ u₁ (Ty.unit.refin φ₁)
+        have h₃ := h₂ u₁ (Ty.unit.refin φ₁)
         have h₄: Env.lookupTy (Env.updateTy (Env.updateTy Γ u₁ (Ty.unit.refin φ₁)) u₂ (Ty.unit.refin φ₂)) u₁ = (Ty.unit.refin φ₁) := by {
           apply lookup_update_ne_of_lookup
           exact hne₃
           apply lookup_update_self
         }
-        have h₅ := lookup_mem_of_eq h₄
-        rw[h₄] at h₃
-        simp at h₃
-        apply isZero_eval_eq_branch_semantics h₃ h₂
+        have h₅ := h₃ h₄
+        rw[h₄] at h₅
+        simp at h₅
+        unfold PropSemantics.predToProp PropSemantics.exprToProp at h₅
+        intro h₁
+        apply isZero_eval_eq_branch_semantics h₅ h₁
         repeat apply Eval.EvalProp.Var; rfl
       }
-    apply Ty.TypeJudgment.TE_SUB h_sub
+    apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_VarEnv
     apply lookup_update_self
+    exact h_sub
 }
 
 abbrev bit_value_type (ident: String): Ast.Ty := (Ast.Ty.unit.refin
@@ -1082,3 +1099,31 @@ lemma eval_lt_val {σ Δ x t} (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binR
     use v
     simp_all
   }
+
+lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
+  apply Ty.TypeJudgment.TE_SUB
+  apply Ty.TypeJudgment.TE_ConstZ
+  apply Ty.SubtypeJudgment.TSub_Refine
+  apply Ty.SubtypeJudgment.TSub_Refl
+  intro σ v h₁ h₂
+  unfold PropSemantics.predToProp PropSemantics.exprToProp at h₂ ⊢
+  cases h₂
+  rename_i va ih₁ ih₂ ih₃
+  cases ih₁
+  cases ih₃
+  rename_i v₁ v₂ ih₁ ih₃ r
+  cases ih₃
+  unfold Eval.evalRelOp at r
+  cases v₁ <;> simp at r
+  rw[r] at ih₁
+  apply Eval.EvalProp.App
+  apply Eval.EvalProp.Lam
+  exact ih₂
+  apply Eval.EvalProp.Rel
+  exact ih₁
+  apply Eval.EvalProp.ConstZ
+  unfold Eval.evalRelOp
+  simp
+  exact h
+}

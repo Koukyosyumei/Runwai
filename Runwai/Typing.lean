@@ -26,34 +26,34 @@ namespace Ty
   under valuation `σ`, Chips `Δ`, type env `Γ`, and fuel.
 -/
 inductive SubtypeJudgment :
-  Env.ValEnv → Env.ChipEnv → Env.TyEnv → Ast.Ty → Ast.Ty → Prop where
+  Env.ChipEnv → Env.TyEnv → Ast.Ty → Ast.Ty → Prop where
   /-- TSUB-REFL: Reflexivity -/
-  | TSub_Refl {σ: Env.ValEnv} {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {τ : Ast.Ty} :
-      SubtypeJudgment σ Δ Γ τ τ
+  | TSub_Refl {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {τ : Ast.Ty} :
+      SubtypeJudgment Δ Γ τ τ
 
   /-- TSUB-TRANS: Transitivity -/
-  | TSub_Trans {σ: Env.ValEnv} {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {τ₁ τ₂ τ₃ : Ast.Ty} :
-      SubtypeJudgment σ Δ Γ τ₁ τ₂ →
-      SubtypeJudgment σ Δ Γ τ₂ τ₃ →
-      SubtypeJudgment σ Δ Γ τ₁ τ₃
+  | TSub_Trans {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {τ₁ τ₂ τ₃ : Ast.Ty} :
+      SubtypeJudgment Δ Γ τ₁ τ₂ →
+      SubtypeJudgment Δ Γ τ₂ τ₃ →
+      SubtypeJudgment Δ Γ τ₁ τ₃
 
   /-- TSUB-REFINE: Refinement subtyping -/
-  | TSub_Refine {σ: Env.ValEnv} {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} :
-      SubtypeJudgment σ Δ Γ T₁ T₂ →
-      (∀ v: Ast.Expr, PropSemantics.tyenvToProp σ Δ Γ → (PropSemantics.predToProp σ Δ T₁ φ₁ v → PropSemantics.predToProp σ Δ T₂ φ₂ v)) →
-      SubtypeJudgment σ Δ Γ (Ast.Ty.refin T₁ φ₁) (Ast.Ty.refin T₂ φ₂)
+  | TSub_Refine {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} :
+      SubtypeJudgment Δ Γ T₁ T₂ →
+      (∀ σ: Env.ValEnv, ∀ v: Ast.Expr, PropSemantics.tyenvToProp σ Δ Γ → (PropSemantics.predToProp σ Δ T₁ φ₁ v → PropSemantics.predToProp σ Δ T₂ φ₂ v)) →
+      SubtypeJudgment Δ Γ (Ast.Ty.refin T₁ φ₁) (Ast.Ty.refin T₂ φ₂)
 
   /-- TSUB-FUN: Function subtyping -/
-  | TSub_Fun {σ: Env.ValEnv} {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {x y : String} {z : Ast.Value} {τx τy τr τs : Ast.Ty} :
-      SubtypeJudgment σ Δ Γ τy τx →
+  | TSub_Fun {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {x y : String} {z : Ast.Value} {τx τy τr τs : Ast.Ty} :
+      SubtypeJudgment Δ Γ τy τx →
       -- Using a fresh variable z to avoid capture
-      SubtypeJudgment (Env.updateVal (Env.updateVal σ x z) y z) Δ Γ τr τs →
-      SubtypeJudgment σ Δ Γ (Ast.Ty.func x τx τr) (Ast.Ty.func y τy τs)
+      SubtypeJudgment Δ Γ τr τs → --replace x with z in τr and y with z in τs
+      SubtypeJudgment Δ Γ (Ast.Ty.func x τx τr) (Ast.Ty.func y τy τs)
 
   /-- TSUB-ARR: Array subtyping -/
-  | TSub_Arr {σ: Env.ValEnv} {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {n: Int} :
-      SubtypeJudgment σ Δ Γ T₁ T₂ →
-      SubtypeJudgment σ Δ Γ (Ast.Ty.arr T₁ n) (Ast.Ty.arr T₂ n)
+  | TSub_Arr {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {n: Int} :
+      SubtypeJudgment Δ Γ T₁ T₂ →
+      SubtypeJudgment Δ Γ (Ast.Ty.arr T₁ n) (Ast.Ty.arr T₂ n)
 
 def lookup_pred (args: List (Ast.Expr × Ast.Expr)) (c: Ast.Chip) (φ: Ast.Predicate) (Η: Env.UsedNames): Ast.Predicate :=
   args.foldl
@@ -68,15 +68,15 @@ def update_UsedNames (c: Ast.Chip) (Η: Env.UsedNames) : Env.UsedNames :=
   Typing judgment `Γ ⊢ e : τ`: expression `e` has type `τ`
   under type environment `Γ`, valuation `σ`, Chips `Δ`, and fuel.
 -/
-inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.ChipEnv}:
+inductive TypeJudgment {Δ: Env.ChipEnv}:
   Env.TyEnv → Env.UsedNames → Ast.Expr → Ast.Ty → Prop where
   -- TE-VAR
-  | TE_Var {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty}:
-    ∀ φ: Ast.Predicate, Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
+  | TE_Var {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty} {φ: Ast.Predicate}:
+    Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
     TypeJudgment Γ Η (Ast.Expr.var x) (Ast.Ty.refin T (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.var x))))
 
-  | TE_VarEnv {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty}:
-    ∀ φ: Ast.Predicate, Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
+  | TE_VarEnv {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty} {φ: Ast.Predicate}:
+    Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
     TypeJudgment Γ Η (Ast.Expr.var x) (Ast.Ty.refin T φ)
 
   -- TE-VAR-FUNC
@@ -85,10 +85,9 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.var f) (Ast.Ty.func x τ₁ τ₂)
 
   -- TE-ARRY-INDEX
-  | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n: Int} {i: ℕ} {φ: Ast.Predicate}:
+  | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n i: ℕ} {φ: Ast.Predicate}:
     TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
-    Eval.EvalProp σ Δ idx (Ast.Value.vZ i) →
-    i < n →
+    TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ n)))) →
     TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
@@ -130,23 +129,22 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.lam x τ₁ e) ((Ast.Ty.func x τ₁ τ₂))
 
   -- TE-APP
-  | TE_App {Γ: Env.TyEnv} {Η: Env.UsedNames} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂: Ast.Ty} {x₂_v: Ast.Value}:
+  | TE_App {Γ: Env.TyEnv} {Η: Env.UsedNames} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂: Ast.Ty}:
     TypeJudgment Γ Η x₁ (Ast.Ty.func s τ₁ τ₂) →
-    Eval.EvalProp σ Δ x₂ x₂_v →
     TypeJudgment Γ Η x₂ τ₁ →
-    TypeJudgment Γ Η (Ast.Expr.app x₁ x₂) τ₂
+    TypeJudgment Γ Η (Ast.Expr.app x₁ x₂) τ₂ -- rename s with x₂ in τ₂
 
   -- TE_SUB
   | TE_SUB {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
-    (h₀ : @SubtypeJudgment σ Δ Γ τ₁ τ₂)
-    (ht : @TypeJudgment σ Δ Γ Η e τ₁) :
+    (ht : @TypeJudgment Δ Γ Η e τ₁)
+    (h₀ : SubtypeJudgment Δ Γ τ₁ τ₂) :
     TypeJudgment Γ Η e τ₂
 
   -- TE-LETIN
   | TE_LetIn {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ : Ast.Ty}
     (h₀: Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁)
-    (h₁: @TypeJudgment σ Δ Γ Η e₁ τ₁)
-    (h₂: @TypeJudgment σ Δ (Env.updateTy Γ x τ₁) Η e₂ τ₂):
+    (h₁: @TypeJudgment Δ Γ Η e₁ τ₁)
+    (h₂: @TypeJudgment Δ (Env.updateTy Γ x τ₁) Η e₂ τ₂):
     TypeJudgment Γ Η (Ast.Expr.letIn x e₁ e₂) τ₂
 
   -- TE-LOOKUP
@@ -155,7 +153,7 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.ChipEnv}:
     (hc: c = Env.lookupChip Δ cname)
     (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ)
     (hn: φ' = lookup_pred args c φ Η)
-    (h₂: @TypeJudgment σ Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
+    (h₂: @TypeJudgment Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
     TypeJudgment Γ Η (Ast.Expr.lookup vname cname args e) τ
 
 /-
@@ -200,7 +198,7 @@ def chipCorrect (Δ : Env.ChipEnv) (c : Ast.Chip) (minimum_height: ℕ) : Prop :
     let Η := [c.ident_i, c.ident_t]
     checkInputsTrace c (Ast.Value.vArr trace) trace.length →
     PropSemantics.tyenvToProp σ Δ Γ →
-    @TypeJudgment σ Δ Γ Η c.body c.goal
+    @TypeJudgment Δ Γ Η c.body c.goal
 
 lemma lookupTy_mem (Γ: Env.TyEnv) (x: String) (τ :Ast.Ty) (φ: Ast.Predicate)
   (h : Env.lookupTy Γ x = Ast.Ty.refin τ φ) :
