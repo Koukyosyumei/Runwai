@@ -90,8 +90,7 @@ mutual
     | App      {σ Δ f a x body σ' va vb}
         (ih_f : EvalProp σ Δ f (Value.vClosure x body σ'))
         (ih_a : EvalProp σ Δ a va)
-        --(ih_b : EvalProp (updateVal σ' x va) Δ body vb) :
-        (ih_b : EvalProp σ' Δ body vb) :
+        (ih_b : EvalProp (updateVal σ' x va) Δ body vb) :
         EvalProp σ Δ (Expr.app f a) vb
 
     -- E‑FBINOP
