@@ -40,6 +40,7 @@ match Env.lookupTy Γ ident with
 -- bare field and boolean types
 | Ast.Ty.field        => True
 | Ast.Ty.bool         => True
+| Ast.Ty.int          => True
 | _ => False
 
 def tyenvToProp (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ: Env.TyEnv): Prop :=
