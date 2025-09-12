@@ -571,70 +571,42 @@ theorem wordRangeCheckerChip_correct : Ty.chipCorrect Δ wordRangeCheckerChip 1 
   apply Ty.TypeJudgment.TE_LetIn
   · apply lookup_update_self;
   . apply Ty.TypeJudgment.TE_Assert
-    repeat apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
-    simp
+    repeat
+      apply Ty.TypeJudgment.TE_BinOpField
+    auto_resolve_varenv
     apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
-    simp
+    auto_resolve_varenv
     repeat apply Ty.TypeJudgment.TE_ConstF
   . repeat
-      apply Ty.TypeJudgment.TE_LetIn
-      apply lookup_update_self
-      apply Ty.TypeJudgment.TE_Assert
+      auto_let_assert
       repeat
         apply Ty.TypeJudgment.TE_BinOpField
-        apply Ty.TypeJudgment.TE_VarEnv
-        apply lookup_update_ne
-        simp
+        auto_resolve_varenv
       apply Ty.TypeJudgment.TE_ConstF
       apply Ty.TypeJudgment.TE_ConstF
     apply Ty.TypeJudgment.TE_LetIn
     apply lookup_update_self
     apply Ty.TypeJudgment.TE_Assert
     repeat apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
-    simp
+    auto_resolve_varenv
     repeat
       apply Ty.TypeJudgment.TE_BinOpField
-      apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
-      simp
+      auto_resolve_varenv
       apply Ty.TypeJudgment.TE_ConstF
-    apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
-    simp
-    apply Ty.TypeJudgment.TE_LetIn
-    apply lookup_update_self
-    apply Ty.TypeJudgment.TE_Assert
-    apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
-    simp
+    auto_resolve_varenv
+    auto_let_assert
+    auto_resolve_varenv
     apply Ty.TypeJudgment.TE_ConstF
     repeat
-      apply Ty.TypeJudgment.TE_LetIn
-      apply lookup_update_self
-      apply Ty.TypeJudgment.TE_Assert
-      apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
-      simp
+      auto_let_assert
+      auto_resolve_varenv
       apply Ty.TypeJudgment.TE_BinOpField
-      repeat
-        apply Ty.TypeJudgment.TE_VarEnv
-        apply lookup_update_ne
-        simp
+      repeat auto_resolve_varenv
     repeat
-      apply Ty.TypeJudgment.TE_LetIn
-      apply lookup_update_self
-      apply Ty.TypeJudgment.TE_Assert Ty.TypeJudgment.TE_ConstF
+      auto_let_assert
+      apply Ty.TypeJudgment.TE_ConstF
       apply Ty.TypeJudgment.TE_BinOpField
-      repeat
-        apply Ty.TypeJudgment.TE_VarEnv
-        apply lookup_update_ne
-        simp
+      repeat auto_resolve_varenv
     repeat
       apply Ty.TypeJudgment.TE_LookUp
       rfl; rfl; rfl
