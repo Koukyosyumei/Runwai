@@ -391,7 +391,6 @@ theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁
         intro Γ₂ h
         apply Ty.SubtypeJudgment.TSub_Fun
         rename_i x y z τx τy τs τr
-        exact z
         apply ih₁; exact h
         apply ih₂; exact h
       }

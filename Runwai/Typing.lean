@@ -44,10 +44,10 @@ inductive SubtypeJudgment :
       SubtypeJudgment Δ Γ (Ast.Ty.refin T₁ φ₁) (Ast.Ty.refin T₂ φ₂)
 
   /-- TSUB-FUN: Function subtyping -/
-  | TSub_Fun {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {x y : String} {z : Ast.Value} {τx τy τr τs : Ast.Ty} :
+  | TSub_Fun {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {x y z: String} {τx τy τr τs : Ast.Ty} :
       SubtypeJudgment Δ Γ τy τx →
       -- Using a fresh variable z to avoid capture
-      SubtypeJudgment Δ Γ τr τs → --replace x with z in τr and y with z in τs
+      SubtypeJudgment Δ Γ (Ast.renameTy τr x (Ast.Expr.var z)) (Ast.renameTy τs y (Ast.Expr.var z)) →
       SubtypeJudgment Δ Γ (Ast.Ty.func x τx τr) (Ast.Ty.func y τy τs)
 
   /-- TSUB-ARR: Array subtyping -/
