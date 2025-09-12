@@ -68,34 +68,21 @@ import Runwai.Tactic
 #runwai_prove Lookup := by {
   rename_i Δ h_delta trace i hs hi ht he hty hσ σ Γ
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
-  set τ' := (Ast.Ty.unit.refin
-      (Ty.lookup_pred
-        [(Ast.trace_i_j "trace" "i" 0, Ast.trace_i_j "trace" "i" 1)]
-        (Env.lookupChip Δ "Assert1")
-        (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2)))
-        ["i", "trace"])) with hτ'
-  set Γ' := (Env.updateTy
-    (Env.updateTy
-      (Env.updateTy [] "trace"
-        (((((Ast.Ty.field.refin Ast.constTruePred).arr 2).refin Ast.constTruePred).arr trace.length).refin Ast.constTruePred))
-      "i"
-      (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ trace.length)))))
-    "u" τ') with hΓ'
   rw[← h_delta]
-  rw[← hτ']
-  rw[← hΓ']
   simp
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
-  unfold Env.lookupTy Γ' Env.updateTy
+  unfold Env.lookupTy Env.updateTy
   simp
-  rw[hτ']
+  apply And.intro
+  rfl
+  rfl
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ v h₁ h₂
   unfold PropSemantics.tyenvToProp at h₁
   have h₃ := h₁ "u"
-  unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' at h₃
+  unfold Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy at h₃
   simp at h₃
   unfold Ty.lookup_pred at h₃
   have hat : (Env.lookupChip Δ "Assert1").ident_t = "trace" := by {
