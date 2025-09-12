@@ -11,7 +11,7 @@ open Env
 
   This module implements a small-step interpreter for Runwai expressions.
   It provides functions to evaluate binary operations, relations, and
-  full `Expr`s under given valuation, circuit, and type environments,
+  full `Expr`s under given valuation, Chip, and type environments,
   with a fuel parameter to ensure termination.
 -/
 
@@ -63,7 +63,7 @@ def evalBoolOp (op : BooleanOp) : Value → Value → Option Bool
   | _, _ => none
 
 mutual
-  inductive EvalProp : ValEnv → CircuitEnv → Expr → Value → Prop
+  inductive EvalProp : ValEnv → ChipEnv → Expr → Value → Prop
     -- E‑VALUE
     | ConstF        {σ Δ v} : EvalProp σ Δ (Expr.constF v) (Value.vF v)
     | ConstZ        {σ Δ v} : EvalProp σ Δ (Expr.constZ v) (Value.vZ v)

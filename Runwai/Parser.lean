@@ -101,20 +101,20 @@ declare_syntax_cat runwai_param
 syntax ident ":" runwai_ty : runwai_param
 
 ---------------------------------------------------
---------------- Declare Circuit -------------------
+--------------- Declare Chip -------------------
 ---------------------------------------------------
-declare_syntax_cat runwai_circuit
+declare_syntax_cat runwai_chip
 
--- circuit A (trace, i, width) -> T {body}
--- syntax "circuit" ident "(" sepBy(runwai_param, ",") ")" "->" runwai_ty "{" runwai_expr "}" : runwai_circuit
-syntax "circuit" ident "(" ident "," ident "," num ")" "->" runwai_ty "{" runwai_expr "}" : runwai_circuit
+-- Chip A (trace, i, width) -> T {body}
+-- syntax "Chip" ident "(" sepBy(runwai_param, ",") ")" "->" runwai_ty "{" runwai_expr "}" : runwai_chip
+syntax "chip" ident "(" ident "," ident "," num ")" "->" runwai_ty "{" runwai_expr "}" : runwai_chip
 
 ---------------------------------------------------
 --------------- Declare File ----------------------
 ---------------------------------------------------
 
 declare_syntax_cat runwai_file
-syntax (runwai_circuit)+ : runwai_file
+syntax (runwai_chip)+ : runwai_file
 
 namespace Frontend
 
@@ -303,11 +303,11 @@ unsafe def elaborateParam (stx : Syntax) : MetaM (String × Ast.Ty) := do
   | _ =>
       throwError "unsupported parameter syntax: {stx}, expected `x : T`"
 
--- circuit A (x1, x2, …, xn) -> T {body}
-/-- Given a single `runwai_circuit` syntax, produce an `Ast.Circuit`. -/
-unsafe def elaborateCircuit (stx : Syntax) : MetaM Ast.Circuit := do
+-- Chip A (x1, x2, …, xn) -> T {body}
+/-- Given a single `runwai_chip` syntax, produce an `Ast.Chip`. -/
+unsafe def elaborateChip (stx : Syntax) : MetaM Ast.Chip := do
   match stx with
-  | `(runwai_circuit| circuit $name:ident ( $ident_t:ident, $ident_i:ident, $width:num ) -> $goal:runwai_ty { $body:runwai_expr } ) => do
+  | `(runwai_chip| chip $name:ident ( $ident_t:ident, $ident_i:ident, $width:num ) -> $goal:runwai_ty { $body:runwai_expr } ) => do
       let goal'    ← elaborateType goal
       let body'    ← elaborateExpr body
       pure {
@@ -318,20 +318,20 @@ unsafe def elaborateCircuit (stx : Syntax) : MetaM Ast.Circuit := do
         goal    := goal'
         body    := body'
       }
-  | _ => throwError "invalid `circuit …` syntax: {stx}"
+  | _ => throwError "invalid `Chip …` syntax: {stx}"
 
-/-- A “file” of Loda is one or more `circuit` declarations. -/
-unsafe def elabLodaFile (stx : Syntax) : MetaM (Array Ast.Circuit) := do
+/-- A “file” of Loda is one or more `Chip` declarations. -/
+unsafe def elabLodaFile (stx : Syntax) : MetaM (Array Ast.Chip) := do
   match stx with
-  | `(runwai_file| $[$cs:runwai_circuit]*) =>
-      cs.mapM fun c => elaborateCircuit c
+  | `(runwai_file| $[$cs:runwai_chip]*) =>
+      cs.mapM fun c => elaborateChip c
   | _ => throwError "invalid Loda file syntax"
 
 /--
   If you ever want to parse a string in MetaM (outside of the “command” front‐end),
   you can do something like this:
 -/
-unsafe def parseLodaProgram (content : String) : MetaM (List Ast.Circuit) := do
+unsafe def parseLodaProgram (content : String) : MetaM (List Ast.Chip) := do
   let env ← getEnv
   let fname := `anonymous
   match Lean.Parser.runParserCategory env `runwai_file content fname.toString with

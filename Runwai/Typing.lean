@@ -15,7 +15,7 @@ import Runwai.PropSemantics
      between (optional) Runwai types under environments.
   2. A **typing** relation `TypeJudgment`
      assigning types to Runwai expressions.
-  3. A conversion of a `Circuit` into a `Prop`
+  3. A conversion of a `Chip` into a `Prop`
      expressing its correctness w.r.t. its input/output refinements.
 -/
 
@@ -23,52 +23,52 @@ namespace Ty
 
 /--
   Subtyping judgment between two optional types `τ₁ → τ₂`
-  under valuation `σ`, circuits `Δ`, type env `Γ`, and fuel.
+  under valuation `σ`, Chips `Δ`, type env `Γ`, and fuel.
 -/
 inductive SubtypeJudgment :
-  Env.ValEnv → Env.CircuitEnv → Env.TyEnv → Ast.Ty → Ast.Ty → Prop where
+  Env.ValEnv → Env.ChipEnv → Env.TyEnv → Ast.Ty → Ast.Ty → Prop where
   /-- TSUB-REFL: Reflexivity -/
-  | TSub_Refl {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {τ : Ast.Ty} :
+  | TSub_Refl {σ: Env.ValEnv} {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {τ : Ast.Ty} :
       SubtypeJudgment σ Δ Γ τ τ
 
   /-- TSUB-TRANS: Transitivity -/
-  | TSub_Trans {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {τ₁ τ₂ τ₃ : Ast.Ty} :
+  | TSub_Trans {σ: Env.ValEnv} {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {τ₁ τ₂ τ₃ : Ast.Ty} :
       SubtypeJudgment σ Δ Γ τ₁ τ₂ →
       SubtypeJudgment σ Δ Γ τ₂ τ₃ →
       SubtypeJudgment σ Δ Γ τ₁ τ₃
 
   /-- TSUB-REFINE: Refinement subtyping -/
-  | TSub_Refine {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} :
+  | TSub_Refine {σ: Env.ValEnv} {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} :
       SubtypeJudgment σ Δ Γ T₁ T₂ →
       (∀ v: Ast.Expr, PropSemantics.tyenvToProp σ Δ Γ → (PropSemantics.predToProp σ Δ T₁ φ₁ v → PropSemantics.predToProp σ Δ T₂ φ₂ v)) →
       SubtypeJudgment σ Δ Γ (Ast.Ty.refin T₁ φ₁) (Ast.Ty.refin T₂ φ₂)
 
   /-- TSUB-FUN: Function subtyping -/
-  | TSub_Fun {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {x y : String} {z : Ast.Value} {τx τy τr τs : Ast.Ty} :
+  | TSub_Fun {σ: Env.ValEnv} {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {x y : String} {z : Ast.Value} {τx τy τr τs : Ast.Ty} :
       SubtypeJudgment σ Δ Γ τy τx →
       -- Using a fresh variable z to avoid capture
       SubtypeJudgment (Env.updateVal (Env.updateVal σ x z) y z) Δ Γ τr τs →
       SubtypeJudgment σ Δ Γ (Ast.Ty.func x τx τr) (Ast.Ty.func y τy τs)
 
   /-- TSUB-ARR: Array subtyping -/
-  | TSub_Arr {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {n: Int} :
+  | TSub_Arr {σ: Env.ValEnv} {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {n: Int} :
       SubtypeJudgment σ Δ Γ T₁ T₂ →
       SubtypeJudgment σ Δ Γ (Ast.Ty.arr T₁ n) (Ast.Ty.arr T₂ n)
 
-def lookup_pred (args: List (Ast.Expr × Ast.Expr)) (c: Ast.Circuit) (φ: Ast.Predicate) (Η: Env.UsedNames): Ast.Predicate :=
+def lookup_pred (args: List (Ast.Expr × Ast.Expr)) (c: Ast.Chip) (φ: Ast.Predicate) (Η: Env.UsedNames): Ast.Predicate :=
   args.foldl
   (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst (Ast.renameVar (Ast.renameVar y.snd c.ident_t (Env.freshName Η c.ident_t) 1000) c.ident_i (Env.freshName Η c.ident_i) 1000))))
   (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))
                         c.ident_i (Env.freshName Η c.ident_i))
 
-def update_UsedNames (c: Ast.Circuit) (Η: Env.UsedNames) : Env.UsedNames :=
+def update_UsedNames (c: Ast.Chip) (Η: Env.UsedNames) : Env.UsedNames :=
   [Env.freshName Η c.ident_i, Env.freshName Η c.ident_t] ++ Η
 
 /--
   Typing judgment `Γ ⊢ e : τ`: expression `e` has type `τ`
-  under type environment `Γ`, valuation `σ`, circuits `Δ`, and fuel.
+  under type environment `Γ`, valuation `σ`, Chips `Δ`, and fuel.
 -/
-inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
+inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.ChipEnv}:
   Env.TyEnv → Env.UsedNames → Ast.Expr → Ast.Ty → Prop where
   -- TE-VAR
   | TE_Var {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty}:
@@ -151,8 +151,8 @@ inductive TypeJudgment {σ: Env.ValEnv} {Δ: Env.CircuitEnv}:
 
   -- TE-LOOKUP
   | TE_LookUp {Γ: Env.TyEnv} {Η: Env.UsedNames} {vname cname : String} {args: List (Ast.Expr × Ast.Expr)}
-              {c: Ast.Circuit} {φ φ': Ast.Predicate} {e: Ast.Expr} {τ: Ast.Ty}
-    (hc: c = Env.lookupCircuit Δ cname)
+              {c: Ast.Chip} {φ φ': Ast.Predicate} {e: Ast.Expr} {τ: Ast.Ty}
+    (hc: c = Env.lookupChip Δ cname)
     (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ)
     (hn: φ' = lookup_pred args c φ Η)
     (h₂: @TypeJudgment σ Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
@@ -164,12 +164,12 @@ If an expression `e` is typed as the refinement `{ v : τ | φ }`,
 then the predicate `φ` holds under `exprToProp`.
 (TODO: this is the soundness theorem that we can prove)
 -/
-axiom typeJudgmentRefinementSound {σ : Env.ValEnv} {Δ : Env.CircuitEnv}
+axiom typeJudgmentRefinementSound {σ : Env.ValEnv} {Δ : Env.ChipEnv}
  (Γ : Env.TyEnv) (τ : Ast.Ty) (e: Ast.Expr) (φ: Ast.Predicate):
   @Ty.TypeJudgment σ Δ Γ e (Ast.Ty.refin τ φ) → PropSemantics.predToProp σ Δ φ e
 -/
 
-def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): Env.ValEnv × Env.TyEnv :=
+def makeEnvs (c : Ast.Chip) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): Env.ValEnv × Env.TyEnv :=
   let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] c.ident_t trace) c.ident_i i
   let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] c.ident_t
     (.refin (.arr (.refin (.arr (.refin .field
@@ -177,7 +177,7 @@ def makeEnvs (c : Ast.Circuit) (trace : Ast.Value) (i: Ast.Value) (height: ℕ):
     c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ height))))
   (σ, Γ)
 
-def checkInputsTrace (c: Ast.Circuit) (trace : Ast.Value) (height: ℕ): Prop :=
+def checkInputsTrace (c: Ast.Chip) (trace : Ast.Value) (height: ℕ): Prop :=
   match trace with
   | Ast.Value.vArr rows => rows.length == height ∧ ∀ r ∈ rows, match r with
     | Ast.Value.vArr cols => cols.length == c.width ∧ ∀ c ∈ cols, match c with
@@ -187,11 +187,11 @@ def checkInputsTrace (c: Ast.Circuit) (trace : Ast.Value) (height: ℕ): Prop :=
   | _ => False
 
 /--
-  Correctness of a circuit `c`:
+  Correctness of a Chip `c`:
   if the input satisfies its refinement, then evaluating `c.body`
   yields a value satisfying the output refinement.
 -/
-def circuitCorrect (Δ : Env.CircuitEnv) (c : Ast.Circuit) (minimum_height: ℕ) : Prop :=
+def ChipCorrect (Δ : Env.ChipEnv) (c : Ast.Chip) (minimum_height: ℕ) : Prop :=
   ∀ (trace: List Ast.Value) (i: ℕ),
     minimum_height ≤ trace.length →
     i < trace.length →
@@ -219,7 +219,7 @@ lemma lookupTy_mem (Γ: Env.TyEnv) (x: String) (τ :Ast.Ty) (φ: Ast.Predicate)
       simp_all
 
 lemma tyenvToProp_implies_varToProp
-  (σ : Env.ValEnv) (Δ : Env.CircuitEnv) (Γ : Env.TyEnv)
+  (σ : Env.ValEnv) (Δ : Env.ChipEnv) (Γ : Env.TyEnv)
   (x : String) (τ : Ast.Ty) (φ : Ast.Predicate)
   (hΓx : Env.lookupTy Γ x = Ast.Ty.refin τ φ)
   (hmt : PropSemantics.tyenvToProp σ Δ Γ) :

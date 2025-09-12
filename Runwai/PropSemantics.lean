@@ -6,7 +6,7 @@ import Runwai.Eval
   # Predicate Semantics for Runwai
 
   This module interprets certain Runwai expressions as Lean `Prop`s,
-  by evaluating them under a valuation environment `σ`, a circuit
+  by evaluating them under a valuation environment `σ`, a Chip
   environment `Δ`, and a fuel bound `fuel`.
 -/
 
@@ -24,15 +24,15 @@ namespace PropSemantics
 
   In all other cases, the result is `False`.
 -/
-def exprToProp (σ : Env.ValEnv) (Δ : Env.CircuitEnv) (e: Ast.Expr): Prop :=
+def exprToProp (σ : Env.ValEnv) (Δ : Env.ChipEnv) (e: Ast.Expr): Prop :=
   Eval.EvalProp σ Δ e (Ast.Value.vBool true)
 
-def predToProp (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (τ: Ast.Ty): Ast.Predicate → (Ast.Expr → Prop)
+def predToProp (σ: Env.ValEnv) (Δ: Env.ChipEnv) (τ: Ast.Ty): Ast.Predicate → (Ast.Expr → Prop)
  | Ast.Predicate.dep ident body => fun v => exprToProp σ Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
  | Ast.Predicate.ind body => fun _ => exprToProp σ Δ body
  | Ast.Predicate.and left right => fun v => (predToProp σ Δ τ left v) ∧ (predToProp σ Δ τ right v)
 
-def varToProp (σ : Env.ValEnv) (Δ : Env.CircuitEnv) (Γ : Env.TyEnv) (ident : String): Prop :=
+def varToProp (σ : Env.ValEnv) (Δ : Env.ChipEnv) (Γ : Env.TyEnv) (ident : String): Prop :=
 match Env.lookupTy Γ ident with
 -- refinement types: check base-type match and predicate
 | Ast.Ty.refin τ pred =>
@@ -42,7 +42,7 @@ match Env.lookupTy Γ ident with
 | Ast.Ty.bool         => True
 | _ => False
 
-def tyenvToProp (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ: Env.TyEnv): Prop :=
+def tyenvToProp (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ: Env.TyEnv): Prop :=
   ∀ (x: String) (τ: Ast.Ty), Env.lookupTy Γ x = some τ → varToProp σ Δ Γ x
 
 end PropSemantics
