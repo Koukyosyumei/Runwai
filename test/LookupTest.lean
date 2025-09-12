@@ -51,8 +51,8 @@ def lookupChip_2 : Ast.Chip := {
 def σ : Env.ValEnv := []
 def Δ : Env.ChipEnv := [("assert", assertCircuit), ("assert_2", assertCircuit_2), ("lookup", lookupChip)]
 
-theorem lookupChip_correct : Ty.ChipCorrect Δ lookupChip 1 := by
-  unfold Ty.ChipCorrect lookupChip
+theorem lookupChip_correct : Ty.chipCorrect Δ lookupChip 1 := by
+  unfold Ty.chipCorrect lookupChip
   intro x i hs hi hrow ht
   let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
@@ -105,8 +105,8 @@ theorem lookupChip_correct : Ty.ChipCorrect Δ lookupChip 1 := by
   simp
   rfl
 
-theorem lookupChip_correct_2 : Ty.ChipCorrect Δ lookupChip_2 1 := by
-  unfold Ty.ChipCorrect lookupChip_2
+theorem lookupChip_correct_2 : Ty.chipCorrect Δ lookupChip_2 1 := by
+  unfold Ty.chipCorrect lookupChip_2
   intro x i hs hi hrow ht
   let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1

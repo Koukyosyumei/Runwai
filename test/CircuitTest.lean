@@ -112,8 +112,8 @@ def wordRangeCheckerChip : Ast.Chip := {
 
 def Δ : Env.ChipEnv := [("assert", assertChip), ("u8", u8chip)]
 
-theorem assertChip_correct : Ty.ChipCorrect Δ assertChip 1 := by
-  unfold Ty.ChipCorrect
+theorem assertChip_correct : Ty.chipCorrect Δ assertChip 1 := by
+  unfold Ty.chipCorrect
   intro x i hs hi hrow ht hσ
   let envs := Ty.makeEnvs assertChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
@@ -133,8 +133,8 @@ theorem assertChip_correct : Ty.ChipCorrect Δ assertChip 1 := by
   . constructor;
     apply lookup_update_self
 
-theorem iszeroChip_correct : Ty.ChipCorrect Δ iszeroChip 1 := by
-  unfold Ty.ChipCorrect
+theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
+  unfold Ty.chipCorrect
   intro x i height hs hi hrow ht
   let envs := Ty.makeEnvs iszeroChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
@@ -149,8 +149,8 @@ theorem iszeroChip_correct : Ty.ChipCorrect Δ iszeroChip 1 := by
   apply lookup_update_self;
   repeat decide
 
-theorem iszeroChip_correct_long : Ty.ChipCorrect Δ iszeroChip 1 := by
-  unfold Ty.ChipCorrect
+theorem iszeroChip_correct_long : Ty.chipCorrect Δ iszeroChip 1 := by
+  unfold Ty.chipCorrect
   intro x i height hs hi hrow ht
   let envs := Ty.makeEnvs iszeroChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
@@ -627,8 +627,8 @@ lemma subtype_wordRange
 }
 
 
-theorem wordRangeCheckerChip_correct : Ty.ChipCorrect Δ wordRangeCheckerChip 1 := by
-  unfold Ty.ChipCorrect
+theorem wordRangeCheckerChip_correct : Ty.chipCorrect Δ wordRangeCheckerChip 1 := by
+  unfold Ty.chipCorrect
   intro x i hs hi hrow ht hσ
   let envs := Ty.makeEnvs assertChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1

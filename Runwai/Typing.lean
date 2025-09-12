@@ -191,7 +191,7 @@ def checkInputsTrace (c: Ast.Chip) (trace : Ast.Value) (height: ℕ): Prop :=
   if the input satisfies its refinement, then evaluating `c.body`
   yields a value satisfying the output refinement.
 -/
-def ChipCorrect (Δ : Env.ChipEnv) (c : Ast.Chip) (minimum_height: ℕ) : Prop :=
+def chipCorrect (Δ : Env.ChipEnv) (c : Ast.Chip) (minimum_height: ℕ) : Prop :=
   ∀ (trace: List Ast.Value) (i: ℕ),
     minimum_height ≤ trace.length →
     i < trace.length →
