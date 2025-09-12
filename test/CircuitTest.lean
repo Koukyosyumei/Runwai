@@ -112,6 +112,107 @@ def wordRangeCheckerCircuit : Ast.Circuit := {
 
 def Δ : Env.CircuitEnv := [("assert", assertCircuit), ("u8", u8chip)]
 
+theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
+  unfold Ty.circuitCorrect
+  intro x i hs hi hrow ht hσ
+  let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
+  let σ := envs.1
+  let Γ := envs.2
+  apply Ty.TypeJudgment.TE_LetIn
+  · apply lookup_update_self
+  · apply Ty.TypeJudgment.TE_Assert
+    · apply Ty.TypeJudgment.TE_ArrayIndex; apply Ty.TypeJudgment.TE_ArrayIndex; apply Ty.TypeJudgment.TE_Var
+      apply lookup_update_ne
+      simp
+      apply Eval.EvalProp.Var; exact rfl
+      simp
+      exact hi
+      apply Eval.EvalProp.ConstZ
+      simp
+    . apply Ty.TypeJudgment.TE_ConstF
+  . constructor;
+    apply lookup_update_self
+
+theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
+  unfold Ty.circuitCorrect
+  intro x i height hs hi hrow ht
+  let envs := Ty.makeEnvs iszeroCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
+  let σ := envs.1
+  let Γ := envs.2
+  repeat
+    apply Ty.TypeJudgment.TE_LetIn;
+    · apply lookup_update_self;
+    · auto_judgment;
+  apply isZero_typing_soundness
+  repeat apply lookup_update_ne; simp
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_self;
+  repeat decide
+
+theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
+  unfold Ty.circuitCorrect
+  intro x i height hs hi hrow ht
+  let envs := Ty.makeEnvs iszeroCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
+  let σ := envs.1
+  let Γ := envs.2
+  unfold iszeroCircuit; simp
+  apply Ty.TypeJudgment.TE_LetIn
+  · apply lookup_update_self
+  · apply Ty.TypeJudgment.TE_ArrayIndex
+    apply Ty.TypeJudgment.TE_ArrayIndex
+    apply Ty.TypeJudgment.TE_Var
+    apply lookup_update_ne
+    simp
+    apply Eval.EvalProp.Var
+    unfold Env.lookupVal
+    unfold Env.updateVal
+    simp
+    rfl
+    simp
+    exact hs
+    apply Eval.EvalProp.ConstZ
+    simp
+  . apply Ty.TypeJudgment.TE_LetIn
+    . apply lookup_update_self
+    · apply Ty.TypeJudgment.TE_ArrayIndex
+      apply Ty.TypeJudgment.TE_ArrayIndex
+      apply Ty.TypeJudgment.TE_Var
+      apply lookup_update_ne
+      simp
+      apply Eval.EvalProp.Var
+      unfold Env.lookupVal
+      unfold Env.updateVal
+      simp
+      rfl
+      simp
+      exact hs
+      apply Eval.EvalProp.ConstZ
+      simp
+    . apply Ty.TypeJudgment.TE_LetIn
+      . apply lookup_update_self
+      · apply Ty.TypeJudgment.TE_ArrayIndex
+        apply Ty.TypeJudgment.TE_ArrayIndex
+        apply Ty.TypeJudgment.TE_Var
+        apply lookup_update_ne
+        simp
+        apply Eval.EvalProp.Var
+        unfold Env.lookupVal
+        unfold Env.updateVal
+        simp
+        rfl
+        simp
+        exact hs
+        apply Eval.EvalProp.ConstZ
+        simp
+      . apply isZero_typing_soundness
+        apply lookup_update_ne; simp
+        apply lookup_update_ne; simp
+        apply Ty.TypeJudgment.TE_VarEnv
+        apply lookup_update_self
+        decide
+        decide
+        decide
+
 lemma lookup_u8_val_lt_256
   (h₁: PropSemantics.tyenvToProp σ Δ Γ)
   (h₂: Env.lookupTy Γ u = some ((Ast.Ty.unit.refin
@@ -614,104 +715,3 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
     apply lookup_update_self
     apply Ty.TypeJudgment.TE_VarEnv
     apply lookup_update_self
-
-theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
-  unfold Ty.circuitCorrect
-  intro x i hs hi hrow ht hσ
-  let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
-  let σ := envs.1
-  let Γ := envs.2
-  apply Ty.TypeJudgment.TE_LetIn
-  · apply lookup_update_self
-  · apply Ty.TypeJudgment.TE_Assert
-    · apply Ty.TypeJudgment.TE_ArrayIndex; apply Ty.TypeJudgment.TE_ArrayIndex; apply Ty.TypeJudgment.TE_Var
-      apply lookup_update_ne
-      simp
-      apply Eval.EvalProp.Var; exact rfl
-      simp
-      exact hi
-      apply Eval.EvalProp.ConstZ
-      simp
-    . apply Ty.TypeJudgment.TE_ConstF
-  . constructor;
-    apply lookup_update_self
-
-theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
-  unfold Ty.circuitCorrect
-  intro x i height hs hi hrow ht
-  let envs := Ty.makeEnvs iszeroCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
-  let σ := envs.1
-  let Γ := envs.2
-  repeat
-    apply Ty.TypeJudgment.TE_LetIn;
-    · apply lookup_update_self;
-    · auto_judgment;
-  apply isZero_typing_soundness
-  repeat apply lookup_update_ne; simp
-  apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self;
-  repeat decide
-
-theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
-  unfold Ty.circuitCorrect
-  intro x i height hs hi hrow ht
-  let envs := Ty.makeEnvs iszeroCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
-  let σ := envs.1
-  let Γ := envs.2
-  unfold iszeroCircuit; simp
-  apply Ty.TypeJudgment.TE_LetIn
-  · apply lookup_update_self
-  · apply Ty.TypeJudgment.TE_ArrayIndex
-    apply Ty.TypeJudgment.TE_ArrayIndex
-    apply Ty.TypeJudgment.TE_Var
-    apply lookup_update_ne
-    simp
-    apply Eval.EvalProp.Var
-    unfold Env.lookupVal
-    unfold Env.updateVal
-    simp
-    rfl
-    simp
-    exact hs
-    apply Eval.EvalProp.ConstZ
-    simp
-  . apply Ty.TypeJudgment.TE_LetIn
-    . apply lookup_update_self
-    · apply Ty.TypeJudgment.TE_ArrayIndex
-      apply Ty.TypeJudgment.TE_ArrayIndex
-      apply Ty.TypeJudgment.TE_Var
-      apply lookup_update_ne
-      simp
-      apply Eval.EvalProp.Var
-      unfold Env.lookupVal
-      unfold Env.updateVal
-      simp
-      rfl
-      simp
-      exact hs
-      apply Eval.EvalProp.ConstZ
-      simp
-    . apply Ty.TypeJudgment.TE_LetIn
-      . apply lookup_update_self
-      · apply Ty.TypeJudgment.TE_ArrayIndex
-        apply Ty.TypeJudgment.TE_ArrayIndex
-        apply Ty.TypeJudgment.TE_Var
-        apply lookup_update_ne
-        simp
-        apply Eval.EvalProp.Var
-        unfold Env.lookupVal
-        unfold Env.updateVal
-        simp
-        rfl
-        simp
-        exact hs
-        apply Eval.EvalProp.ConstZ
-        simp
-      . apply isZero_typing_soundness
-        apply lookup_update_ne; simp
-        apply lookup_update_ne; simp
-        apply Ty.TypeJudgment.TE_VarEnv
-        apply lookup_update_self
-        decide
-        decide
-        decide
