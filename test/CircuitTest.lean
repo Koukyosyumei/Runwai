@@ -481,7 +481,7 @@ lemma eval_eq_const_mul_val {σ Δ x y v} (h: Eval.EvalProp σ Δ
     simp_all
   }
 
-lemma eval_bits_to_byte_expr_val (h: Eval.EvalProp σ Δ
+lemma eval_bits_to_byte_expr_val {σ Δ x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇ x₈} (h: Eval.EvalProp σ Δ
   (Ast.exprEq
     (bits_to_byte_expr x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇)
     (Ast.Expr.var x₈))
@@ -570,7 +570,7 @@ lemma eval_bits_to_byte_expr_val (h: Eval.EvalProp σ Δ
     simp_all
   }
 
-lemma tyenv_to_eval_expr (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind e))):
+lemma tyenv_to_eval_expr {σ Δ Γ x e} (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind e))):
   (Eval.EvalProp σ Δ e (Ast.Value.vBool true)) := by {
     unfold PropSemantics.tyenvToProp PropSemantics.varToProp PropSemantics.predToProp at h₁
     have h₁' := h₁ x (Ast.Ty.unit.refin (Ast.Predicate.ind e)) h₂
@@ -580,7 +580,7 @@ lemma tyenv_to_eval_expr (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.l
     exact h₁'
   }
 
-lemma tyenv_and_to_eval_exprs (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.and (Ast.Predicate.ind e₁) (Ast.Predicate.ind e₂)))):
+lemma tyenv_and_to_eval_exprs {σ Δ Γ x e₁ e₂} (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.and (Ast.Predicate.ind e₁) (Ast.Predicate.ind e₂)))):
   (Eval.EvalProp σ Δ e₁ (Ast.Value.vBool true)) ∧ (Eval.EvalProp σ Δ e₂ (Ast.Value.vBool true)) := by {
     unfold PropSemantics.tyenvToProp PropSemantics.varToProp PropSemantics.predToProp at h₁
     have h₁' := h₁ x (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.and (Ast.Predicate.ind e₁) (Ast.Predicate.ind e₂))) h₂
@@ -590,7 +590,7 @@ lemma tyenv_and_to_eval_exprs (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: 
     exact h₁'
   }
 
-lemma eval_lt_val (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
+lemma eval_lt_val {σ Δ x t} (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
   ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h
     rename_i ih₀ ih₁ r₁
@@ -1145,312 +1145,12 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
     rfl
     rfl
     rfl
-    set τ := (Ast.Ty.unit.refin
-      (Ty.lookup_pred [(Ast.Expr.var "value_3", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
-        (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-        (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))) with hτ
-    set Γ' := (Env.updateTy
-    (Env.updateTy
-      (Env.updateTy
-        (Env.updateTy
-          (Env.updateTy
-            (Env.updateTy
-              (Env.updateTy
-                (Env.updateTy
-                  (Env.updateTy
-                    (Env.updateTy
-                      (Env.updateTy
-                        (Env.updateTy
-                          (Env.updateTy
-                            (Env.updateTy
-                              (Env.updateTy
-                                (Env.updateTy
-                                  (Env.updateTy
-                                    (Env.updateTy
-                                      (Env.updateTy
-                                        (Env.updateTy
-                                          (Env.updateTy
-                                            (Env.updateTy
-                                              (Env.updateTy
-                                                (Env.updateTy
-                                                  (Env.updateTy
-                                                    (Env.updateTy
-                                                      (Env.updateTy
-                                                        (Env.updateTy
-                                                          (Env.updateTy
-                                                            (Env.updateTy
-                                                              (Env.updateTy
-                                                                (Env.updateTy
-                                                                  (Env.updateTy
-                                                                    (Env.updateTy
-                                                                      (Env.updateTy
-                                                                        (Env.updateTy
-                                                                          (Env.updateTy
-                                                                            (Env.updateTy
-                                                                              (Env.updateTy
-                                                                                (Env.updateTy
-                                                                                  (Env.updateTy
-                                                                                    (Env.updateTy
-                                                                                      (Env.updateTy []
-                                                                                        wordRangeCheckerCircuit.ident_t
-                                                                                        (((((Ast.Ty.field.refin
-                                                                                                          (Ast.Predicate.ind
-                                                                                                            (Ast.Expr.constBool
-                                                                                                              true))).arr
-                                                                                                      wordRangeCheckerCircuit.width).refin
-                                                                                                  (Ast.Predicate.ind
-                                                                                                    (Ast.Expr.constBool
-                                                                                                      true))).arr
-                                                                                              ↑x.length).refin
-                                                                                          (Ast.Predicate.ind
-                                                                                            (Ast.Expr.constBool true))))
-                                                                                      wordRangeCheckerCircuit.ident_i
-                                                                                      (Ast.Ty.int.refin
-                                                                                        (Ast.Predicate.dep "v"
-                                                                                          ((Ast.Expr.var "v").binRel
-                                                                                            Ast.RelOp.lt
-                                                                                            (Ast.Expr.constZ
-                                                                                              x.length)))))
-                                                                                    "value_0"
-                                                                                    (Ast.Ty.field.refin
-                                                                                      (Ast.Predicate.ind
-                                                                                        (Ast.Expr.constBool true))))
-                                                                                  "value_1"
-                                                                                  (Ast.Ty.field.refin
-                                                                                    (Ast.Predicate.ind
-                                                                                      (Ast.Expr.constBool true))))
-                                                                                "value_2"
-                                                                                (Ast.Ty.field.refin
-                                                                                  (Ast.Predicate.ind
-                                                                                    (Ast.Expr.constBool true))))
-                                                                              "value_3"
-                                                                              (Ast.Ty.field.refin
-                                                                                (Ast.Predicate.ind
-                                                                                  (Ast.Expr.constBool true))))
-                                                                            "most_sig_byte_decomp_0"
-                                                                            (Ast.Ty.field.refin
-                                                                              (Ast.Predicate.ind
-                                                                                (Ast.Expr.constBool true))))
-                                                                          "most_sig_byte_decomp_1"
-                                                                          (Ast.Ty.field.refin
-                                                                            (Ast.Predicate.ind
-                                                                              (Ast.Expr.constBool true))))
-                                                                        "most_sig_byte_decomp_2"
-                                                                        (Ast.Ty.field.refin
-                                                                          (Ast.Predicate.ind
-                                                                            (Ast.Expr.constBool true))))
-                                                                      "most_sig_byte_decomp_3"
-                                                                      (Ast.Ty.field.refin
-                                                                        (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                                    "most_sig_byte_decomp_4"
-                                                                    (Ast.Ty.field.refin
-                                                                      (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                                  "most_sig_byte_decomp_5"
-                                                                  (Ast.Ty.field.refin
-                                                                    (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                                "most_sig_byte_decomp_6"
-                                                                (Ast.Ty.field.refin
-                                                                  (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                              "most_sig_byte_decomp_7"
-                                                              (Ast.Ty.field.refin
-                                                                (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                            "and_most_sig_byte_decomp_0_to_2"
-                                                            (Ast.Ty.field.refin
-                                                              (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                          "and_most_sig_byte_decomp_0_to_3"
-                                                          (Ast.Ty.field.refin
-                                                            (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                        "and_most_sig_byte_decomp_0_to_4"
-                                                        (Ast.Ty.field.refin
-                                                          (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                      "and_most_sig_byte_decomp_0_to_5"
-                                                      (Ast.Ty.field.refin
-                                                        (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                    "and_most_sig_byte_decomp_0_to_6"
-                                                    (Ast.Ty.field.refin (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                  "and_most_sig_byte_decomp_0_to_7"
-                                                  (Ast.Ty.field.refin (Ast.Predicate.ind (Ast.Expr.constBool true))))
-                                                "b₀"
-                                                (Ast.Ty.unit.refin
-                                                  (Ast.Predicate.ind
-                                                    (Ast.exprEq
-                                                      ((Ast.Expr.var "most_sig_byte_decomp_0").fieldExpr Ast.FieldOp.mul
-                                                        ((Ast.Expr.var "most_sig_byte_decomp_0").fieldExpr
-                                                          Ast.FieldOp.sub (Ast.Expr.constF 1)))
-                                                      (Ast.Expr.constF 0)))))
-                                              "b₁"
-                                              (Ast.Ty.unit.refin
-                                                (Ast.Predicate.ind
-                                                  (Ast.exprEq
-                                                    ((Ast.Expr.var "most_sig_byte_decomp_1").fieldExpr Ast.FieldOp.mul
-                                                      ((Ast.Expr.var "most_sig_byte_decomp_1").fieldExpr Ast.FieldOp.sub
-                                                        (Ast.Expr.constF 1)))
-                                                    (Ast.Expr.constF 0)))))
-                                            "b₂"
-                                            (Ast.Ty.unit.refin
-                                              (Ast.Predicate.ind
-                                                (Ast.exprEq
-                                                  ((Ast.Expr.var "most_sig_byte_decomp_2").fieldExpr Ast.FieldOp.mul
-                                                    ((Ast.Expr.var "most_sig_byte_decomp_2").fieldExpr Ast.FieldOp.sub
-                                                      (Ast.Expr.constF 1)))
-                                                  (Ast.Expr.constF 0)))))
-                                          "b₃"
-                                          (Ast.Ty.unit.refin
-                                            (Ast.Predicate.ind
-                                              (Ast.exprEq
-                                                ((Ast.Expr.var "most_sig_byte_decomp_3").fieldExpr Ast.FieldOp.mul
-                                                  ((Ast.Expr.var "most_sig_byte_decomp_3").fieldExpr Ast.FieldOp.sub
-                                                    (Ast.Expr.constF 1)))
-                                                (Ast.Expr.constF 0)))))
-                                        "b₄"
-                                        (Ast.Ty.unit.refin
-                                          (Ast.Predicate.ind
-                                            (Ast.exprEq
-                                              ((Ast.Expr.var "most_sig_byte_decomp_4").fieldExpr Ast.FieldOp.mul
-                                                ((Ast.Expr.var "most_sig_byte_decomp_4").fieldExpr Ast.FieldOp.sub
-                                                  (Ast.Expr.constF 1)))
-                                              (Ast.Expr.constF 0)))))
-                                      "b₅"
-                                      (Ast.Ty.unit.refin
-                                        (Ast.Predicate.ind
-                                          (Ast.exprEq
-                                            ((Ast.Expr.var "most_sig_byte_decomp_5").fieldExpr Ast.FieldOp.mul
-                                              ((Ast.Expr.var "most_sig_byte_decomp_5").fieldExpr Ast.FieldOp.sub
-                                                (Ast.Expr.constF 1)))
-                                            (Ast.Expr.constF 0)))))
-                                    "b₆"
-                                    (Ast.Ty.unit.refin
-                                      (Ast.Predicate.ind
-                                        (Ast.exprEq
-                                          ((Ast.Expr.var "most_sig_byte_decomp_6").fieldExpr Ast.FieldOp.mul
-                                            ((Ast.Expr.var "most_sig_byte_decomp_6").fieldExpr Ast.FieldOp.sub
-                                              (Ast.Expr.constF 1)))
-                                          (Ast.Expr.constF 0)))))
-                                  "b₇"
-                                  (Ast.Ty.unit.refin
-                                    (Ast.Predicate.ind
-                                      (Ast.exprEq
-                                        ((Ast.Expr.var "most_sig_byte_decomp_7").fieldExpr Ast.FieldOp.mul
-                                          ((Ast.Expr.var "most_sig_byte_decomp_7").fieldExpr Ast.FieldOp.sub
-                                            (Ast.Expr.constF 1)))
-                                        (Ast.Expr.constF 0)))))
-                                "u₁"
-                                (Ast.Ty.unit.refin
-                                  (Ast.Predicate.ind
-                                    (Ast.exprEq
-                                      ((((((((Ast.Expr.var "most_sig_byte_decomp_0").fieldExpr Ast.FieldOp.add
-                                                                ((Ast.Expr.var "most_sig_byte_decomp_1").fieldExpr
-                                                                  Ast.FieldOp.mul (Ast.Expr.constF 2))).fieldExpr
-                                                            Ast.FieldOp.add
-                                                            ((Ast.Expr.var "most_sig_byte_decomp_2").fieldExpr
-                                                              Ast.FieldOp.mul (Ast.Expr.constF 4))).fieldExpr
-                                                        Ast.FieldOp.add
-                                                        ((Ast.Expr.var "most_sig_byte_decomp_3").fieldExpr
-                                                          Ast.FieldOp.mul (Ast.Expr.constF 8))).fieldExpr
-                                                    Ast.FieldOp.add
-                                                    ((Ast.Expr.var "most_sig_byte_decomp_4").fieldExpr Ast.FieldOp.mul
-                                                      (Ast.Expr.constF 16))).fieldExpr
-                                                Ast.FieldOp.add
-                                                ((Ast.Expr.var "most_sig_byte_decomp_5").fieldExpr Ast.FieldOp.mul
-                                                  (Ast.Expr.constF 32))).fieldExpr
-                                            Ast.FieldOp.add
-                                            ((Ast.Expr.var "most_sig_byte_decomp_6").fieldExpr Ast.FieldOp.mul
-                                              (Ast.Expr.constF 64))).fieldExpr
-                                        Ast.FieldOp.add
-                                        ((Ast.Expr.var "most_sig_byte_decomp_7").fieldExpr Ast.FieldOp.mul
-                                          (Ast.Expr.constF 128)))
-                                      (Ast.Expr.var "value_3")))))
-                              "u₂"
-                              (Ast.Ty.unit.refin
-                                (Ast.Predicate.ind
-                                  (Ast.exprEq (Ast.Expr.var "most_sig_byte_decomp_7") (Ast.Expr.constF 0)))))
-                            "u₃"
-                            (Ast.Ty.unit.refin
-                              (Ast.Predicate.ind
-                                (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_2")
-                                  ((Ast.Expr.var "most_sig_byte_decomp_0").fieldExpr Ast.FieldOp.mul
-                                    (Ast.Expr.var "most_sig_byte_decomp_1"))))))
-                          "u₄"
-                          (Ast.Ty.unit.refin
-                            (Ast.Predicate.ind
-                              (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_3")
-                                ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_2").fieldExpr Ast.FieldOp.mul
-                                  (Ast.Expr.var "most_sig_byte_decomp_2"))))))
-                        "u₅"
-                        (Ast.Ty.unit.refin
-                          (Ast.Predicate.ind
-                            (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_4")
-                              ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_3").fieldExpr Ast.FieldOp.mul
-                                (Ast.Expr.var "most_sig_byte_decomp_3"))))))
-                      "u₆"
-                      (Ast.Ty.unit.refin
-                        (Ast.Predicate.ind
-                          (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_5")
-                            ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_4").fieldExpr Ast.FieldOp.mul
-                              (Ast.Expr.var "most_sig_byte_decomp_4"))))))
-                    "u₇"
-                    (Ast.Ty.unit.refin
-                      (Ast.Predicate.ind
-                        (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_6")
-                          ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_5").fieldExpr Ast.FieldOp.mul
-                            (Ast.Expr.var "most_sig_byte_decomp_5"))))))
-                  "u₈"
-                  (Ast.Ty.unit.refin
-                    (Ast.Predicate.ind
-                      (Ast.exprEq (Ast.Expr.var "and_most_sig_byte_decomp_0_to_7")
-                        ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_6").fieldExpr Ast.FieldOp.mul
-                          (Ast.Expr.var "most_sig_byte_decomp_6"))))))
-                "u₉"
-                (Ast.Ty.unit.refin
-                  (Ast.Predicate.ind
-                    (Ast.exprEq (Ast.Expr.constF 0)
-                      ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
-                        (Ast.Expr.var "value_0"))))))
-              "u₁₀"
-              (Ast.Ty.unit.refin
-                (Ast.Predicate.ind
-                  (Ast.exprEq (Ast.Expr.constF 0)
-                    ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
-                      (Ast.Expr.var "value_1"))))))
-            "u₁₁"
-            (Ast.Ty.unit.refin
-              (Ast.Predicate.ind
-                (Ast.exprEq (Ast.Expr.constF 0)
-                  ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
-                    (Ast.Expr.var "value_2"))))))
-          "l₀"
-          (Ast.Ty.unit.refin
-            (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
-              (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t])))
-        "l₁"
-        (Ast.Ty.unit.refin
-          (Ty.lookup_pred [(Ast.Expr.var "value_1", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
-            (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))
-      "l₂"
-      (Ast.Ty.unit.refin
-        (Ty.lookup_pred [(Ast.Expr.var "value_2", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
-          (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t])))))
-    "l₃" τ) with hΓ'
-    have h_sub : @Ty.SubtypeJudgment σ Δ Γ' τ wordRangeCheckerCircuit.goal := by {
-      apply subtype_wordrage_check
-      repeat
-        unfold Γ'
-        apply lookup_update_ne
-        simp
-      rw[← hτ]
-      unfold Γ'
-      apply lookup_update_self
-    }
-    apply Ty.TypeJudgment.TE_SUB h_sub
+    apply Ty.TypeJudgment.TE_SUB
+    apply subtype_wordrage_check
+    repeat
+      apply lookup_update_ne
+      simp
+    apply lookup_update_self
     apply Ty.TypeJudgment.TE_VarEnv
     apply lookup_update_self
 
