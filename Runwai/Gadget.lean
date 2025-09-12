@@ -623,6 +623,21 @@ lemma bit_value_0_or_1 {x: F} (h: x * (x - 1) = 0): x = 0 ∨ x = 1 := by {
   }
 }
 
+lemma bit_value_mul_zero {x: F} (h: x = 0 ∨ x - 1 = 0): x * (x - 1) = 0 := by {
+  simp_all
+  /-
+  rcases h with h_case | h_case
+  {
+    left
+    exact h_case
+  }
+  {
+    right
+    simp_all
+  }
+  -/
+}
+
 
 lemma bit_val_to_nat {x: F} (h: x = 0 ∨ x = 1) : x.val = 0 ∨ x.val = 1 := by {
   rcases h with h_case | h_case

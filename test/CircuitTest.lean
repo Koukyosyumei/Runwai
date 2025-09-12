@@ -153,7 +153,7 @@ lemma lookup_u8_val_lt_256
     exact hvl₀'
   }
 
-lemma subtype_wordrage_check
+lemma subtype_wordRange
   (hb₁: Env.lookupTy Γ "b₀" = some (bit_value_type "most_sig_byte_decomp_0"))
   (hb₂ : Env.lookupTy Γ "b₁" = some (bit_value_type "most_sig_byte_decomp_1"))
   (hb₃: Env.lookupTy Γ "b₂" = some (bit_value_type "most_sig_byte_decomp_2"))
@@ -473,12 +473,10 @@ lemma subtype_wordrage_check
       . apply Eval.EvalProp.ZBinOp
         apply Eval.EvalProp.ZBinOp
         . apply Eval.EvalProp.toZ
-          apply Eval.EvalProp.Var
-          exact h_value_0_env
+          apply Eval.EvalProp.Var h_value_0_env
         . apply Eval.EvalProp.ZBinOp
           . apply Eval.EvalProp.toZ
-            apply Eval.EvalProp.Var
-            exact h_value_1_env
+            apply Eval.EvalProp.Var h_value_1_env
           . apply Eval.EvalProp.ConstZ
           . unfold Eval.evalIntegerOp
             simp
@@ -488,8 +486,7 @@ lemma subtype_wordrage_check
           rfl
         . apply Eval.EvalProp.ZBinOp
           . apply Eval.EvalProp.toZ
-            apply Eval.EvalProp.Var
-            exact h_value_2_env
+            apply Eval.EvalProp.Var h_value_2_env
           . apply Eval.EvalProp.ConstZ
           . unfold Eval.evalIntegerOp
             simp
@@ -499,8 +496,7 @@ lemma subtype_wordrage_check
           rfl
       . apply Eval.EvalProp.ZBinOp
         . apply Eval.EvalProp.toZ
-          apply Eval.EvalProp.Var
-          exact h_value_3_env
+          apply Eval.EvalProp.Var h_value_3_env
         . apply Eval.EvalProp.ConstZ
         . unfold Eval.evalIntegerOp
           simp
@@ -512,30 +508,11 @@ lemma subtype_wordrage_check
     . unfold Eval.evalRelOp
       simp
       apply word_range_val_bound
-      simp
-      exact h_most_sig_byte_decomp_0
-      simp
-      exact h_most_sig_byte_decomp_1
-      simp
-      exact h_most_sig_byte_decomp_2
-      simp
-      exact h_most_sig_byte_decomp_3
-      simp
-      exact h_most_sig_byte_decomp_4
-      simp
-      exact h_most_sig_byte_decomp_5
-      simp
-      exact h_most_sig_byte_decomp_6
-      simp
-      exact h_most_sig_byte_decomp_7
-      exact h_msb_rec
-      exact h_most_sig_byte_decomp_7_is_0
-      exact hamm₁
-      exact hamm₂
-      exact hamm₃
-      exact hamm₄
-      exact hamm₅
-      exact hamm₆
+        (bit_value_mul_zero h_most_sig_byte_decomp_0) (bit_value_mul_zero h_most_sig_byte_decomp_1)
+        (bit_value_mul_zero h_most_sig_byte_decomp_2) (bit_value_mul_zero h_most_sig_byte_decomp_3)
+        (bit_value_mul_zero h_most_sig_byte_decomp_4) (bit_value_mul_zero h_most_sig_byte_decomp_5)
+        (bit_value_mul_zero h_most_sig_byte_decomp_6) (bit_value_mul_zero h_most_sig_byte_decomp_7)
+        h_msb_rec h_most_sig_byte_decomp_7_is_0 hamm₁ hamm₂ hamm₃ hamm₄ hamm₅ hamm₆
       simp
       exact hav₀
       simp
@@ -630,7 +607,7 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
       apply Ty.TypeJudgment.TE_LookUp
       rfl; rfl; rfl
     apply Ty.TypeJudgment.TE_SUB
-    apply subtype_wordrage_check
+    apply subtype_wordRange
     repeat
       apply lookup_update_ne
       simp
