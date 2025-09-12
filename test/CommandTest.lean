@@ -19,7 +19,6 @@ import Runwai.Tactic
 }
 
 #runwai_prove Assert1 := by {
-  rename_i Δ h_delta σ x i hs hi ht hty hσ σ Γ
   apply Ty.TypeJudgment.TE_LetIn
   · apply lookup_update_self
   · apply Ty.TypeJudgment.TE_Assert
@@ -38,22 +37,7 @@ import Runwai.Tactic
 }
 
 #runwai_prove IsZero := by {
-  rename_i Δ h_delta σ x i hs hi ht hty hσ σ Γ
-  repeat
-    apply Ty.TypeJudgment.TE_LetIn
-    · apply lookup_update_self;
-    · apply Ty.TypeJudgment.TE_ArrayIndex
-      apply Ty.TypeJudgment.TE_ArrayIndex
-      apply Ty.TypeJudgment.TE_VarEnv
-      simp
-      apply lookup_update_ne
-      simp
-      apply Ty.TypeJudgment.TE_VarEnv
-      try (apply lookup_update_self)
-      try (apply lookup_update_ne)
-      try (simp)
-      apply constZ_refine_lt
-      simp
+  auto_trace_index
   apply isZero_typing_soundness
   repeat apply lookup_update_ne; simp
   apply Ty.TypeJudgment.TE_VarEnv

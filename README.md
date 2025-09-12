@@ -29,10 +29,7 @@ Runwai is a refinement-typed DSL for certified AIR constraints in zero-knowledge
 
 ```haskell
 #runwai_prove IsZero := by {
-  repeat
-    apply Ty.TypeJudgment.TE_LetIn;
-    · apply lookup_update_self;
-    · auto_judgment;
+  auto_trace_index
   apply isZero_typing_soundness
   repeat apply lookup_update_ne; simp
   apply Ty.TypeJudgment.TE_VarEnv
