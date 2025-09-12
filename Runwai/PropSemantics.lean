@@ -31,6 +31,8 @@ def predToProp (σ: Env.ValEnv) (Δ: Env.ChipEnv) (τ: Ast.Ty): Ast.Predicate �
  | Ast.Predicate.dep ident body => fun v => exprToProp σ Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
  | Ast.Predicate.ind body => fun _ => exprToProp σ Δ body
  | Ast.Predicate.and left right => fun v => (predToProp σ Δ τ left v) ∧ (predToProp σ Δ τ right v)
+ | Ast.Predicate.or  left right => fun v => (predToProp σ Δ τ left v) ∨ (predToProp σ Δ τ right v)
+ | Ast.Predicate.not φ => fun v => ¬ (predToProp σ Δ τ φ v)
 
 def varToProp (σ : Env.ValEnv) (Δ : Env.ChipEnv) (Γ : Env.TyEnv) (ident : String): Prop :=
 match Env.lookupTy Γ ident with

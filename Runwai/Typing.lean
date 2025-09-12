@@ -91,10 +91,13 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
-  | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty}:
-    TypeJudgment Γ Η e₁ τ →
-    TypeJudgment Γ Η e₂ τ →
-    TypeJudgment Γ Η (Ast.Expr.branch c e₁ e₂) τ
+  | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₁ φ₂: Ast.Predicate}:
+    TypeJudgment Γ Η e₁ (Ast.Ty.refin τ φ₁) →
+    TypeJudgment Γ Η e₂ (Ast.Ty.refin τ φ₂) →
+    TypeJudgment Γ Η (Ast.Expr.branch c e₁ e₂)
+      (Ast.Ty.refin τ (Ast.Predicate.or
+        (Ast.Predicate.and (Ast.Predicate.ind c) φ₁)
+        (Ast.Predicate.and (Ast.Predicate.not (Ast.Predicate.ind c)) φ₂)))
 
   -- TE-CONSTF
   | TE_ConstF {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: F} :
@@ -155,17 +158,6 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     (hn: φ' = lookup_pred args c φ Η)
     (h₂: @TypeJudgment Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
     TypeJudgment Γ Η (Ast.Expr.lookup vname cname args e) τ
-
-/-
-/--
-If an expression `e` is typed as the refinement `{ v : τ | φ }`,
-then the predicate `φ` holds under `exprToProp`.
-(TODO: this is the soundness theorem that we can prove)
--/
-axiom typeJudgmentRefinementSound {σ : Env.ValEnv} {Δ : Env.ChipEnv}
- (Γ : Env.TyEnv) (τ : Ast.Ty) (e: Ast.Expr) (φ: Ast.Predicate):
-  @Ty.TypeJudgment σ Δ Γ e (Ast.Ty.refin τ φ) → PropSemantics.predToProp σ Δ φ e
--/
 
 def makeEnvs (c : Ast.Chip) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): Env.ValEnv × Env.TyEnv :=
   let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] c.ident_t trace) c.ident_i i

@@ -77,6 +77,8 @@ mutual
     | dep : (ident: String) → (body: Expr) → Predicate
     | ind : (body: Expr) → Predicate
     | and : (left: Predicate) → (right: Predicate) → Predicate
+    | or  : (left: Predicate) → (right: Predicate) → Predicate
+    | not : (φ: Predicate) → Predicate
   deriving Lean.ToExpr
 
   /-- Runtime values in Runwai. -/
@@ -138,6 +140,8 @@ def renameVarinPred (p: Predicate) (oldName newName : String) : Predicate :=
   | Predicate.dep ident body => if ident = oldName then p else Predicate.dep ident (renameVar body oldName newName 1000)
   | Predicate.ind body => Predicate.ind (renameVar body oldName newName 1000)
   | Predicate.and left right => Predicate.and (renameVarinPred left oldName newName) (renameVarinPred right oldName newName)
+  | Predicate.or  left right => Predicate.or (renameVarinPred left oldName newName) (renameVarinPred right oldName newName)
+  | Predicate.not φ => Predicate.not (renameVarinPred φ oldName newName)
 
 /-- Test for equality of two `Value`s. -/
 partial def valueEq : Value → Value → Bool
@@ -217,6 +221,8 @@ mutual
     | Predicate.dep ident body => s!"{ident} = {exprToString body}"
     | Predicate.ind body => exprToString body
     | Predicate.and left right => s!"{predicateToString left} ∧ {predicateToString right}"
+    | Predicate.or  left right => s!"{predicateToString left} ∨ {predicateToString right}"
+    | Predicate.not φ => s!"¬ {predicateToString φ}"
 
   partial def tyToString : Ty → String
     | Ty.unknown        => "unknown"
