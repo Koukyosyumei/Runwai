@@ -224,6 +224,7 @@ lemma subtype_wordrage_check
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl
     intro v h₁ h₂
+
     have hb₁' := tyenv_to_eval_expr h₁ hb₁
     have hb₂' := tyenv_to_eval_expr h₁ hb₂
     have hb₃' := tyenv_to_eval_expr h₁ hb₃
@@ -547,6 +548,7 @@ lemma subtype_wordrage_check
       exact hvl₃
 }
 
+
 theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerCircuit 1 := by
   unfold Ty.circuitCorrect
   intro x i hs hi hrow ht hσ
@@ -568,8 +570,7 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
     apply Ty.TypeJudgment.TE_VarEnv
     apply lookup_update_ne
     simp
-    apply Ty.TypeJudgment.TE_ConstF
-    apply Ty.TypeJudgment.TE_ConstF
+    repeat apply Ty.TypeJudgment.TE_ConstF
   . repeat
       apply Ty.TypeJudgment.TE_LetIn
       apply lookup_update_self
