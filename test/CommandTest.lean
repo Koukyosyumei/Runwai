@@ -24,9 +24,7 @@ import Runwai.Tactic
   · apply lookup_update_self
   · apply Ty.TypeJudgment.TE_Assert
     · apply Ty.TypeJudgment.TE_ArrayIndex
-      exact x
       apply Ty.TypeJudgment.TE_ArrayIndex
-      exact x
       apply Ty.TypeJudgment.TE_Var
       apply lookup_update_ne
       simp
@@ -45,9 +43,7 @@ import Runwai.Tactic
     apply Ty.TypeJudgment.TE_LetIn
     · apply lookup_update_self;
     · apply Ty.TypeJudgment.TE_ArrayIndex
-      exact x
       apply Ty.TypeJudgment.TE_ArrayIndex
-      exact x
       apply Ty.TypeJudgment.TE_VarEnv
       simp
       apply lookup_update_ne

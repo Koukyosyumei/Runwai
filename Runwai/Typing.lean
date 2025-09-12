@@ -84,7 +84,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.var f) (Ast.Ty.func x τ₁ τ₂)
 
   -- TE-ARRY-INDEX
-  | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n i: ℕ} {φ: Ast.Predicate}:
+  | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n: ℕ} {φ: Ast.Predicate}:
     TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
     TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ n)))) →
     TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ

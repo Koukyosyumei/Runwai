@@ -122,9 +122,7 @@ theorem assertChip_correct : Ty.chipCorrect Δ assertChip 1 := by
   · apply lookup_update_self
   · apply Ty.TypeJudgment.TE_Assert
     · apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
       apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
       apply Ty.TypeJudgment.TE_Var
       apply lookup_update_ne
       simp
@@ -146,9 +144,7 @@ theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
     apply Ty.TypeJudgment.TE_LetIn
     · apply lookup_update_self;
     · apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
       apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
       apply Ty.TypeJudgment.TE_VarEnv
       simp
       apply lookup_update_ne
@@ -589,9 +585,7 @@ theorem wordRangeCheckerChip_correct : Ty.chipCorrect Δ wordRangeCheckerChip 1 
     apply Ty.TypeJudgment.TE_LetIn
     · apply lookup_update_self
     . apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
       apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
       apply Ty.TypeJudgment.TE_VarEnv
       simp
       apply lookup_update_ne

@@ -418,7 +418,6 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       intro Γ₂ h
       rename_i i φ h₁
       apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
       apply h₃
       exact h
       apply a_ih
