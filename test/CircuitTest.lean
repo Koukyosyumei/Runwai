@@ -178,7 +178,6 @@ theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
       apply Ty.TypeJudgment.TE_ArrayIndex
       exact i
       apply Ty.TypeJudgment.TE_VarEnv
-      unfold iszeroChip
       simp
       apply lookup_update_ne
       simp
