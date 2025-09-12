@@ -20,3 +20,25 @@ macro_rules
         apply constZ_refine_lt
         simp
   )
+
+syntax "auto_let_assert" : tactic
+macro_rules
+| `(tactic| auto_let_assert) => `(tactic|
+    apply Ty.TypeJudgment.TE_LetIn;
+    apply lookup_update_self;
+    apply Ty.TypeJudgment.TE_Assert;
+  )
+
+syntax "auto_resolve_varenv" : tactic
+macro_rules
+| `(tactic| auto_resolve_varenv) => `(tactic|
+    apply Ty.TypeJudgment.TE_VarEnv;
+    apply lookup_update_ne;
+    simp;
+  )
+
+/-
+    apply Ty.TypeJudgment.TE_VarEnv
+    apply lookup_update_ne
+    simp
+-/
