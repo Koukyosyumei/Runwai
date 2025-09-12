@@ -13,8 +13,9 @@ addition, multiplication, negation, inversion (via Fermat's little theorem),
 and exponentiation.
 -/
 
+-- KoalaBear: 2^31 - 2^24 + 1
 @[inline]
-def p : Nat := 21888242871839275222246405745257275088548364400416034343698204186575808495617
+def p : Nat := 2130706433
 
 -- TODO: prove this statement as a theorem
 axiom p_is_prime: Nat.Prime p
