@@ -29,14 +29,23 @@ def evalFieldOp (op: FieldOp) : Value → Value → Option Value
       | FieldOp.div => x * y.inv
   | _, _ => none
 
+@[simp]
+def evalIntegerOp (op: IntegerOp) : Value → Value → Option Value
+  | Value.vZ x, Value.vZ y =>
+    some $ Value.vZ $
+      match op with
+      | IntegerOp.add => x + y
+      | IntegerOp.sub => x - y
+      | IntegerOp.mul => x * y
+  | _, _ => none
+
 /-- Evaluate a relational operator `op` on two `Value` arguments. -/
 @[simp]
 def evalRelOp (op: RelOp) : Value → Value → Option Bool
   | Value.vF i, Value.vF j =>
-    some $ match op with
-    | RelOp.eq => i = j
-    | RelOp.lt => i.val % p < j.val % p
-    | RelOp.le => i.val % p ≤ j.val % p
+    match op with
+    | RelOp.eq => some (i = j)
+    | _ => none
   | Value.vZ i, Value.vZ j =>
     some $ match op with
     | RelOp.eq => i = j
@@ -61,6 +70,9 @@ mutual
     | ConstBool     {σ Δ b} : EvalProp σ Δ (Expr.constBool b) (Value.vBool b)
     | ConstArr  {σ Δ xs es} (ilength: xs.length = es.length) (ih : ∀ xe ∈ List.zip xs es, EvalProp σ Δ xe.fst xe.snd) :
         EvalProp σ Δ (Expr.arr xs) (Value.vArr es)
+
+    | toZ {σ Δ e v} (h: EvalProp σ Δ e (Ast.Value.vF v)) :
+        EvalProp σ Δ (Expr.toZ e) (Ast.Value.vZ v.val)
 
     -- E‑VAR
     | Var         {σ Δ x v} : lookupVal σ x = v → EvalProp σ Δ (Expr.var x) v
@@ -88,6 +100,13 @@ mutual
         (ih₂ : EvalProp σ Δ e₂ (Value.vF i₂))
         (r   : evalFieldOp op (Value.vF i₁) (Value.vF i₂) = some v) :
         EvalProp σ Δ (Expr.fieldExpr e₁ op e₂) v
+
+    -- E‑ZBINOP
+    | ZBinOp   {σ Δ e₁ e₂ op i₁ i₂ v}
+        (ih₁ : EvalProp σ Δ e₁ (Value.vZ i₁))
+        (ih₂ : EvalProp σ Δ e₂ (Value.vZ i₂))
+        (r   : evalIntegerOp op (Value.vZ i₁) (Value.vZ i₂) = some v) :
+        EvalProp σ Δ (Expr.integerExpr e₁ op e₂) v
 
     -- E‑BOOLBINOP
     | BoolOp   {σ Δ e₁ e₂ op b₁ b₂ b}
