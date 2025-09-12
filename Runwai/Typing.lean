@@ -44,10 +44,10 @@ inductive SubtypeJudgment :
       SubtypeJudgment Δ Γ (Ast.Ty.refin T₁ φ₁) (Ast.Ty.refin T₂ φ₂)
 
   /-- TSUB-FUN: Function subtyping -/
-  | TSub_Fun {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {x y : String} {z : Ast.Value} {τx τy τr τs : Ast.Ty} :
+  | TSub_Fun {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {x y z: String} {τx τy τr τs : Ast.Ty} :
       SubtypeJudgment Δ Γ τy τx →
       -- Using a fresh variable z to avoid capture
-      SubtypeJudgment Δ Γ τr τs → --replace x with z in τr and y with z in τs
+      SubtypeJudgment Δ Γ (Ast.renameTy τr x (Ast.Expr.var z)) (Ast.renameTy τs y (Ast.Expr.var z)) →
       SubtypeJudgment Δ Γ (Ast.Ty.func x τx τr) (Ast.Ty.func y τy τs)
 
   /-- TSUB-ARR: Array subtyping -/
@@ -57,9 +57,8 @@ inductive SubtypeJudgment :
 
 def lookup_pred (args: List (Ast.Expr × Ast.Expr)) (c: Ast.Chip) (φ: Ast.Predicate) (Η: Env.UsedNames): Ast.Predicate :=
   args.foldl
-  (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst (Ast.renameVar (Ast.renameVar y.snd c.ident_t (Env.freshName Η c.ident_t) 1000) c.ident_i (Env.freshName Η c.ident_i) 1000))))
-  (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Env.freshName Η c.ident_t))
-                        c.ident_i (Env.freshName Η c.ident_i))
+  (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst (Ast.renameVar (Ast.renameVar y.snd c.ident_t (Ast.Expr.var (Env.freshName Η c.ident_t)) 1000) c.ident_i (Ast.Expr.var (Env.freshName Η c.ident_i)) 1000))))
+  (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Ast.Expr.var (Env.freshName Η c.ident_t))) c.ident_i (Ast.Expr.var (Env.freshName Η c.ident_i)))
 
 def update_UsedNames (c: Ast.Chip) (Η: Env.UsedNames) : Env.UsedNames :=
   [Env.freshName Η c.ident_i, Env.freshName Η c.ident_t] ++ Η
@@ -85,16 +84,19 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.var f) (Ast.Ty.func x τ₁ τ₂)
 
   -- TE-ARRY-INDEX
-  | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n i: ℕ} {φ: Ast.Predicate}:
+  | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n: ℕ} {φ: Ast.Predicate}:
     TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
     TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.Expr.binRel (Ast.Expr.var "v") Ast.RelOp.lt (Ast.Expr.constZ n)))) →
     TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
-  | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty}:
-    TypeJudgment Γ Η e₁ τ →
-    TypeJudgment Γ Η e₂ τ →
-    TypeJudgment Γ Η (Ast.Expr.branch c e₁ e₂) τ
+  | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₁ φ₂: Ast.Predicate}:
+    TypeJudgment Γ Η e₁ (Ast.Ty.refin τ φ₁) →
+    TypeJudgment Γ Η e₂ (Ast.Ty.refin τ φ₂) →
+    TypeJudgment Γ Η (Ast.Expr.branch c e₁ e₂)
+      (Ast.Ty.refin τ (Ast.Predicate.or
+        (Ast.Predicate.and (Ast.Predicate.ind c) φ₁)
+        (Ast.Predicate.and (Ast.Predicate.not (Ast.Predicate.ind c)) φ₂)))
 
   -- TE-CONSTF
   | TE_ConstF {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: F} :
@@ -132,7 +134,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   | TE_App {Γ: Env.TyEnv} {Η: Env.UsedNames} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂: Ast.Ty}:
     TypeJudgment Γ Η x₁ (Ast.Ty.func s τ₁ τ₂) →
     TypeJudgment Γ Η x₂ τ₁ →
-    TypeJudgment Γ Η (Ast.Expr.app x₁ x₂) τ₂ -- rename s with x₂ in τ₂
+    TypeJudgment Γ Η (Ast.Expr.app x₁ x₂) (Ast.renameTy τ₂ s x₂)
 
   -- TE_SUB
   | TE_SUB {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
@@ -155,17 +157,6 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     (hn: φ' = lookup_pred args c φ Η)
     (h₂: @TypeJudgment Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
     TypeJudgment Γ Η (Ast.Expr.lookup vname cname args e) τ
-
-/-
-/--
-If an expression `e` is typed as the refinement `{ v : τ | φ }`,
-then the predicate `φ` holds under `exprToProp`.
-(TODO: this is the soundness theorem that we can prove)
--/
-axiom typeJudgmentRefinementSound {σ : Env.ValEnv} {Δ : Env.ChipEnv}
- (Γ : Env.TyEnv) (τ : Ast.Ty) (e: Ast.Expr) (φ: Ast.Predicate):
-  @Ty.TypeJudgment σ Δ Γ e (Ast.Ty.refin τ φ) → PropSemantics.predToProp σ Δ φ e
--/
 
 def makeEnvs (c : Ast.Chip) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): Env.ValEnv × Env.TyEnv :=
   let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] c.ident_t trace) c.ident_i i

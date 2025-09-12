@@ -391,7 +391,6 @@ theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁
         intro Γ₂ h
         apply Ty.SubtypeJudgment.TSub_Fun
         rename_i x y z τx τy τs τr
-        exact z
         apply ih₁; exact h
         apply ih₂; exact h
       }
@@ -419,7 +418,6 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       intro Γ₂ h
       rename_i i φ h₁
       apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
       apply h₃
       exact h
       apply a_ih

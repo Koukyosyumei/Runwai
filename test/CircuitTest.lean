@@ -112,34 +112,6 @@ def wordRangeCheckerChip : Ast.Chip := {
 
 def Δ : Env.ChipEnv := [("assert", assertChip), ("u8", u8chip)]
 
-lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
-  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
-  apply Ty.TypeJudgment.TE_SUB
-  apply Ty.TypeJudgment.TE_ConstZ
-  apply Ty.SubtypeJudgment.TSub_Refine
-  apply Ty.SubtypeJudgment.TSub_Refl
-  intro σ v h₁ h₂
-  unfold PropSemantics.predToProp PropSemantics.exprToProp at h₂ ⊢
-  cases h₂
-  rename_i va ih₁ ih₂ ih₃
-  cases ih₁
-  cases ih₃
-  rename_i v₁ v₂ ih₁ ih₃ r
-  cases ih₃
-  unfold Eval.evalRelOp at r
-  cases v₁ <;> simp at r
-  rw[r] at ih₁
-  apply Eval.EvalProp.App
-  apply Eval.EvalProp.Lam
-  exact ih₂
-  apply Eval.EvalProp.Rel
-  exact ih₁
-  apply Eval.EvalProp.ConstZ
-  unfold Eval.evalRelOp
-  simp
-  exact h
-}
-
 theorem assertChip_correct : Ty.chipCorrect Δ assertChip 1 := by
   unfold Ty.chipCorrect
   intro x i hs hi hrow ht hσ
@@ -150,9 +122,7 @@ theorem assertChip_correct : Ty.chipCorrect Δ assertChip 1 := by
   · apply lookup_update_self
   · apply Ty.TypeJudgment.TE_Assert
     · apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
       apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
       apply Ty.TypeJudgment.TE_Var
       apply lookup_update_ne
       simp
@@ -170,23 +140,7 @@ theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
   let envs := Ty.makeEnvs iszeroChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
-  repeat
-    apply Ty.TypeJudgment.TE_LetIn
-    · apply lookup_update_self;
-    · apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
-      apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
-      apply Ty.TypeJudgment.TE_VarEnv
-      simp
-      apply lookup_update_ne
-      simp
-      apply Ty.TypeJudgment.TE_VarEnv
-      try (apply lookup_update_self)
-      try (apply lookup_update_ne)
-      try (simp)
-      apply constZ_refine_lt
-      simp
+  auto_trace_index
   apply isZero_typing_soundness
   repeat apply lookup_update_ne; simp
   apply Ty.TypeJudgment.TE_VarEnv
@@ -613,23 +567,7 @@ theorem wordRangeCheckerChip_correct : Ty.chipCorrect Δ wordRangeCheckerChip 1 
   let envs := Ty.makeEnvs assertChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
-  repeat
-    apply Ty.TypeJudgment.TE_LetIn
-    · apply lookup_update_self
-    . apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
-      apply Ty.TypeJudgment.TE_ArrayIndex
-      exact i
-      apply Ty.TypeJudgment.TE_VarEnv
-      simp
-      apply lookup_update_ne
-      simp
-      apply Ty.TypeJudgment.TE_VarEnv
-      try (apply lookup_update_self)
-      try (apply lookup_update_ne)
-      try (simp)
-      apply constZ_refine_lt
-      simp
+  auto_trace_index
   apply Ty.TypeJudgment.TE_LetIn
   · apply lookup_update_self;
   . apply Ty.TypeJudgment.TE_Assert

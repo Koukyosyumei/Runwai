@@ -24,16 +24,14 @@ namespace Env
 abbrev ValEnv := List (String × Ast.Value)
 
 @[inline]
+def updateVal (σ : ValEnv) (ident : String) (val : Ast.Value) : ValEnv :=
+  [(ident, val)] ++ σ
+
+@[inline]
 def lookupVal (σ : ValEnv) (ident : String) : Ast.Value :=
   match σ.find? (·.1 = ident) with
   | some (_, v) => v
   | none        => Ast.Value.vUnit
-
-@[inline]
-def updateVal (σ : ValEnv) (ident : String) (val : Ast.Value) : ValEnv :=
-  if (σ.find? (fun (x, _) => x = ident)).isSome
-  then σ
-  else σ ++ [(ident, val)]
 
 /-- A Chip environment: maps Chip names to their `Chip`. -/
 abbrev ChipEnv := List (String × Ast.Chip)
@@ -75,10 +73,6 @@ abbrev TyEnv := List (String × Ast.Ty)
 @[inline]
 def updateTy (Γ: TyEnv) (ident: String) (τ: Ast.Ty) : TyEnv :=
   (ident, τ) :: Γ
-
---@[inline]
---def unsafe_updateTy (Γ: TyEnv) (ident: String) (τ: Ast.Ty) : TyEnv :=
---  (ident, τ) :: Γ
 
 @[inline]
 def lookupTy (Γ : TyEnv) (ident : String) : Option Ast.Ty :=
