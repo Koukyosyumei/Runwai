@@ -353,7 +353,7 @@ lemma word_range_val_bound
   }
 }
 
-lemma eval_eq_then_lt
+lemma eval_eq_then_lt {σ Δ e₁ e₂ e₃}
   (h₁: Eval.EvalProp σ Δ (Ast.exprEq e₁ e₂) (Ast.Value.vBool true))
   (h₂: Eval.EvalProp σ Δ (Ast.Expr.binRel (Ast.Expr.toZ e₂) Ast.RelOp.lt e₃) (Ast.Value.vBool true))
   : Eval.EvalProp σ Δ (Ast.Expr.binRel (Ast.Expr.toZ e₁) Ast.RelOp.lt e₃) (Ast.Value.vBool true) := by {
@@ -390,7 +390,7 @@ lemma eval_eq_then_lt
     | _ => simp at hlt
   }
 
-lemma eval_mul_expr_val (h: Eval.EvalProp σ Δ
+lemma eval_mul_expr_val {σ x y z Δ} (h: Eval.EvalProp σ Δ
   (Ast.exprEq (Ast.Expr.var x)
     ((Ast.Expr.var y).fieldExpr Ast.FieldOp.mul (Ast.Expr.var z)))
   (Ast.Value.vBool true)) :
@@ -424,7 +424,7 @@ lemma eval_mul_expr_val (h: Eval.EvalProp σ Δ
     | _ => simp at r₂
                  }
 
-lemma eval_bit_expr_val (h: Eval.EvalProp σ Δ
+lemma eval_bit_expr_val {σ Δ x} (h: Eval.EvalProp σ Δ
   (Ast.exprEq
     ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul
       ((Ast.Expr.var x).fieldExpr Ast.FieldOp.sub (Ast.Expr.constF 1)))
@@ -458,7 +458,7 @@ lemma eval_bit_expr_val (h: Eval.EvalProp σ Δ
     exact r₁
   }
 
-lemma eval_eq_const_mul_val (h: Eval.EvalProp σ Δ
+lemma eval_eq_const_mul_val {σ Δ x y v} (h: Eval.EvalProp σ Δ
   (Ast.exprEq (Ast.Expr.constF v)
     ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul (Ast.Expr.var y)))
   (Ast.Value.vBool true)):
