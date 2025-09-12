@@ -503,61 +503,23 @@ lemma subtype_wordRange
     simp at h₁
     rw[← h₁] at hvl₃
 
-    apply Eval.EvalProp.Rel
-    . apply Eval.EvalProp.ZBinOp
-      . apply Eval.EvalProp.ZBinOp
-        apply Eval.EvalProp.ZBinOp
-        . apply Eval.EvalProp.toZ
-          apply Eval.EvalProp.Var h_value_0_env
-        . apply Eval.EvalProp.ZBinOp
-          . apply Eval.EvalProp.toZ
-            apply Eval.EvalProp.Var h_value_1_env
-          . apply Eval.EvalProp.ConstZ
-          . unfold Eval.evalIntegerOp
-            simp
-            rfl
-        . unfold Eval.evalIntegerOp
-          simp
-          rfl
-        . apply Eval.EvalProp.ZBinOp
-          . apply Eval.EvalProp.toZ
-            apply Eval.EvalProp.Var h_value_2_env
-          . apply Eval.EvalProp.ConstZ
-          . unfold Eval.evalIntegerOp
-            simp
-            rfl
-        . unfold Eval.evalIntegerOp
-          simp
-          rfl
-      . apply Eval.EvalProp.ZBinOp
-        . apply Eval.EvalProp.toZ
-          apply Eval.EvalProp.Var h_value_3_env
-        . apply Eval.EvalProp.ConstZ
-        . unfold Eval.evalIntegerOp
-          simp
-          rfl
-      . unfold Eval.evalIntegerOp
-        simp
-        rfl
-    . apply Eval.EvalProp.ConstZ
-    . unfold Eval.evalRelOp
-      simp
-      apply word_range_val_bound
-        (bit_value_mul_zero h_most_sig_byte_decomp_0) (bit_value_mul_zero h_most_sig_byte_decomp_1)
-        (bit_value_mul_zero h_most_sig_byte_decomp_2) (bit_value_mul_zero h_most_sig_byte_decomp_3)
-        (bit_value_mul_zero h_most_sig_byte_decomp_4) (bit_value_mul_zero h_most_sig_byte_decomp_5)
-        (bit_value_mul_zero h_most_sig_byte_decomp_6) (bit_value_mul_zero h_most_sig_byte_decomp_7)
-        h_msb_rec h_most_sig_byte_decomp_7_is_0 hamm₁ hamm₂ hamm₃ hamm₄ hamm₅ hamm₆
-      simp
-      exact hav₀
-      simp
-      exact hav₁
-      simp
-      exact hav₂
-      exact hvl₀
-      exact hvl₁
-      exact hvl₂
-      exact hvl₃
+    repeat
+      repeat constructor
+      assumption
+    repeat constructor
+    simp
+    apply word_range_val_bound
+      (bit_value_mul_zero h_most_sig_byte_decomp_0) (bit_value_mul_zero h_most_sig_byte_decomp_1)
+      (bit_value_mul_zero h_most_sig_byte_decomp_2) (bit_value_mul_zero h_most_sig_byte_decomp_3)
+      (bit_value_mul_zero h_most_sig_byte_decomp_4) (bit_value_mul_zero h_most_sig_byte_decomp_5)
+      (bit_value_mul_zero h_most_sig_byte_decomp_6) (bit_value_mul_zero h_most_sig_byte_decomp_7)
+      h_msb_rec h_most_sig_byte_decomp_7_is_0 hamm₁ hamm₂ hamm₃ hamm₄ hamm₅ hamm₆
+    simp
+    exact hav₀
+    simp
+    exact hav₁
+    simp
+    repeat assumption
 }
 
 
@@ -584,9 +546,7 @@ theorem wordRangeCheckerChip_correct : Ty.chipCorrect Δ wordRangeCheckerChip 1 
         auto_resolve_varenv
       apply Ty.TypeJudgment.TE_ConstF
       apply Ty.TypeJudgment.TE_ConstF
-    apply Ty.TypeJudgment.TE_LetIn
-    apply lookup_update_self
-    apply Ty.TypeJudgment.TE_Assert
+    auto_let_assert
     repeat apply Ty.TypeJudgment.TE_BinOpField
     auto_resolve_varenv
     repeat
