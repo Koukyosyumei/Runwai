@@ -3,18 +3,18 @@ import Runwai.Gadget
 import Runwai.Command
 import Runwai.Tactic
 
-#runwai_register circuit Assert1(trace, i, 2) -> {Unit| trace [i][1] == Fp 2} {let u = assert_eq(trace [i][1], Fp 2) in u}
+#runwai_register chip Assert1(trace, i, 2) -> {Unit| trace [i][1] == Fp 2} {let u = assert_eq(trace [i][1], Fp 2) in u}
 #runwai_check Assert1
 
-#runwai_register circuit IsZero(trace, i, 3) -> {Unit| y == if x == Fp 0 then {Fp 1} else {Fp 0}} {
+#runwai_register chip IsZero(trace, i, 3) -> {Unit| y == if x == Fp 0 then {Fp 1} else {Fp 0}} {
   let x = trace [i][0] in
-    let y = trace [i][1] in
-      let inv = trace [i][2] in
-        let u₁ = assert_eq(y, ((Fp 0 - x) * inv) + Fp 1) in
-          let u₂ = assert_eq(x*y, Fp 0) in u₂
+  let y = trace [i][1] in
+  let inv = trace [i][2] in
+  let u₁ = assert_eq(y, ((Fp 0 - x) * inv) + Fp 1) in
+  let u₂ = assert_eq(x*y, Fp 0) in u₂
 }
 
-#runwai_register circuit Lookup(trace, i, 2) -> {Unit| trace [i][0] == Fp 2} {
+#runwai_register chip Lookup(trace, i, 2) -> {Unit| trace [i][0] == Fp 2} {
   let u = #Assert1(trace [i][0] : trace [i][1]) in u
 }
 
@@ -47,7 +47,7 @@ import Runwai.Tactic
   set τ' := (Ast.Ty.unit.refin
       (Ty.lookup_pred
         [(Ast.trace_i_j "trace" "i" 0, Ast.trace_i_j "trace" "i" 1)]
-        (Env.lookupCircuit Δ "Assert1")
+        (Env.lookupChip Δ "Assert1")
         (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2)))
         ["i", "trace"])) with hτ'
   set Γ' := (Env.updateTy
@@ -67,12 +67,12 @@ import Runwai.Tactic
       unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' at h₃
       simp at h₃
       unfold Ty.lookup_pred at h₃
-      have hat : (Env.lookupCircuit Δ "Assert1").ident_t = "trace" := by {
+      have hat : (Env.lookupChip Δ "Assert1").ident_t = "trace" := by {
         rw[h_delta]
-        unfold Env.lookupCircuit; simp }
-      have hai : (Env.lookupCircuit Δ "Assert1").ident_i = "i" := by {
+        unfold Env.lookupChip; simp }
+      have hai : (Env.lookupChip Δ "Assert1").ident_i = "i" := by {
         rw[h_delta]
-        unfold Env.lookupCircuit; simp }
+        unfold Env.lookupChip; simp }
       rw[hat, hai] at h₃
       unfold Env.freshName at h₃
       simp at h₃

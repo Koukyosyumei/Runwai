@@ -54,7 +54,7 @@ theorem evalRelOp_eq_symm {v₁ v₂: Ast.Value} (h: Eval.evalRelOp Ast.RelOp.eq
   }
 
 theorem evalProp_eq_symm
-  {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {e₁ e₂: Expr} (h: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true)):
+  {σ: Env.ValEnv} {Δ: Env.ChipEnv} {e₁ e₂: Expr} (h: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true)):
   Eval.EvalProp σ Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₁) (Ast.Value.vBool true) := by {
     cases h
     rename_i v₁ v₂ h₁ h₂ h₃
@@ -66,7 +66,7 @@ theorem evalProp_eq_symm
   }
 
 theorem evalprop_deterministic
-  {σ : Env.ValEnv} {Δ : Env.CircuitEnv} {e : Expr} :
+  {σ : Env.ValEnv} {Δ : Env.ChipEnv} {e : Expr} :
   ∀ {v₁ v₂}, Eval.EvalProp σ Δ e v₁ → Eval.EvalProp σ Δ e v₂ → v₁ = v₂ := by
   intro v₁ v₂ h₁ h₂
   induction h₁ generalizing v₂ with
@@ -198,7 +198,7 @@ theorem evalprop_deterministic
   }
 
 theorem evalProp_eq_trans
-  {σ: Env.ValEnv} {Δ: Env.CircuitEnv} {e₁ e₂ e₃: Expr}
+  {σ: Env.ValEnv} {Δ: Env.ChipEnv} {e₁ e₂ e₃: Expr}
   (h₁: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true))
   (h₂: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₃) (Ast.Value.vBool true)):
   Eval.EvalProp σ Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₃) (Ast.Value.vBool true) := by {
@@ -347,7 +347,7 @@ lemma lookupTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)
     exact Eq.symm h₂
   }
 
-theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁ Γ₂: Env.TyEnv) (ident: String)
+theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv) (ident: String)
   (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.varToProp σ Δ Γ₁ ident):
   PropSemantics.varToProp σ Δ Γ₂ ident := by {
     unfold PropSemantics.varToProp at h₂ ⊢
@@ -356,7 +356,7 @@ theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ�
     exact h₂
   }
 
-theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁ Γ₂: Env.TyEnv)
+theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv)
   (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.tyenvToProp σ Δ Γ₁):
   PropSemantics.tyenvToProp σ Δ Γ₂ := by {
     unfold PropSemantics.tyenvToProp at h₂ ⊢
@@ -367,7 +367,7 @@ theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ
     exact varToProp_pointwise_preserve σ Δ Γ₁ Γ₂ x h₁ h₅
   }
 
-theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ₁: Env.TyEnv) (τ₁ τ₂: Ast.Ty)
+theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁ τ₂: Ast.Ty)
   (h₂: Ty.SubtypeJudgment σ Δ Γ₁ τ₁ τ₂) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
     Ty.SubtypeJudgment σ Δ Γ₂ τ₁ τ₂ := by {
@@ -401,7 +401,7 @@ theorem subtyping_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Γ�
       }
     }
 
-theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env.UsedNames) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
+theorem typing_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
   (h₂: @Ty.TypeJudgment σ Δ Γ₁ Η e τ) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
         @Ty.TypeJudgment σ Δ Γ₂ Η e τ := by {
@@ -469,7 +469,7 @@ lemma mem_update_preserve (Γ: Env.TyEnv) (x x': String) (τ τ': Ty) (h: (x, τ
   · simp_all
   · simp [h]
 
-lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.CircuitEnv}
+lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.ChipEnv}
   (h₁ : Eval.EvalProp σ Δ (exprEq y ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr
                   FieldOp.add (Expr.constF 1))) (Value.vBool true))
   (h₂ : Eval.EvalProp σ Δ (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)) (Value.vBool true))
@@ -515,7 +515,7 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.
   . simp_all; rw[← ih₄]; simp
 }
 
-lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.CircuitEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
+lemma isZero_typing_soundness (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
   (x y inv u₁ u₂: String)
   (htx: Env.lookupTy Γ x = (Ty.refin Ast.Ty.field φ₁))
   (hty: Env.lookupTy Γ y = (Ty.refin Ast.Ty.field φ₂))

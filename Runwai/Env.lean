@@ -15,7 +15,7 @@ open Lean.Meta
 
   This module provides:
   1. A **valuation environment** mapping variable names to runtime values.
-  2. A **circuit environment** mapping circuit names to their declarations.
+  2. A **chip environment** mapping Chip names to their declarations.
   3. A **type environment** mapping variable names to Runwai types.
 -/
 namespace Env
@@ -35,39 +35,39 @@ def updateVal (σ : ValEnv) (ident : String) (val : Ast.Value) : ValEnv :=
   then σ
   else σ ++ [(ident, val)]
 
-/-- A circuit environment: maps circuit names to their `Circuit`. -/
-abbrev CircuitEnv := List (String × Ast.Circuit)
-deriving instance ToExpr for CircuitEnv
+/-- A Chip environment: maps Chip names to their `Chip`. -/
+abbrev ChipEnv := List (String × Ast.Chip)
+deriving instance ToExpr for ChipEnv
 
 @[inline]
-def lookupCircuit (Δ : CircuitEnv) (ident : String) : Ast.Circuit :=
+def lookupChip (Δ : ChipEnv) (ident : String) : Ast.Chip :=
   match Δ.find? (·.1 = ident) with
   | some (_, v) => v
-  | none        => Ast.DefaultCircuit
+  | none        => Ast.DefaultChip
 
 @[inline]
-def updateCircuit (Δ: CircuitEnv) (ident: String) (circuit: Ast.Circuit) : CircuitEnv :=
-  (ident, circuit) :: Δ
+def updateChip (Δ: ChipEnv) (ident: String) (Chip: Ast.Chip) : ChipEnv :=
+  (ident, Chip) :: Δ
 
-abbrev CircuitEntry := String × Ast.Circuit
+abbrev ChipEntry := String × Ast.Chip
 
-initialize circuitExt : Lean.SimplePersistentEnvExtension CircuitEntry CircuitEnv ←
+initialize ChipExt : Lean.SimplePersistentEnvExtension ChipEntry ChipEnv ←
   Lean.registerSimplePersistentEnvExtension {
     addImportedFn := fun as => [],
-    addEntryFn := fun m (name, circuit) => (name, circuit) :: m,
+    addEntryFn := fun m (name, Chip) => (name, Chip) :: m,
     toArrayFn := fun m => m.toArray
   }
 
-def addCircuitToEnv (name : String) (circuit : Ast.Circuit) : Lean.CoreM Unit := do
-  Lean.modifyEnv (circuitExt.addEntry · (name, circuit))
+def addChipToEnv (name : String) (Chip : Ast.Chip) : Lean.CoreM Unit := do
+  Lean.modifyEnv (ChipExt.addEntry · (name, Chip))
 
-def getCircuitEnv : Lean.CoreM CircuitEnv := do
+def getChipEnv : Lean.CoreM ChipEnv := do
   let env ← Lean.getEnv
-  return circuitExt.getState env
+  return ChipExt.getState env
 
-def getCircuitFromEnv (name : String) : Lean.CoreM (Option Ast.Circuit) := do
+def getChipFromEnv (name : String) : Lean.CoreM (Option Ast.Chip) := do
   let env ← Lean.getEnv
-  return lookupCircuit (circuitExt.getState env) name
+  return lookupChip (ChipExt.getState env) name
 
 /-- A type environment: maps variable names to Runwai `Ty`s. -/
 abbrev TyEnv := List (String × Ast.Ty)

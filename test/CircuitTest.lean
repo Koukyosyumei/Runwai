@@ -9,7 +9,7 @@ open Lean Elab Tactic
 
 
 @[simp]
-def assertCircuit : Ast.Circuit := {
+def assertChip : Ast.Chip := {
   name    := "assert",
   ident_t := "trace",
   ident_i := "i",
@@ -25,7 +25,7 @@ def assertCircuit : Ast.Circuit := {
 }
 
 @[simp]
-def iszeroCircuit : Ast.Circuit := {
+def iszeroChip : Ast.Chip := {
   name    := "iszero",
   ident_t := "trace",
   ident_i := "i",
@@ -44,7 +44,7 @@ def iszeroCircuit : Ast.Circuit := {
 }
 
 @[simp]
-def u8chip : Ast.Circuit := {
+def u8chip : Ast.Chip := {
   name := "u8",
   ident_t := "trace",
   ident_i := "i"
@@ -54,7 +54,7 @@ def u8chip : Ast.Circuit := {
 }
 
 @[simp]
-def wordRangeCheckerCircuit : Ast.Circuit := {
+def wordRangeCheckerChip : Ast.Chip := {
   name := "word_range_checker",
   ident_t := "trace",
   ident_i := "i",
@@ -110,12 +110,12 @@ def wordRangeCheckerCircuit : Ast.Circuit := {
              (.var "l₃"))))))))))))))))))))))))))))))))))))))))))
 }
 
-def Δ : Env.CircuitEnv := [("assert", assertCircuit), ("u8", u8chip)]
+def Δ : Env.ChipEnv := [("assert", assertChip), ("u8", u8chip)]
 
-theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
-  unfold Ty.circuitCorrect
+theorem assertChip_correct : Ty.chipCorrect Δ assertChip 1 := by
+  unfold Ty.chipCorrect
   intro x i hs hi hrow ht hσ
-  let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
+  let envs := Ty.makeEnvs assertChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
   apply Ty.TypeJudgment.TE_LetIn
@@ -133,10 +133,10 @@ theorem assertCircuit_correct : Ty.circuitCorrect Δ assertCircuit 1 := by
   . constructor;
     apply lookup_update_self
 
-theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
-  unfold Ty.circuitCorrect
+theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
+  unfold Ty.chipCorrect
   intro x i height hs hi hrow ht
-  let envs := Ty.makeEnvs iszeroCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
+  let envs := Ty.makeEnvs iszeroChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
   repeat
@@ -149,13 +149,13 @@ theorem iszeroCircuit_correct : Ty.circuitCorrect Δ iszeroCircuit 1 := by
   apply lookup_update_self;
   repeat decide
 
-theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
-  unfold Ty.circuitCorrect
+theorem iszeroChip_correct_long : Ty.chipCorrect Δ iszeroChip 1 := by
+  unfold Ty.chipCorrect
   intro x i height hs hi hrow ht
-  let envs := Ty.makeEnvs iszeroCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
+  let envs := Ty.makeEnvs iszeroChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
-  unfold iszeroCircuit; simp
+  unfold iszeroChip; simp
   apply Ty.TypeJudgment.TE_LetIn
   · apply lookup_update_self
   · apply Ty.TypeJudgment.TE_ArrayIndex
@@ -216,19 +216,19 @@ theorem iszeroCircuit_correct_long : Ty.circuitCorrect Δ iszeroCircuit 1 := by
 lemma lookup_u8_val_lt_256
   (h₁: PropSemantics.tyenvToProp σ Δ Γ)
   (h₂: Env.lookupTy Γ u = some ((Ast.Ty.unit.refin
-          (Ty.lookup_pred [(Ast.Expr.var x, Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+          (Ty.lookup_pred [(Ast.Expr.var x, Ast.trace_i_j "trace" "i" 0)] (Env.lookupChip Δ "u8")
             (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
             Η))))
-  (h₃: (Env.freshName Η (Env.lookupCircuit Δ "u8").ident_i) = new_ident_i)
-  (h₄: (Env.freshName Η (Env.lookupCircuit Δ "u8").ident_t) = new_ident_t)
+  (h₃: (Env.freshName Η (Env.lookupChip Δ "u8").ident_i) = new_ident_i)
+  (h₄: (Env.freshName Η (Env.lookupChip Δ "u8").ident_t) = new_ident_t)
   (h₇: new_ident_t ≠ "i") :  ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < 256 := by {
     unfold Ty.lookup_pred at h₂
-    have hu8_i : (Env.lookupCircuit Δ "u8").ident_i = "i" := by {
-      unfold Env.lookupCircuit Δ
+    have hu8_i : (Env.lookupChip Δ "u8").ident_i = "i" := by {
+      unfold Env.lookupChip Δ
       simp
     }
-    have hu8_t : (Env.lookupCircuit Δ "u8").ident_t = "trace" := by {
-      unfold Env.lookupCircuit Δ
+    have hu8_t : (Env.lookupChip Δ "u8").ident_t = "trace" := by {
+      unfold Env.lookupChip Δ
       simp
     }
 
@@ -294,34 +294,34 @@ lemma subtype_wordRange
                     ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
                       (Ast.Expr.var "value_2"))))))
   ( hl₀ : Env.lookupTy Γ "l₀" = some ((Ast.Ty.unit.refin
-            (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+            (Ty.lookup_pred [(Ast.Expr.var "value_0", Ast.trace_i_j "trace" "i" 0)] (Env.lookupChip Δ "u8")
               (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))
+              [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t]))))
   ( hl₁: Env.lookupTy Γ "l₁" = some (        (Ast.Ty.unit.refin
-          (Ty.lookup_pred [(Ast.Expr.var "value_1", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+          (Ty.lookup_pred [(Ast.Expr.var "value_1", Ast.trace_i_j "trace" "i" 0)] (Env.lookupChip Δ "u8")
             (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t])))))
+            (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+              [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t])))))
   ( hl₂: Env.lookupTy Γ "l₂" =       (Ast.Ty.unit.refin
-        (Ty.lookup_pred [(Ast.Expr.var "value_2", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+        (Ty.lookup_pred [(Ast.Expr.var "value_2", Ast.trace_i_j "trace" "i" 0)] (Env.lookupChip Δ "u8")
           (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t])))))
+          (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+            (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+              [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t])))))
   ( hl₃: Env.lookupTy Γ "l₃" = (Ast.Ty.unit.refin
-      (Ty.lookup_pred [(Ast.Expr.var "value_3", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+      (Ty.lookup_pred [(Ast.Expr.var "value_3", Ast.trace_i_j "trace" "i" 0)] (Env.lookupChip Δ "u8")
         (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-        (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))))
+        (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+          (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+            (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+              [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t]))))))
   : @Ty.SubtypeJudgment σ Δ Γ (Ast.Ty.unit.refin
-      (Ty.lookup_pred [(Ast.Expr.var "value_3", Ast.trace_i_j "trace" "i" 0)] (Env.lookupCircuit Δ "u8")
+      (Ty.lookup_pred [(Ast.Expr.var "value_3", Ast.trace_i_j "trace" "i" 0)] (Env.lookupChip Δ "u8")
         (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-        (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))))) wordRangeCheckerCircuit.goal := by {
+        (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+          (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+            (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+              [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t]))))) wordRangeCheckerChip.goal := by {
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl
     intro v h₁ h₂
@@ -372,20 +372,20 @@ lemma subtype_wordRange
     cases v₁ <;> simp at h_most_sig_byte_decomp_7_is_0
     rename_i most_sig_byte_decomp_7 h_most_sig_byte_decomp_7_env
 
-    have hu8_i : (Env.lookupCircuit Δ "u8").ident_i = "i" := by {
-      unfold Env.lookupCircuit Δ
+    have hu8_i : (Env.lookupChip Δ "u8").ident_i = "i" := by {
+      unfold Env.lookupChip Δ
       simp
     }
-    have hu8_t : (Env.lookupCircuit Δ "u8").ident_t = "trace" := by {
-      unfold Env.lookupCircuit Δ
+    have hu8_t : (Env.lookupChip Δ "u8").ident_t = "trace" := by {
+      unfold Env.lookupChip Δ
       simp
     }
-    have h₁' : (Env.freshName [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t] (Env.lookupCircuit Δ "u8").ident_t) = "trace'" := by {
+    have h₁' : (Env.freshName [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t] (Env.lookupChip Δ "u8").ident_t) = "trace'" := by {
       unfold Env.freshName
       rw[hu8_t]
       simp
     }
-    have h₂' : (Env.freshName [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t] (Env.lookupCircuit Δ "u8").ident_i) = "i'" := by {
+    have h₂' : (Env.freshName [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t] (Env.lookupChip Δ "u8").ident_i) = "i'" := by {
       unfold Env.freshName
       rw[hu8_i]
       simp
@@ -393,16 +393,16 @@ lemma subtype_wordRange
     have h₃' : "trace'" ≠ "i" := by simp
     have hl₀' := tyenv_and_to_eval_exprs h₁ hl₀
     have hvl₀ := lookup_u8_val_lt_256 h₁ hl₀ h₂' h₁' h₃'
-    have h₁' : (Env.freshName (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]) (Env.lookupCircuit Δ "u8").ident_t) = "trace'" := by {
+    have h₁' : (Env.freshName (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+              [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t]) (Env.lookupChip Δ "u8").ident_t) = "trace'" := by {
       unfold Env.freshName
       rw[hu8_t]
       simp
       unfold Ty.update_UsedNames
       simp
     }
-    have h₂' : (Env.freshName (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]) (Env.lookupCircuit Δ "u8").ident_i) = "i'" := by {
+    have h₂' : (Env.freshName (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+              [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t]) (Env.lookupChip Δ "u8").ident_i) = "i'" := by {
       unfold Env.freshName
       rw[hu8_i]
       simp
@@ -411,20 +411,20 @@ lemma subtype_wordRange
     }
     have hl₁' := tyenv_and_to_eval_exprs h₁ hl₁
     have hvl₁ := lookup_u8_val_lt_256 h₁ hl₁ h₂' h₁' h₃'
-    have h₁' : (Env.freshName (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))) (Env.lookupCircuit Δ "u8").ident_t) = "trace'" := by {
+    have h₁' : (Env.freshName (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+          (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+            (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+              [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t]))) (Env.lookupChip Δ "u8").ident_t) = "trace'" := by {
       unfold Env.freshName
       rw[hu8_t]
       simp
       unfold Ty.update_UsedNames
       simp
     }
-    have h₂' : (Env.freshName (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-          (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-            (Ty.update_UsedNames (Env.lookupCircuit Δ "u8")
-              [wordRangeCheckerCircuit.ident_i, wordRangeCheckerCircuit.ident_t]))) (Env.lookupCircuit Δ "u8").ident_i) = "i'" := by {
+    have h₂' : (Env.freshName (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+          (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+            (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+              [wordRangeCheckerChip.ident_i, wordRangeCheckerChip.ident_t]))) (Env.lookupChip Δ "u8").ident_i) = "i'" := by {
       unfold Env.freshName
       rw[hu8_i]
       simp
@@ -627,10 +627,10 @@ lemma subtype_wordRange
 }
 
 
-theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerCircuit 1 := by
-  unfold Ty.circuitCorrect
+theorem wordRangeCheckerChip_correct : Ty.chipCorrect Δ wordRangeCheckerChip 1 := by
+  unfold Ty.chipCorrect
   intro x i hs hi hrow ht hσ
-  let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
+  let envs := Ty.makeEnvs assertChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
   let Γ := envs.2
   repeat

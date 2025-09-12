@@ -8,37 +8,37 @@ import Runwai.Parser
 open Lean Parser
 open Lean Meta
 
-syntax (name := runwai_register) "#runwai_register" runwai_circuit : command
+syntax (name := runwai_register) "#runwai_register" runwai_chip : command
 syntax (name := runwai_check) "#runwai_check" ident : command
 syntax (name := runwai_prove) "#runwai_prove" ident ":=" "by" tacticSeq: command
 
-builtin_initialize tempCircuitRef : IO.Ref (Option Ast.Circuit) ← IO.mkRef none
+builtin_initialize tempChipRef : IO.Ref (Option Ast.Chip) ← IO.mkRef none
 
 @[command_elab runwai_register]
-unsafe def elabLodaCircuitRegister : Elab.Command.CommandElab := fun stx =>
+unsafe def elabLodaChipRegister : Elab.Command.CommandElab := fun stx =>
   match stx with
-  | `(command| #runwai_register $circ:runwai_circuit) =>
+  | `(command| #runwai_register $circ:runwai_chip) =>
       Elab.Command.runTermElabM fun _ => do
-        let ast ← Frontend.elaborateCircuit circ
-        logInfo m!"Successfully elaborated circuit {repr ast}"
-        Env.addCircuitToEnv ast.name ast
-        logInfo m!"Successfully registered circuit '{ast.name}'."
+        let ast ← Frontend.elaborateChip circ
+        logInfo m!"Successfully elaborated Chip {repr ast}"
+        Env.addChipToEnv ast.name ast
+        logInfo m!"Successfully registered Chip '{ast.name}'."
   | _ => Elab.throwUnsupportedSyntax
 
 @[command_elab runwai_check]
-unsafe def elabLodaCircuitCheck : Elab.Command.CommandElab
+unsafe def elabLodaChipCheck : Elab.Command.CommandElab
   | `(command| #runwai_check $cName:ident) => do
-    let Δ ← Elab.Command.liftCoreM Env.getCircuitEnv
-    let circ := Env.lookupCircuit Δ cName.getId.toString
+    let Δ ← Elab.Command.liftCoreM Env.getChipEnv
+    let circ := Env.lookupChip Δ cName.getId.toString
     logInfo m!"{repr circ}"
   | _ => Elab.throwUnsupportedSyntax
 
 @[command_elab runwai_prove]
 unsafe def elabLodaProve : Elab.Command.CommandElab
   | `(command| #runwai_prove $cName:ident := by $proof:tacticSeq) => do
-    -- Get the circuit from environment
-    let Δ ← Elab.Command.liftCoreM Env.getCircuitEnv
-    let circ := Env.lookupCircuit Δ cName.getId.toString
+    -- Get the Chip from environment
+    let Δ ← Elab.Command.liftCoreM Env.getChipEnv
+    let circ := Env.lookupChip Δ cName.getId.toString
 
     let circExpr := toExpr circ
     let deltaExpr := toExpr Δ
@@ -52,8 +52,8 @@ unsafe def elabLodaProve : Elab.Command.CommandElab
 
     -- Generate the theorem syntax
     let theoremStx ← `(command|
-      theorem $theoremIdent (Δ: Env.CircuitEnv) (h_delta: Δ = $deltaTerm) : (Ty.circuitCorrect $deltaTerm $circTerm 1) := by
-        (unfold Ty.circuitCorrect; intro x i hs hi hrow ht hσ; set envs := Ty.makeEnvs $circTerm (Ast.Value.vArr x) (Ast.Value.vZ i) x.length);
+      theorem $theoremIdent (Δ: Env.ChipEnv) (h_delta: Δ = $deltaTerm) : (Ty.chipCorrect $deltaTerm $circTerm 1) := by
+        (unfold Ty.chipCorrect; intro x i hs hi hrow ht hσ; set envs := Ty.makeEnvs $circTerm (Ast.Value.vArr x) (Ast.Value.vZ i) x.length);
         (set σ := envs.1); (set Γ := envs.2); ($proof);
     )
     logInfo m!"Proof state opened for '{theoremName}' - continue with tactics!"

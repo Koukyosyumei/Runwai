@@ -6,7 +6,7 @@ import Runwai.Typing
 --import Runwai.PP
 
 @[simp]
-def assertCircuit : Ast.Circuit := {
+def assertCircuit : Ast.Chip := {
   name    := "assert",
   ident_t := "trace",
   ident_i := "i",
@@ -16,7 +16,7 @@ def assertCircuit : Ast.Circuit := {
 }
 
 @[simp]
-def assertCircuit_2 : Ast.Circuit := {
+def assertCircuit_2 : Ast.Chip := {
   name    := "assert_2",
   ident_t := "trace",
   ident_i := "i",
@@ -26,7 +26,7 @@ def assertCircuit_2 : Ast.Circuit := {
 }
 
 @[simp]
-def lookupCircuit : Ast.Circuit := {
+def lookupChip : Ast.Chip := {
   name    := "lookup",
   ident_t := "trace",
   ident_i := "i",
@@ -37,7 +37,7 @@ def lookupCircuit : Ast.Circuit := {
 }
 
 @[simp]
-def lookupCircuit_2 : Ast.Circuit := {
+def lookupChip_2 : Ast.Chip := {
   name    := "lookup_2",
   ident_t := "trace",
   ident_i := "i",
@@ -49,10 +49,10 @@ def lookupCircuit_2 : Ast.Circuit := {
 }
 
 def σ : Env.ValEnv := []
-def Δ : Env.CircuitEnv := [("assert", assertCircuit), ("assert_2", assertCircuit_2), ("lookup", lookupCircuit)]
+def Δ : Env.ChipEnv := [("assert", assertCircuit), ("assert_2", assertCircuit_2), ("lookup", lookupChip)]
 
-theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
-  unfold Ty.circuitCorrect lookupCircuit
+theorem lookupChip_correct : Ty.chipCorrect Δ lookupChip 1 := by
+  unfold Ty.chipCorrect lookupChip
   intro x i hs hi hrow ht
   let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
@@ -63,7 +63,7 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
   let τ' := (Ast.Ty.unit.refin
       (Ty.lookup_pred
         [(Ast.trace_i_j "trace" "i" 0, Ast.trace_i_j "trace" "i" 1)]
-        (Env.lookupCircuit Δ "assert")
+        (Env.lookupChip Δ "assert")
         (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2)))
         ["i", "trace"]))
   let Γ' := (Env.updateTy
@@ -83,10 +83,10 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
       unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' at h₃
       simp at h₃
       unfold Ty.lookup_pred at h₃
-      have hat : (Env.lookupCircuit Δ "assert").ident_t = "trace" := by {
-        unfold Env.lookupCircuit Δ; simp }
-      have hai : (Env.lookupCircuit Δ "assert").ident_i = "i" := by {
-        unfold Env.lookupCircuit Δ; simp }
+      have hat : (Env.lookupChip Δ "assert").ident_t = "trace" := by {
+        unfold Env.lookupChip Δ; simp }
+      have hai : (Env.lookupChip Δ "assert").ident_i = "i" := by {
+        unfold Env.lookupChip Δ; simp }
       rw[hat, hai] at h₃
       unfold Env.freshName at h₃
       simp at h₃
@@ -105,8 +105,8 @@ theorem lookupCircuit_correct : Ty.circuitCorrect Δ lookupCircuit 1 := by
   simp
   rfl
 
-theorem lookupCircuit_correct_2 : Ty.circuitCorrect Δ lookupCircuit_2 1 := by
-  unfold Ty.circuitCorrect lookupCircuit_2
+theorem lookupChip_correct_2 : Ty.chipCorrect Δ lookupChip_2 1 := by
+  unfold Ty.chipCorrect lookupChip_2
   intro x i hs hi hrow ht
   let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
   let σ := envs.1
@@ -115,13 +115,13 @@ theorem lookupCircuit_correct_2 : Ty.circuitCorrect Δ lookupCircuit_2 1 := by
   intro h
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
-  have ht : (Ty.update_UsedNames (Env.lookupCircuit Δ "assert") ["i", "trace"]) = ["i'", "trace'", "i", "trace"] := by {
-    unfold Ty.update_UsedNames Env.lookupCircuit Δ Env.freshName; simp
+  have ht : (Ty.update_UsedNames (Env.lookupChip Δ "assert") ["i", "trace"]) = ["i'", "trace'", "i", "trace"] := by {
+    unfold Ty.update_UsedNames Env.lookupChip Δ Env.freshName; simp
   }
   let τ' := (Ast.Ty.unit.refin
       (Ty.lookup_pred
         [(Ast.trace_i_j "trace" "i" 1, Ast.trace_i_j "trace" "i" 2)]
-        (Env.lookupCircuit Δ "assert_2")
+        (Env.lookupChip Δ "assert_2")
         (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 2) (Ast.Expr.constF 3)))
         ["i'", "trace'", "i", "trace"]))
   let Γ' := (Env.updateTy
@@ -134,7 +134,7 @@ theorem lookupCircuit_correct_2 : Ty.circuitCorrect Δ lookupCircuit_2 1 := by
           (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ x.length)))))
         "u₁"
           (Ast.Ty.unit.refin
-            (Ty.lookup_pred [(Ast.trace_i_j "trace" "i" 0, Ast.trace_i_j "trace" "i" 1)] (Env.lookupCircuit Δ "assert")
+            (Ty.lookup_pred [(Ast.trace_i_j "trace" "i" 0, Ast.trace_i_j "trace" "i" 1)] (Env.lookupChip Δ "assert")
               (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2))) ["i", "trace"])))
         "u₂" τ')
   have hs : Ty.SubtypeJudgment σ Δ Γ' τ'
@@ -145,8 +145,8 @@ theorem lookupCircuit_correct_2 : Ty.circuitCorrect Δ lookupCircuit_2 1 := by
       unfold PropSemantics.tyenvToProp at h₁
       have h₃ := h₁ "u₂"
       unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' Ty.lookup_pred at h₃
-      have hat : (Env.lookupCircuit Δ "assert_2").ident_t = "trace" := by {unfold Env.lookupCircuit Δ; simp }
-      have hai : (Env.lookupCircuit Δ "assert_2").ident_i = "i" := by {unfold Env.lookupCircuit Δ; simp }
+      have hat : (Env.lookupChip Δ "assert_2").ident_t = "trace" := by {unfold Env.lookupChip Δ; simp }
+      have hai : (Env.lookupChip Δ "assert_2").ident_i = "i" := by {unfold Env.lookupChip Δ; simp }
       rw[hat, hai] at h₃
       unfold Env.freshName at h₃
       simp at h₃

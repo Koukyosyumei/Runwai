@@ -159,7 +159,7 @@ abbrev constTruePred : Predicate := Predicate.ind (Ast.Expr.constBool true)
 abbrev trace_i_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.var ident_i)).arrIdx (Ast.Expr.constZ j)
 abbrev v: Expr := Expr.var ".v"
 
-structure Circuit where
+structure Chip where
   name    : String
   ident_t : String
   ident_i : String
@@ -254,10 +254,10 @@ def valueToString : Value → String
 instance : Repr Value where
   reprPrec v _ := Format.text (valueToString v)
 
-instance : Repr Circuit where
+instance : Repr Chip where
   reprPrec c _ :=
     Format.text s!
-"Circuit \{
+"Chip \{
   name    := \"{c.name}\",
   ident_t := {c.ident_t},
   ident_i := {c.ident_i},
@@ -266,7 +266,7 @@ instance : Repr Circuit where
   body    := {repr c.body}
 }"
 
-def DefaultCircuit : Circuit := {
+def DefaultChip : Chip := {
     name    := "dummy"
     ident_t := "trace"
     ident_i := "i"
@@ -275,7 +275,7 @@ def DefaultCircuit : Circuit := {
     body    := Expr.assertE (Expr.constF 1) (Expr.constF 1)
   }
 
-instance : Inhabited Circuit where
-  default := DefaultCircuit
+instance : Inhabited Chip where
+  default := DefaultChip
 
 end Ast
