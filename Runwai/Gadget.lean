@@ -1099,3 +1099,31 @@ lemma eval_lt_val {σ Δ x t} (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binR
     use v
     simp_all
   }
+
+lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
+  apply Ty.TypeJudgment.TE_SUB
+  apply Ty.TypeJudgment.TE_ConstZ
+  apply Ty.SubtypeJudgment.TSub_Refine
+  apply Ty.SubtypeJudgment.TSub_Refl
+  intro σ v h₁ h₂
+  unfold PropSemantics.predToProp PropSemantics.exprToProp at h₂ ⊢
+  cases h₂
+  rename_i va ih₁ ih₂ ih₃
+  cases ih₁
+  cases ih₃
+  rename_i v₁ v₂ ih₁ ih₃ r
+  cases ih₃
+  unfold Eval.evalRelOp at r
+  cases v₁ <;> simp at r
+  rw[r] at ih₁
+  apply Eval.EvalProp.App
+  apply Eval.EvalProp.Lam
+  exact ih₂
+  apply Eval.EvalProp.Rel
+  exact ih₁
+  apply Eval.EvalProp.ConstZ
+  unfold Eval.evalRelOp
+  simp
+  exact h
+}

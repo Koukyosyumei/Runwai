@@ -19,21 +19,45 @@ import Runwai.Tactic
 }
 
 #runwai_prove Assert1 := by {
-  rename_i Δ h_delta x i hs hi ht hty hσ σ Γ
+  rename_i Δ h_delta σ x i hs hi ht hty hσ σ Γ
   apply Ty.TypeJudgment.TE_LetIn
   · apply lookup_update_self
   · apply Ty.TypeJudgment.TE_Assert
-    · auto_judgment
+    · apply Ty.TypeJudgment.TE_ArrayIndex
+      exact x
+      apply Ty.TypeJudgment.TE_ArrayIndex
+      exact x
+      apply Ty.TypeJudgment.TE_Var
+      apply lookup_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply lookup_update_self
+      apply constZ_refine_lt
+      simp
     . apply Ty.TypeJudgment.TE_ConstF
   . constructor;
     apply lookup_update_self
 }
 
 #runwai_prove IsZero := by {
+  rename_i Δ h_delta σ x i hs hi ht hty hσ σ Γ
   repeat
-    apply Ty.TypeJudgment.TE_LetIn;
+    apply Ty.TypeJudgment.TE_LetIn
     · apply lookup_update_self;
-    · auto_judgment;
+    · apply Ty.TypeJudgment.TE_ArrayIndex
+      exact x
+      apply Ty.TypeJudgment.TE_ArrayIndex
+      exact x
+      apply Ty.TypeJudgment.TE_VarEnv
+      simp
+      apply lookup_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_VarEnv
+      try (apply lookup_update_self)
+      try (apply lookup_update_ne)
+      try (simp)
+      apply constZ_refine_lt
+      simp
   apply isZero_typing_soundness
   repeat apply lookup_update_ne; simp
   apply Ty.TypeJudgment.TE_VarEnv
@@ -57,41 +81,37 @@ import Runwai.Tactic
       "i"
       (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ trace.length)))))
     "u" τ') with hΓ'
-  have hs : Ty.SubtypeJudgment σ Δ Γ' τ'
-         (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 2)))) := by {
-      apply Ty.SubtypeJudgment.TSub_Refine
-      apply Ty.SubtypeJudgment.TSub_Refl
-      intro v h₁ h₂
-      unfold PropSemantics.tyenvToProp at h₁
-      have h₃ := h₁ "u"
-      unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' at h₃
-      simp at h₃
-      unfold Ty.lookup_pred at h₃
-      have hat : (Env.lookupChip Δ "Assert1").ident_t = "trace" := by {
-        rw[h_delta]
-        unfold Env.lookupChip; simp }
-      have hai : (Env.lookupChip Δ "Assert1").ident_i = "i" := by {
-        rw[h_delta]
-        unfold Env.lookupChip; simp }
-      rw[hat, hai] at h₃
-      unfold Env.freshName at h₃
-      simp at h₃
-      repeat unfold Ast.renameVarinPred at h₃
-      repeat unfold Ast.renameVar at h₃; simp at h₃
-      unfold PropSemantics.predToProp at h₃
-      obtain ⟨h₄,h₅⟩ := h₃
-      unfold PropSemantics.predToProp PropSemantics.exprToProp at h₄ h₅ ⊢
-      apply evalProp_eq_symm at h₅
-      apply evalProp_eq_trans h₅ h₄
-        }
   rw[← h_delta]
   rw[← hτ']
   rw[← hΓ']
   simp
   apply Ty.TypeJudgment.TE_SUB
-  exact hs
   apply Ty.TypeJudgment.TE_VarEnv
   unfold Env.lookupTy Γ' Env.updateTy
   simp
   rw[hτ']
+  apply Ty.SubtypeJudgment.TSub_Refine
+  apply Ty.SubtypeJudgment.TSub_Refl
+  intro σ v h₁ h₂
+  unfold PropSemantics.tyenvToProp at h₁
+  have h₃ := h₁ "u"
+  unfold Γ' Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy τ' at h₃
+  simp at h₃
+  unfold Ty.lookup_pred at h₃
+  have hat : (Env.lookupChip Δ "Assert1").ident_t = "trace" := by {
+    rw[h_delta]
+    unfold Env.lookupChip; simp }
+  have hai : (Env.lookupChip Δ "Assert1").ident_i = "i" := by {
+    rw[h_delta]
+    unfold Env.lookupChip; simp }
+  rw[hat, hai] at h₃
+  unfold Env.freshName at h₃
+  simp at h₃
+  repeat unfold Ast.renameVarinPred at h₃
+  repeat unfold Ast.renameVar at h₃; simp at h₃
+  unfold PropSemantics.predToProp at h₃
+  obtain ⟨h₄,h₅⟩ := h₃
+  unfold PropSemantics.predToProp PropSemantics.exprToProp at h₄ h₅ ⊢
+  apply evalProp_eq_symm at h₅
+  apply evalProp_eq_trans h₅ h₄
 }
