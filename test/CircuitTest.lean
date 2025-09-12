@@ -574,14 +574,11 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
       apply Ty.TypeJudgment.TE_LetIn
       apply lookup_update_self
       apply Ty.TypeJudgment.TE_Assert
-      apply Ty.TypeJudgment.TE_BinOpField
-      apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
-      simp
-      apply Ty.TypeJudgment.TE_BinOpField
-      apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
-      simp
+      repeat
+        apply Ty.TypeJudgment.TE_BinOpField
+        apply Ty.TypeJudgment.TE_VarEnv
+        apply lookup_update_ne
+        simp
       apply Ty.TypeJudgment.TE_ConstF
       apply Ty.TypeJudgment.TE_ConstF
     apply Ty.TypeJudgment.TE_LetIn
@@ -615,40 +612,22 @@ theorem wordRangeCheckerCircuit_correct : Ty.circuitCorrect Δ wordRangeCheckerC
       apply lookup_update_ne
       simp
       apply Ty.TypeJudgment.TE_BinOpField
-      apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
-      simp
-      apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
-      simp
+      repeat
+        apply Ty.TypeJudgment.TE_VarEnv
+        apply lookup_update_ne
+        simp
     repeat
       apply Ty.TypeJudgment.TE_LetIn
       apply lookup_update_self
-      apply Ty.TypeJudgment.TE_Assert
-      apply Ty.TypeJudgment.TE_ConstF
+      apply Ty.TypeJudgment.TE_Assert Ty.TypeJudgment.TE_ConstF
       apply Ty.TypeJudgment.TE_BinOpField
-      apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
-      simp
-      apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
-      simp
-    apply Ty.TypeJudgment.TE_LookUp
-    rfl
-    rfl
-    rfl
-    apply Ty.TypeJudgment.TE_LookUp
-    rfl
-    rfl
-    rfl
-    apply Ty.TypeJudgment.TE_LookUp
-    rfl
-    rfl
-    rfl
-    apply Ty.TypeJudgment.TE_LookUp
-    rfl
-    rfl
-    rfl
+      repeat
+        apply Ty.TypeJudgment.TE_VarEnv
+        apply lookup_update_ne
+        simp
+    repeat
+      apply Ty.TypeJudgment.TE_LookUp
+      rfl; rfl; rfl
     apply Ty.TypeJudgment.TE_SUB
     apply subtype_wordrage_check
     repeat
