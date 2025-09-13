@@ -176,13 +176,9 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   apply Ty.TypeJudgment.TE_LetIn
   rfl
   apply Ty.TypeJudgment.TE_App
-  rfl
   apply Ty.TypeJudgment.TE_App
-  swap
   apply Ty.TypeJudgment.TE_App
-  swap
   apply iszero_func_typing_soundness
-  rfl
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne_of_lookup
   simp
@@ -190,28 +186,33 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   simp
   apply lookup_update_self
   rfl
+  unfold Ast.renameTy
+  unfold Ast.renameVarinPred
+  unfold Ast.renameVar
+  simp
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne_of_lookup
   simp
-  unfold Ast.renameVarinPred
-  unfold Ast.renameVar
-  simp
   apply lookup_update_self
-  unfold Ast.renameTy
+  rfl
   unfold Ast.renameTy
   unfold Ast.renameVarinPred
-  simp
-  unfold Ast.renameVar
-  simp
   unfold Ast.renameVar
   simp
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self
-  unfold Ast.renameTy
-  unfold Ast.renameTy
   unfold Ast.renameVarinPred
   simp
+  unfold Ast.renameVar
+  simp
+  apply lookup_update_self
+  rfl
   unfold Ast.renameTy
+  unfold Ast.renameTy
+  unfold Ast.renameTy
+  unfold Ast.renameTy
+  simp
+  unfold Ast.renameVarinPred
+  unfold Ast.renameVarinPred
   unfold Ast.renameVarinPred
   simp
   unfold Ast.renameVar
