@@ -611,7 +611,7 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
     exact h_sub
 }
 
-lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
+lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv)
   (x y inv u₁ u₂: String)
   (hne₁: ¬ x = u₁)
   (hne₂: ¬ y = u₁)
