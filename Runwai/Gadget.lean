@@ -456,9 +456,10 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       apply Ty.TypeJudgment.TE_Abs
       · rwa [← update_preserve_pointwise _ _ _ _ h]
       · apply ih₂; exact update_preserve_pointwise _ _ _ _ h
-    | TE_App h₂ _ ih₁ ih₂ =>
+    | TE_App _ h₂ _ ih₁ ih₂ =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_App
+      rfl
       apply ih₁
       exact h
       apply ih₂
@@ -611,40 +612,33 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
     exact h_sub
 }
 
-lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv)
-  (x y inv u₁ u₂: String)
-  (hne₁: ¬ x = u₁)
-  (hne₂: ¬ y = u₁)
-  (hne₃: ¬ u₁ = u₂)
-  (hne₄: ¬ x = inv)
-  (hne₅: ¬ x = y)
-  (hne₆: ¬ y = inv):
-  @Ty.TypeJudgment Δ Γ Η
-    (Ast.Expr.lam x (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-      (Ast.Expr.lam y (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-        (Ast.Expr.lam inv (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-          ((Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
-            (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))))))
-    (Ast.Ty.func x (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-      (Ast.Ty.func y (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-        (Ast.Ty.func inv (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-          (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0)))))))) := by {
+abbrev iszero_func := (Ast.Expr.lam "x" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+      (Ast.Expr.lam "y" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+        (Ast.Expr.lam "inv" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+          ((Ast.Expr.letIn "u₁" (.assertE (.var "y") (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var "x")) .mul (.var "inv")) (.add) (.constF 1)))
+            (Ast.Expr.letIn "u₂" (.assertE (.fieldExpr (.var "x") .mul (.var "y")) (.constF 0)) (.var "u₂")))))))
+
+lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) :
+  @Ty.TypeJudgment Δ Γ Η iszero_func
+    (Ast.Ty.func "x" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+      (Ast.Ty.func "y" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+        (Ast.Ty.func "inv" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+          (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var "y") (.branch (.binRel (.var "x") (.eq) (.constF 0)) (.constF 1) (.constF 0)))))))) := by {
       repeat
         apply Ty.TypeJudgment.TE_Abs
         apply lookup_update_self
       apply isZero_typing_soundness
       apply lookup_update_ne_of_lookup
       simp
-      exact hne₄
       apply lookup_update_ne_of_lookup
-      exact hne₅
+      simp
       apply lookup_update_self
       apply lookup_update_ne_of_lookup
-      exact hne₆
+      simp
       apply lookup_update_self
       apply Ty.TypeJudgment.TE_VarEnv
       apply lookup_update_self
-      repeat assumption
+      repeat simp
     }
 
 abbrev bit_value_type (ident: String): Ast.Ty := (Ast.Ty.unit.refin

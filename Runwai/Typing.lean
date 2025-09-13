@@ -142,10 +142,11 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.lam x τ₁ e) ((Ast.Ty.func x τ₁ τ₂))
 
   -- TE-APP
-  | TE_App {Γ: Env.TyEnv} {Η: Env.UsedNames} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂: Ast.Ty}:
+  | TE_App {Γ: Env.TyEnv} {Η: Env.UsedNames} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂ τ₂': Ast.Ty}
+    (h₁: τ₂' = (Ast.renameTy τ₂ s x₂)):
     TypeJudgment Γ Η x₁ (Ast.Ty.func s τ₁ τ₂) →
     TypeJudgment Γ Η x₂ τ₁ →
-    TypeJudgment Γ Η (Ast.Expr.app x₁ x₂) (Ast.renameTy τ₂ s x₂)
+    TypeJudgment Γ Η (Ast.Expr.app x₁ x₂) τ₂
 
   -- TE_SUB
   | TE_SUB {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
