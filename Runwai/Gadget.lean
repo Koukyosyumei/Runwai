@@ -443,13 +443,14 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       apply a_ih
       exact h
     }
-    | TE_Branch _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Branch (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_Branch _ _ _ ih₀ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Branch (ih₀ Γ₂ h) (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_ConstF => intros; constructor
     | TE_ConstZ => intros; constructor
     | TE_ConstBool => intros; constructor
     | TE_Assert _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Assert (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_BinOpField _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpField (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_BinOpInteger _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpInteger (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_BinOpRel _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpRel (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_Abs ih₀ _ ih₂ =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_Abs

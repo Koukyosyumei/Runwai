@@ -90,7 +90,8 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
-  | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₁ φ₂: Ast.Predicate}:
+  | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₀ φ₁ φ₂: Ast.Predicate}:
+    TypeJudgment Γ Η c  (Ast.Ty.refin Ast.Ty.bool φ₀) →
     TypeJudgment Γ Η e₁ (Ast.Ty.refin τ φ₁) →
     TypeJudgment Γ Η e₂ (Ast.Ty.refin τ φ₂) →
     TypeJudgment Γ Η (Ast.Expr.branch c e₁ e₂)
@@ -127,6 +128,12 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.int) φ₁) →
     TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.int) φ₂) →
   TypeJudgment Γ Η (Ast.Expr.integerExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.integerExpr e₁ op e₂)))))
+
+  -- TE-BINOPREL
+  | TE_BinOpRel {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₁ φ₂: Ast.Predicate} {op: Ast.RelOp}:
+    TypeJudgment Γ Η e₁ (Ast.Ty.refin τ φ₁) →
+    TypeJudgment Γ Η e₂ (Ast.Ty.refin τ φ₂) →
+  TypeJudgment Γ Η (Ast.Expr.binRel e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.bool) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.binRel e₁ op e₂)))))
 
   -- TE-ABS (function abstraction)
   | TE_Abs {Γ: Env.TyEnv} {Η: Env.UsedNames} {x: String} {τ₁ τ₂: Ast.Ty} {e: Ast.Expr}:
