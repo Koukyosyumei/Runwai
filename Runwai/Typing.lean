@@ -90,7 +90,8 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
-  | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₁ φ₂: Ast.Predicate}:
+  | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₀ φ₁ φ₂: Ast.Predicate}:
+    TypeJudgment Γ Η c  (Ast.Ty.refin Ast.Ty.bool φ₀) →
     TypeJudgment Γ Η e₁ (Ast.Ty.refin τ φ₁) →
     TypeJudgment Γ Η e₂ (Ast.Ty.refin τ φ₂) →
     TypeJudgment Γ Η (Ast.Expr.branch c e₁ e₂)
@@ -105,6 +106,10 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   -- TE-CONSTZ
   | TE_ConstZ {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: ℕ} :
     TypeJudgment Γ Η (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constZ f))))
+
+  -- TE-BOOL
+  | TE_ConstBool {Γ: Env.TyEnv} {Η: Env.UsedNames} {b: Bool} :
+    TypeJudgment Γ Η (Ast.Expr.constBool b) (Ast.Ty.refin (Ast.Ty.bool) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constBool b))))
 
   -- TE-ASSERT
   | TE_Assert {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate}:
@@ -124,6 +129,12 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.int) φ₂) →
   TypeJudgment Γ Η (Ast.Expr.integerExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.integerExpr e₁ op e₂)))))
 
+  -- TE-BINOPREL
+  | TE_BinOpRel {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₁ φ₂: Ast.Predicate} {op: Ast.RelOp}:
+    TypeJudgment Γ Η e₁ (Ast.Ty.refin τ φ₁) →
+    TypeJudgment Γ Η e₂ (Ast.Ty.refin τ φ₂) →
+  TypeJudgment Γ Η (Ast.Expr.binRel e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.bool) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.binRel e₁ op e₂)))))
+
   -- TE-ABS (function abstraction)
   | TE_Abs {Γ: Env.TyEnv} {Η: Env.UsedNames} {x: String} {τ₁ τ₂: Ast.Ty} {e: Ast.Expr}:
     Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁ →
@@ -131,10 +142,11 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.lam x τ₁ e) ((Ast.Ty.func x τ₁ τ₂))
 
   -- TE-APP
-  | TE_App {Γ: Env.TyEnv} {Η: Env.UsedNames} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂: Ast.Ty}:
-    TypeJudgment Γ Η x₁ (Ast.Ty.func s τ₁ τ₂) →
-    TypeJudgment Γ Η x₂ τ₁ →
-    TypeJudgment Γ Η (Ast.Expr.app x₁ x₂) (Ast.renameTy τ₂ s x₂)
+  | TE_App {Γ: Env.TyEnv} {Η: Env.UsedNames} {x₁ x₂: Ast.Expr} {s: String} {τ₁ τ₂ τ₂': Ast.Ty}
+    (h₁: @TypeJudgment Δ Γ Η x₁ (Ast.Ty.func s τ₁ τ₂))
+    (h₂: @TypeJudgment Δ Γ Η x₂ τ₁)
+    (h₃: τ₂' = (Ast.renameTy τ₂ s x₂)):
+    TypeJudgment Γ Η (Ast.Expr.app x₁ x₂) τ₂'
 
   -- TE_SUB
   | TE_SUB {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}

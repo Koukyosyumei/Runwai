@@ -44,6 +44,25 @@ def iszeroChip : Ast.Chip := {
 }
 
 @[simp]
+def iszeroChip2: Ast.Chip := {
+  name    := "iszero2",
+  ident_t := "trace",
+  ident_i := "i",
+  width   := 3,
+  goal    := Ast.Ty.refin Ast.Ty.unit
+    (Ast.Predicate.ind
+      (Ast.exprEq (.var "β") (.branch (.binRel (.var "α") (.eq) (.constF 0)) (.constF 1) (.constF 0))))
+  body    := (Ast.Expr.letIn "α" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
+              (Ast.Expr.letIn "β" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
+                (Ast.Expr.letIn "γ" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 2))
+                  (Ast.Expr.letIn "u₁" (.app (.app (.app iszero_func (.var "α")) (.var "β")) (.var "γ"))
+                     (.var "u₁"))
+                )
+              )
+            )
+}
+
+@[simp]
 def u8chip : Ast.Chip := {
   name := "u8",
   ident_t := "trace",
@@ -146,6 +165,70 @@ theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_self;
   repeat decide
+
+theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
+  unfold Ty.chipCorrect
+  intro x i height hs hi hrow ht
+  let envs := Ty.makeEnvs iszeroChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
+  let σ := envs.1
+  let Γ := envs.2
+  auto_trace_index
+  apply Ty.TypeJudgment.TE_LetIn
+  rfl
+  apply Ty.TypeJudgment.TE_App
+  apply Ty.TypeJudgment.TE_App
+  apply Ty.TypeJudgment.TE_App
+  apply iszero_func_typing_soundness
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_ne_of_lookup
+  simp
+  apply lookup_update_ne_of_lookup
+  simp
+  apply lookup_update_self
+  rfl
+  unfold Ast.renameTy
+  unfold Ast.renameVarinPred
+  unfold Ast.renameVar
+  simp
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_ne_of_lookup
+  simp
+  apply lookup_update_self
+  rfl
+  unfold Ast.renameTy
+  unfold Ast.renameVarinPred
+  unfold Ast.renameVar
+  simp
+  apply Ty.TypeJudgment.TE_VarEnv
+  unfold Ast.renameVarinPred
+  simp
+  unfold Ast.renameVar
+  simp
+  apply lookup_update_self
+  rfl
+  unfold Ast.renameTy
+  unfold Ast.renameTy
+  unfold Ast.renameTy
+  unfold Ast.renameTy
+  simp
+  unfold Ast.renameVarinPred
+  unfold Ast.renameVarinPred
+  unfold Ast.renameVarinPred
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_self
 
 lemma lookup_u8_val_lt_256
   (h₁: PropSemantics.tyenvToProp σ Δ Γ)

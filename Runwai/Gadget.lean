@@ -51,6 +51,8 @@ theorem evalRelOp_eq_symm {v₁ v₂: Ast.Value} (h: Eval.evalRelOp Ast.RelOp.eq
     repeat simp_all
     cases v₂
     repeat simp_all
+    cases v₂
+    repeat simp_all
   }
 
 theorem evalProp_eq_symm
@@ -245,6 +247,24 @@ theorem evalProp_eq_trans
       }
       | _ => simp at ih₃
     }
+    | vBool => {
+      cases v₂ with
+      | vBool => {
+        simp at ih₆
+        cases v₄ with
+        | vBool => {
+          simp at ih₃ ih₆
+          apply Eval.EvalProp.Rel
+          exact ih₂
+          exact ih₅
+          unfold Eval.evalRelOp
+          simp
+          rw[← ih₃, ← ih₆]
+        }
+        | _ => simp at ih₆
+      }
+      | _ => simp at ih₃
+    }
     | _ => simp_all
   }
 
@@ -423,25 +443,27 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       apply a_ih
       exact h
     }
-    | TE_Branch _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Branch (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_Branch _ _ _ ih₀ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Branch (ih₀ Γ₂ h) (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_ConstF => intros; constructor
     | TE_ConstZ => intros; constructor
+    | TE_ConstBool => intros; constructor
     | TE_Assert _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Assert (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_BinOpField _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpField (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_BinOpInteger _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpInteger (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_BinOpRel _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpRel (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_Abs ih₀ _ ih₂ =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_Abs
       · rwa [← update_preserve_pointwise _ _ _ _ h]
       · apply ih₂; exact update_preserve_pointwise _ _ _ _ h
-    | TE_App h₂ _ ih₁ ih₂ =>
+    | TE_App h₁ h₂ h₃ ih₁ ih₂ =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_App
       apply ih₁
       exact h
       apply ih₂
       exact h
-       --(ih₁ Γ₂ h) h₂ (ih₂ Γ₂ h)
+      exact h₃
     | TE_SUB h₀ h₁ ih =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_SUB
@@ -588,6 +610,35 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
     apply lookup_update_self
     exact h_sub
 }
+
+abbrev iszero_func := (Ast.Expr.lam "x" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+      (Ast.Expr.lam "y" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+        (Ast.Expr.lam "inv" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+          ((Ast.Expr.letIn "u₁" (.assertE (.var "y") (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var "x")) .mul (.var "inv")) (.add) (.constF 1)))
+            (Ast.Expr.letIn "u₂" (.assertE (.fieldExpr (.var "x") .mul (.var "y")) (.constF 0)) (.var "u₂")))))))
+
+lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) :
+  @Ty.TypeJudgment Δ Γ Η iszero_func
+    (Ast.Ty.func "x" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+      (Ast.Ty.func "y" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+        (Ast.Ty.func "inv" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+          (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var "y") (.branch (.binRel (.var "x") (.eq) (.constF 0)) (.constF 1) (.constF 0)))))))) := by {
+      repeat
+        apply Ty.TypeJudgment.TE_Abs
+        apply lookup_update_self
+      apply isZero_typing_soundness
+      apply lookup_update_ne_of_lookup
+      simp
+      apply lookup_update_ne_of_lookup
+      simp
+      apply lookup_update_self
+      apply lookup_update_ne_of_lookup
+      simp
+      apply lookup_update_self
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply lookup_update_self
+      repeat simp
+    }
 
 abbrev bit_value_type (ident: String): Ast.Ty := (Ast.Ty.unit.refin
                                                   (Ast.Predicate.ind

@@ -51,6 +51,10 @@ def evalRelOp (op: RelOp) : Value → Value → Option Bool
     | RelOp.eq => i = j
     | RelOp.lt => i < j
     | RelOp.le => i ≤ j
+  | Value.vBool i, Value.vBool j =>
+    match op with
+    | RelOp.eq => some (i = j)
+    | _ => none
   | _, _ => none
 
 /-- Evaluate a boolean operator `op` on two `Value.bool` arguments. -/
