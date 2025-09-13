@@ -51,6 +51,8 @@ theorem evalRelOp_eq_symm {v₁ v₂: Ast.Value} (h: Eval.evalRelOp Ast.RelOp.eq
     repeat simp_all
     cases v₂
     repeat simp_all
+    cases v₂
+    repeat simp_all
   }
 
 theorem evalProp_eq_symm
@@ -245,6 +247,24 @@ theorem evalProp_eq_trans
       }
       | _ => simp at ih₃
     }
+    | vBool => {
+      cases v₂ with
+      | vBool => {
+        simp at ih₆
+        cases v₄ with
+        | vBool => {
+          simp at ih₃ ih₆
+          apply Eval.EvalProp.Rel
+          exact ih₂
+          exact ih₅
+          unfold Eval.evalRelOp
+          simp
+          rw[← ih₃, ← ih₆]
+        }
+        | _ => simp at ih₆
+      }
+      | _ => simp at ih₃
+    }
     | _ => simp_all
   }
 
@@ -426,6 +446,7 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
     | TE_Branch _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Branch (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_ConstF => intros; constructor
     | TE_ConstZ => intros; constructor
+    | TE_ConstBool => intros; constructor
     | TE_Assert _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Assert (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_BinOpField _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpField (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_BinOpInteger _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpInteger (ih₁ Γ₂ h) (ih₂ Γ₂ h)

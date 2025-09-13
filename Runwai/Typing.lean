@@ -106,6 +106,10 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   | TE_ConstZ {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: ℕ} :
     TypeJudgment Γ Η (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constZ f))))
 
+  -- TE-BOOL
+  | TE_ConstBool {Γ: Env.TyEnv} {Η: Env.UsedNames} {b: Bool} :
+    TypeJudgment Γ Η (Ast.Expr.constBool b) (Ast.Ty.refin (Ast.Ty.bool) (Ast.Predicate.dep "v" (Ast.exprEq (Ast.Expr.var "v") (Ast.Expr.constBool b))))
+
   -- TE-ASSERT
   | TE_Assert {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate}:
     TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.field) φ₁) →
