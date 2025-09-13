@@ -456,10 +456,10 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       apply Ty.TypeJudgment.TE_Abs
       · rwa [← update_preserve_pointwise _ _ _ _ h]
       · apply ih₂; exact update_preserve_pointwise _ _ _ _ h
-    | TE_App _ h₂ _ ih₁ ih₂ =>
+    | TE_App h₁ h₂ _ ih₁ ih₂ =>
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_App
-      rfl
+      exact h₁
       apply ih₁
       exact h
       apply ih₂

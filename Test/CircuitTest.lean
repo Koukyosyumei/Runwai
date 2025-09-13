@@ -51,11 +51,11 @@ def iszeroChip2: Ast.Chip := {
   width   := 3,
   goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
-      (Ast.exprEq (.var "y") (.branch (.binRel (.var "x") (.eq) (.constF 0)) (.constF 1) (.constF 0))))
-  body    := (Ast.Expr.letIn "x" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
-              (Ast.Expr.letIn "y" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
-                (Ast.Expr.letIn "inv" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 2))
-                  (Ast.Expr.letIn "u₁" (.app (.app (.app iszero_func (.var "x")) (.var "y")) (.var "inv"))
+      (Ast.exprEq (.var "β") (.branch (.binRel (.var "α") (.eq) (.constF 0)) (.constF 1) (.constF 0))))
+  body    := (Ast.Expr.letIn "α" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
+              (Ast.Expr.letIn "β" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
+                (Ast.Expr.letIn "γ" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 2))
+                  (Ast.Expr.letIn "u₁" (.app (.app (.app iszero_func (.var "α")) (.var "β")) (.var "γ"))
                      (.var "u₁"))
                 )
               )
@@ -178,22 +178,54 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   apply Ty.TypeJudgment.TE_App
   rfl
   apply Ty.TypeJudgment.TE_App
-  rfl
+  swap
   apply Ty.TypeJudgment.TE_App
-  rfl
+  swap
   apply iszero_func_typing_soundness
+  rfl
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne_of_lookup
   simp
   apply lookup_update_ne_of_lookup
   simp
   apply lookup_update_self
+  rfl
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne_of_lookup
   simp
+  unfold Ast.renameVarinPred
+  unfold Ast.renameVar
+  simp
   apply lookup_update_self
+  unfold Ast.renameTy
+  unfold Ast.renameTy
+  unfold Ast.renameVarinPred
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_self
+  unfold Ast.renameTy
+  unfold Ast.renameTy
+  unfold Ast.renameVarinPred
+  simp
+  unfold Ast.renameTy
+  unfold Ast.renameVarinPred
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
+  unfold Ast.renameVar
+  simp
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_self
 
