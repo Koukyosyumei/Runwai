@@ -51,12 +51,6 @@ Runwai addresses these challenges by providing a **refinement-typed, high-level 
   Runwai’s type system allows developers to formally specify and statically verify circuit properties. This reduces the risk of subtle bugs that could compromise the security of ZK proofs.
 
 * 📚 **Concise and readable syntax**
-  Compared to traditional AIR implementations, Runwai programs are shorter, more expressive, and easier to understand. For example, a Fibonacci circuit in Runwai clearly encodes the intended constraints without verbose row-slice manipulations.
-
-* 🛡️ **Safer and more secure circuits**
-  By catching constraint violations at compile-time, Runwai helps prevent exploitable errors in ZK applications, enhancing both reliability and security.
-
-* 🔍 **Symbolic reasoning support**
-  Runwai supports symbolic row indices and matrix dimensions, enabling verification of circuits even when certain parameters are unknown at compile time.
+  Compared to traditional AIR implementations, Runwai programs are shorter, more expressive, and easier to understand.
 
 In short, Runwai allows ZK developers to **write correct, secure, and maintainable AIR circuits efficiently**, while benefiting from the guarantees of a strong, refinement-based type system.
