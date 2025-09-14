@@ -72,26 +72,9 @@ def u8chip : Ast.Chip := {
   body := Ast.Expr.assertE (Ast.Expr.constF 0) (Ast.Expr.constF 0)
 }
 
-/-
-    (Ast.Ty.func "most_sig_byte_decomp_0" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "most_sig_byte_decomp_1" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "most_sig_byte_decomp_2" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "most_sig_byte_decomp_3" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "most_sig_byte_decomp_4" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "most_sig_byte_decomp_5" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "most_sig_byte_decomp_6" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "most_sig_byte_decomp_7" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "and_most_sig_byte_decomp_0_to_2" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "and_most_sig_byte_decomp_0_to_3" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "and_most_sig_byte_decomp_0_to_4" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "and_most_sig_byte_decomp_0_to_5" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "and_most_sig_byte_decomp_0_to_6" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
-    (Ast.Ty.func "and_most_sig_byte_decomp_0_to_7" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
--/
-
 @[simp]
-def wordRangeCheckerChip : Ast.Chip := {
-  name := "word_range_checker",
+def koalabearWordRangeCheckerChip : Ast.Chip := {
+  name := "koalabear_word_range_checker",
   ident_t := "trace",
   ident_i := "i",
   width := 18,
@@ -191,51 +174,21 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   simp
   apply lookup_update_self
   rfl
-  unfold Ast.renameTy
-  unfold Ast.renameVarinPred
-  unfold Ast.renameVar
-  simp
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne_of_lookup
   simp
   apply lookup_update_self
   rfl
-  unfold Ast.renameTy
-  unfold Ast.renameVarinPred
-  unfold Ast.renameVar
-  simp
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
-  unfold Ast.renameVarinPred
-  simp
-  unfold Ast.renameVar
-  simp
   apply lookup_update_self
   rfl
-  unfold Ast.renameTy
-  unfold Ast.renameTy
-  unfold Ast.renameTy
-  unfold Ast.renameTy
-  simp
-  unfold Ast.renameVarinPred
-  unfold Ast.renameVarinPred
-  unfold Ast.renameVarinPred
-  simp
-  unfold Ast.renameVar
-  simp
-  unfold Ast.renameVar
-  simp
-  unfold Ast.renameVar
-  simp
-  unfold Ast.renameVar
-  simp
-  unfold Ast.renameVar
-  simp
-  unfold Ast.renameVar
-  simp
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_self
 
-lemma lookup_u8_val_subtype_lt_256 (u: String)
+lemma u8_lookup_refines_lt256 (u: String)
   (h₁: @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.refin Ast.Ty.field Ast.constTruePred))
   (h₂: Env.lookupTy Γ u = some ((Ast.Ty.unit.refin
           (Ty.lookup_pred [(Ast.Expr.var x, Ast.trace_i_j "trace" "i" 0)] (Env.lookupChip Δ "u8")
@@ -263,18 +216,7 @@ lemma lookup_u8_val_subtype_lt_256 (u: String)
       simp
     }
     rw[h₃, h₄, hu8_i, hu8_t] at h₂
-    unfold Ast.renameVarinPred Ast.renameVar at h₂
-    simp at h₂
-    unfold Ast.renameVarinPred Ast.renameVar at h₂
-    simp at h₂
-    unfold Ast.renameVar at h₂
-    simp at h₂
-    unfold Ast.renameVar at h₂
-    simp at h₂
-    unfold Ast.renameVar at h₂
-    simp at h₂
-    unfold Ast.renameVar at h₂
-    simp at h₂
+    simp [Ast.renameVarinPred, Ast.renameVar] at h₂
     rw [if_neg h₇] at h₂
 
     have he := tyenv_and_to_eval_exprs h₈ h₂
@@ -285,7 +227,18 @@ lemma lookup_u8_val_subtype_lt_256 (u: String)
     exact he₃
   }
 
-theorem wordRangeCheckerChip_correct : Ty.chipCorrect Δ wordRangeCheckerChip 1 := by
+lemma u8_freshName_ne_i : Env.freshName
+    (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+      (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+        (Ty.update_UsedNames (Env.lookupChip Δ "u8")
+          (Ty.update_UsedNames (Env.lookupChip Δ "u8") ["i", "trace"]))))
+    (Env.lookupChip Δ "u8").ident_t ≠
+  "i" := by {
+    unfold Ty.update_UsedNames Env.lookupChip Δ
+    simp [Env.freshName]
+  }
+
+theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordRangeCheckerChip 1 := by
   unfold Ty.chipCorrect
   intro x i hs hi hrow ht hσ
   let envs := Ty.makeEnvs assertChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
@@ -299,61 +252,65 @@ theorem wordRangeCheckerChip_correct : Ty.chipCorrect Δ wordRangeCheckerChip 1 
   apply lookup_update_self
   repeat apply Ty.TypeJudgment.TE_App
   apply koalabear_word_range_checker_func_typing_soundness
-  apply lookup_u8_val_subtype_lt_256 "l₀"
-  apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
-  simp
-  rfl
-  rfl
-  rfl
-  sorry
-  rfl
-  unfold Ast.renameTy Ast.renameVarinPred Ast.renameVar
-  simp
-  unfold Ast.renameVar
-  simp
-  unfold Ast.renameVar
-  simp
-  apply lookup_u8_val_subtype_lt_256 "l₁"
-  apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
-  simp
-  rfl
-  rfl
-  rfl
-  sorry
-  rfl
-  repeat
-    unfold Ast.renameTy Ast.renameVarinPred Ast.renameVar
-    simp
-  repeat
-    unfold Ast.renameVar
-    simp
-  apply lookup_u8_val_subtype_lt_256 "l₂"
+  apply u8_lookup_refines_lt256 "l₀"
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
   simp
   repeat rfl
-  sorry
+  exact u8_freshName_ne_i
   rfl
-  repeat
-    unfold Ast.renameTy Ast.renameVarinPred Ast.renameVar
-    simp
-  repeat
-    unfold Ast.renameVar
-    simp
-  apply lookup_u8_val_subtype_lt_256 "l₃"
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
+  apply u8_lookup_refines_lt256 "l₁"
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_ne
+  simp
+  repeat rfl
+  exact u8_freshName_ne_i
+  rfl
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
+  apply u8_lookup_refines_lt256 "l₂"
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_ne
+  simp
+  repeat rfl
+  exact u8_freshName_ne_i
+  rfl
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
+  apply u8_lookup_refines_lt256 "l₃"
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_ne
+  simp
+  repeat rfl
+  exact u8_freshName_ne_i
+  rfl
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
   simp
   rfl
+  apply Ty.TypeJudgment.TE_VarEnv
+  simp [Ast.renameVarinPred, Ast.renameVar]
+  apply lookup_update_ne
+  simp
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
+  apply And.intro
   rfl
-  rfl
-  sorry
-  rfl
+  apply And.intro
+  repeat rfl
   repeat
-    unfold Ast.renameTy Ast.renameVarinPred Ast.renameVar
+    apply Ty.TypeJudgment.TE_VarEnv
+    apply lookup_update_ne
     simp
+    simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
+    apply And.intro
+    rfl
+    apply And.intro
+    rfl
+    rfl
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
   simp
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
+  rfl
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_self
