@@ -503,3 +503,54 @@ lemma eval_lt_val {σ Δ x t} (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binR
     use v
     simp_all
   }
+
+lemma eval_lt_lam_val {σ Δ x t}
+  (h: Eval.EvalProp σ Δ
+  ((Expr.lam Ast.mu Ty.field ((Expr.var Ast.mu).toZ.binRel RelOp.lt (Expr.constZ t))).app (Expr.var x))
+  (Value.vBool true)):
+  ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
+    cases h
+    rename_i ih₀ ih₁ r₁
+    cases ih₀
+    cases ih₁
+    rename_i r₂
+    rw[← r₂] at r₁
+    cases r₁
+    rename_i ih₀ ih₁ r₁
+    cases ih₀
+    rename_i ih₂
+    cases ih₁
+    cases ih₂
+    rename_i r₃
+    unfold Eval.evalRelOp at r₁
+    simp at r₁
+    rename_i v
+    use v
+    apply And.intro
+    unfold Env.lookupVal Env.updateVal at r₃
+    simp at r₃
+    unfold Env.lookupVal
+    simp
+    exact r₃
+    exact r₁
+  }
+
+/-
+Eval.EvalProp σ Δ
+  ((Expr.lam Ast.v Ty.field ((Expr.var Ast.v).toZ.binRel RelOp.lt (Expr.constZ 256))).app (Expr.var "value_0"))
+  (Value.vBool true)
+-/
+
+/-
+    cases hl₀'
+    rename_i ih₁ ih₂ ih₃
+    cases ih₁
+    cases ih₂
+    rename_i value_0_v h_value_0_v
+    cases ih₃
+    rename_i ih₁ ih₂ ih₃
+    cases ih₁
+    rename_i ih₄
+    cases ih₂
+    cases ih₄
+-/

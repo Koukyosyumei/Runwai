@@ -7,10 +7,21 @@ open Ast
 If a variable `x` is typed with a refinement `{_ : unit | e}` in a semantically valid
 environment, this lemma provides a proof that the expression `e` will evaluate to `true`.
 -/
-lemma tyenv_to_eval_expr {σ Δ Γ x e} (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind e))):
+lemma tyenv_to_eval_expr {σ Δ Γ x τ e} (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin τ (Ast.Predicate.ind e))):
   (Eval.EvalProp σ Δ e (Ast.Value.vBool true)) := by {
     unfold PropSemantics.tyenvToProp PropSemantics.varToProp PropSemantics.predToProp at h₁
-    have h₁' := h₁ x (Ast.Ty.unit.refin (Ast.Predicate.ind e)) h₂
+    have h₁' := h₁ x (Ast.Ty.refin τ (Ast.Predicate.ind e)) h₂
+    rw[h₂] at h₁'
+    simp at h₁'
+    unfold PropSemantics.exprToProp at h₁'
+    exact h₁'
+  }
+
+--  | Ast.Predicate.dep ident body => fun v => exprToProp σ Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
+lemma tyenv_dep_to_eval_expr {σ Δ Γ x τ body} (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin τ (Ast.Predicate.dep v body))):
+  (Eval.EvalProp σ Δ (Ast.Expr.app (Ast.Expr.lam v τ body) (Ast.Expr.var x)) (Ast.Value.vBool true)) := by {
+    unfold PropSemantics.tyenvToProp PropSemantics.varToProp PropSemantics.predToProp at h₁
+    have h₁' := h₁ x (Ast.Ty.refin τ (Ast.Predicate.dep v body)) h₂
     rw[h₂] at h₁'
     simp at h₁'
     unfold PropSemantics.exprToProp at h₁'
@@ -44,7 +55,7 @@ lemma tyenvToProp_implies_varToProp
   exact hΓx
 
 lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
-  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.v ((Ast.Expr.var Ast.v).binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_ConstZ
   apply Ty.SubtypeJudgment.TSub_Refine
