@@ -24,7 +24,7 @@ lemma tyenv_and_to_eval_exprs {σ Δ Γ x e₁ e₂} (h₁: PropSemantics.tyenvT
   }
 
 lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
-  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep "v" ((Ast.Expr.var "v").binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.v ((Ast.Expr.var Ast.v).binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_ConstZ
   apply Ty.SubtypeJudgment.TSub_Refine

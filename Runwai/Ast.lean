@@ -93,7 +93,6 @@ mutual
 
   /-- Basic Types in Runwai. -/
   inductive Ty where
-    | unknown  : Ty
     | unit     : Ty
     | field    : Ty                                               -- F p
     | int      : Ty
@@ -168,7 +167,7 @@ instance : BEq Value where
 abbrev exprEq (e₁ e₂: Expr): Expr := Expr.binRel e₁ RelOp.eq e₂
 abbrev constTruePred : Predicate := Predicate.ind (Ast.Expr.constBool true)
 abbrev trace_i_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.var ident_i)).arrIdx (Ast.Expr.constZ j)
-abbrev v: Expr := Expr.var ".v"
+abbrev v: String := ".v"
 
 structure Chip where
   name    : String
@@ -232,7 +231,6 @@ mutual
     | Predicate.not φ => s!"¬ {predicateToString φ}"
 
   partial def tyToString : Ty → String
-    | Ty.unknown        => "unknown"
     | Ty.unit           => "unit"
     | Ty.field          => "F"
     | Ty.int            => "int"
