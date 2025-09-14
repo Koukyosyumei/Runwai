@@ -8,6 +8,15 @@ abbrev bit_value_type (ident: String): Ast.Ty := (Ast.Ty.unit.refin
                                                           Ast.FieldOp.sub (Ast.Expr.constF 1)))
                                                       (Ast.Expr.constF 0))))
 
+abbrev eq_mul_refinement (i₁ i₂ i₃: String): Ast.Ty := Ast.Ty.unit.refin
+                        (Ast.Predicate.ind
+                          (Ast.exprEq (Ast.Expr.var i₁)
+                            ((Ast.Expr.var i₂).fieldExpr Ast.FieldOp.mul
+                              (Ast.Expr.var i₃))))
+
+abbrev field_lt_const (t: ℕ): Ast.Ty := (Ast.Ty.field.refin
+(Ast.Predicate.dep Ast.v ((Ast.Expr.var Ast.v).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t))))
+
 abbrev bits_to_byte_expr (i₀ i₁ i₂ i₃ i₄ i₅ i₆ i₇: String) : Ast.Expr :=
                                       ((((((((Ast.Expr.var i₀).fieldExpr Ast.FieldOp.add
                                                                 ((Ast.Expr.var i₁).fieldExpr
@@ -30,9 +39,3 @@ abbrev bits_to_byte_expr (i₀ i₁ i₂ i₃ i₄ i₅ i₆ i₇: String) : Ast
                                         Ast.FieldOp.add
                                         ((Ast.Expr.var i₇).fieldExpr Ast.FieldOp.mul
                                           (Ast.Expr.constF 128)))
-
-abbrev eq_mul_refinement (i₁ i₂ i₃: String): Ast.Ty := Ast.Ty.unit.refin
-                        (Ast.Predicate.ind
-                          (Ast.exprEq (Ast.Expr.var i₁)
-                            ((Ast.Expr.var i₂).fieldExpr Ast.FieldOp.mul
-                              (Ast.Expr.var i₃))))

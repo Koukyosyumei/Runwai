@@ -17,6 +17,17 @@ lemma tyenv_to_eval_expr {σ Δ Γ x τ e} (h₁: PropSemantics.tyenvToProp σ �
     exact h₁'
   }
 
+--  | Ast.Predicate.dep ident body => fun v => exprToProp σ Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
+lemma tyenv_dep_to_eval_expr {σ Δ Γ x τ body} (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin τ (Ast.Predicate.dep v body))):
+  (Eval.EvalProp σ Δ (Ast.Expr.app (Ast.Expr.lam v τ body) (Ast.Expr.var x)) (Ast.Value.vBool true)) := by {
+    unfold PropSemantics.tyenvToProp PropSemantics.varToProp PropSemantics.predToProp at h₁
+    have h₁' := h₁ x (Ast.Ty.refin τ (Ast.Predicate.dep v body)) h₂
+    rw[h₂] at h₁'
+    simp at h₁'
+    unfold PropSemantics.exprToProp at h₁'
+    exact h₁'
+  }
+
 /--
 Deconstructs a **conjunctive type guarantee** into individual runtime proofs.
 
