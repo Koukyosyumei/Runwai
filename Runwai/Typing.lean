@@ -81,7 +81,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   -- TE-VAR
   | TE_Var {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty} {φ: Ast.Predicate}:
     Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
-    TypeJudgment Γ Η (Ast.Expr.var x) (Ast.Ty.refin T (Ast.Predicate.dep Ast.ν (Ast.exprEq (Ast.Expr.var Ast.ν) (Ast.Expr.var x))))
+    TypeJudgment Γ Η (Ast.Expr.var x) (Ast.Ty.refin T (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.var x))))
 
   | TE_VarEnv {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty} {φ: Ast.Predicate}:
     Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
@@ -95,7 +95,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   -- TE-ARRY-INDEX
   | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n: ℕ} {φ: Ast.Predicate}:
     TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
-    TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.ν (Ast.Expr.binRel (Ast.Expr.var Ast.ν) Ast.RelOp.lt (Ast.Expr.constZ n)))) →
+    TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.mu (Ast.Expr.binRel (Ast.Expr.var Ast.mu) Ast.RelOp.lt (Ast.Expr.constZ n)))) →
     TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
@@ -110,15 +110,15 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
 
   -- TE-CONSTF
   | TE_ConstF {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: F} :
-    TypeJudgment Γ Η (Ast.Expr.constF f) (Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep Ast.ν (Ast.exprEq (Ast.Expr.var Ast.ν) (Ast.Expr.constF f))))
+    TypeJudgment Γ Η (Ast.Expr.constF f) (Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constF f))))
 
   -- TE-CONSTZ
   | TE_ConstZ {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: ℕ} :
-    TypeJudgment Γ Η (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.ν (Ast.exprEq (Ast.Expr.var Ast.ν) (Ast.Expr.constZ f))))
+    TypeJudgment Γ Η (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ f))))
 
   -- TE-BOOL
   | TE_ConstBool {Γ: Env.TyEnv} {Η: Env.UsedNames} {b: Bool} :
-    TypeJudgment Γ Η (Ast.Expr.constBool b) (Ast.Ty.refin (Ast.Ty.bool) (Ast.Predicate.dep Ast.ν (Ast.exprEq (Ast.Expr.var Ast.ν) (Ast.Expr.constBool b))))
+    TypeJudgment Γ Η (Ast.Expr.constBool b) (Ast.Ty.refin (Ast.Ty.bool) (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constBool b))))
 
   -- TE-ASSERT
   | TE_Assert {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate}:
@@ -130,19 +130,19 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   | TE_BinOpField {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.FieldOp}:
     TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.field) φ₁) →
     TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.field) φ₂) →
-  TypeJudgment Γ Η (Ast.Expr.fieldExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep Ast.ν (Ast.exprEq (Ast.Expr.var Ast.ν) (Ast.Expr.fieldExpr e₁ op e₂)))))
+  TypeJudgment Γ Η (Ast.Expr.fieldExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.fieldExpr e₁ op e₂)))))
 
   -- TE-BINOPINT
   | TE_BinOpInteger {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.IntegerOp}:
     TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.int) φ₁) →
     TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.int) φ₂) →
-  TypeJudgment Γ Η (Ast.Expr.integerExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.ν (Ast.exprEq (Ast.Expr.var Ast.ν) (Ast.Expr.integerExpr e₁ op e₂)))))
+  TypeJudgment Γ Η (Ast.Expr.integerExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.integerExpr e₁ op e₂)))))
 
   -- TE-BINOPREL
   | TE_BinOpRel {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₁ φ₂: Ast.Predicate} {op: Ast.RelOp}:
     TypeJudgment Γ Η e₁ (Ast.Ty.refin τ φ₁) →
     TypeJudgment Γ Η e₂ (Ast.Ty.refin τ φ₂) →
-  TypeJudgment Γ Η (Ast.Expr.binRel e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.bool) (Ast.Predicate.dep Ast.ν (Ast.exprEq (Ast.Expr.var Ast.ν) (Ast.Expr.binRel e₁ op e₂)))))
+  TypeJudgment Γ Η (Ast.Expr.binRel e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.bool) (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.binRel e₁ op e₂)))))
 
   -- TE-ABS (function abstraction)
   | TE_Abs {Γ: Env.TyEnv} {Η: Env.UsedNames} {x: String} {τ₁ τ₂: Ast.Ty} {e: Ast.Expr}:
@@ -188,7 +188,7 @@ def makeEnvs (c : Ast.Chip) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): En
   let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] c.ident_t
     (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.ind (Ast.Expr.constBool true))))
-    c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.ν (Ast.Expr.binRel (Ast.Expr.var Ast.ν) Ast.RelOp.lt (Ast.Expr.constZ height))))
+    c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.Expr.binRel (Ast.Expr.var Ast.mu) Ast.RelOp.lt (Ast.Expr.constZ height))))
   (σ, Γ)
 
 /--

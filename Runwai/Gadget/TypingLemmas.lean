@@ -55,7 +55,7 @@ lemma tyenvToProp_implies_varToProp
   exact hΓx
 
 lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
-  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.ν ((Ast.Expr.var Ast.ν).binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_ConstZ
   apply Ty.SubtypeJudgment.TSub_Refine

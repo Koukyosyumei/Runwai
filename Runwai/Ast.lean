@@ -167,7 +167,7 @@ instance : BEq Value where
 abbrev exprEq (e₁ e₂: Expr): Expr := Expr.binRel e₁ RelOp.eq e₂
 abbrev constTruePred : Predicate := Predicate.ind (Ast.Expr.constBool true)
 abbrev trace_i_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.var ident_i)).arrIdx (Ast.Expr.constZ j)
-abbrev ν: String := "ν"
+abbrev mu: String := "ν"
 
 structure Chip where
   name    : String
