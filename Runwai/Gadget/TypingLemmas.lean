@@ -7,10 +7,10 @@ open Ast
 If a variable `x` is typed with a refinement `{_ : unit | e}` in a semantically valid
 environment, this lemma provides a proof that the expression `e` will evaluate to `true`.
 -/
-lemma tyenv_to_eval_expr {σ Δ Γ x e} (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind e))):
+lemma tyenv_to_eval_expr {σ Δ Γ x τ e} (h₁: PropSemantics.tyenvToProp σ Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin τ (Ast.Predicate.ind e))):
   (Eval.EvalProp σ Δ e (Ast.Value.vBool true)) := by {
     unfold PropSemantics.tyenvToProp PropSemantics.varToProp PropSemantics.predToProp at h₁
-    have h₁' := h₁ x (Ast.Ty.unit.refin (Ast.Predicate.ind e)) h₂
+    have h₁' := h₁ x (Ast.Ty.refin τ (Ast.Predicate.ind e)) h₂
     rw[h₂] at h₁'
     simp at h₁'
     unfold PropSemantics.exprToProp at h₁'
