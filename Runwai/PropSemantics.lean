@@ -13,20 +13,25 @@ import Runwai.Eval
 namespace PropSemantics
 
 /--
-  Interpret a boolean or relational expression `e` as a `Prop`.
+Defines the semantic interpretation of an expression `e` as a formal proposition (`Prop`).
 
-  Returns `true` exactly when
-  1. `e` is a boolean operation `e₁ ∧/∨ e₂` that evaluates to `some b`
-     with `b = true`, or
-  2. `e` is a relational operation `e₁ =/</≤ e₂` that evaluates to
-     `some b` with `b = true`, or
-  3. `e` is the literal `true`.
-
-  In all other cases, the result is `False`.
+This proposition holds true if and only if `e` evaluates to the specific value `vBool true`
+within the given value environment `σ` and chip environment `Δ`.
 -/
 def exprToProp (σ : Env.ValEnv) (Δ : Env.ChipEnv) (e: Ast.Expr): Prop :=
   Eval.EvalProp σ Δ e (Ast.Value.vBool true)
 
+/--
+Translates a syntactic predicate from a refinement type (`Ast.Predicate`) into a semantic
+property in Lean's logic (`Prop`).
+
+- `Predicate.dep`: For dependent predicates like `{x : τ | P}`, it models substitution by
+  evaluating the application `(λ x:τ. P) v`.
+- `Predicate.ind`: For independent predicates like `{_ : τ | P}`, it simply evaluates `P`,
+  ignoring the value `v`.
+- Logical connectives (`and`, `or`, `not`) are mapped directly to their logical
+  counterparts in Lean (`∧`, `∨`, `¬`).
+-/
 def predToProp (σ: Env.ValEnv) (Δ: Env.ChipEnv) (τ: Ast.Ty): Ast.Predicate → (Ast.Expr → Prop)
  | Ast.Predicate.dep ident body => fun v => exprToProp σ Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
  | Ast.Predicate.ind body => fun _ => exprToProp σ Δ body
@@ -34,17 +39,33 @@ def predToProp (σ: Env.ValEnv) (Δ: Env.ChipEnv) (τ: Ast.Ty): Ast.Predicate �
  | Ast.Predicate.or  left right => fun v => (predToProp σ Δ τ left v) ∨ (predToProp σ Δ τ right v)
  | Ast.Predicate.not φ => fun v => ¬ (predToProp σ Δ τ φ v)
 
+/--
+Defines the semantic validity condition for a single variable `ident` within a type
+environment `Γ`.
+
+It looks up the variable's type in `Γ` and checks if the variable satisfies the constraints
+of that type:
+- If the type is a refinement `{τ | φ}`, it uses `predToProp` to verify that the
+  variable itself (as an expression `Expr.var ident`) satisfies the predicate `φ`.
+- For simple, unrefined base types (`field`, `bool`, `int`), the condition is trivially true.
+- For any other type or if the variable is not found, the condition is false.
+-/
 def varToProp (σ : Env.ValEnv) (Δ : Env.ChipEnv) (Γ : Env.TyEnv) (ident : String): Prop :=
 match Env.lookupTy Γ ident with
--- refinement types: check base-type match and predicate
 | Ast.Ty.refin τ pred =>
   predToProp σ Δ τ pred (Ast.Expr.var ident)
--- bare field and boolean types
 | Ast.Ty.field        => True
 | Ast.Ty.bool         => True
 | Ast.Ty.int          => True
 | _ => False
 
+/--
+Asserts the semantic validity of an entire type environment `Γ`.
+
+This proposition holds if and only if **every** variable binding in the environment
+satisfies its own type constraints, as checked by `varToProp`. It serves as the top-level
+semantic judgment for a well-formed context, ensuring all declared properties are met.
+-/
 def tyenvToProp (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ: Env.TyEnv): Prop :=
   ∀ (x: String) (τ: Ast.Ty), Env.lookupTy Γ x = some τ → varToProp σ Δ Γ x
 

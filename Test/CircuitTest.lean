@@ -591,7 +591,7 @@ lemma subtype_wordRange
       assumption
     repeat constructor
     simp
-    apply word_range_val_bound
+    apply word32_range_under_koalabear
       (bit_value_mul_zero h_most_sig_byte_decomp_0) (bit_value_mul_zero h_most_sig_byte_decomp_1)
       (bit_value_mul_zero h_most_sig_byte_decomp_2) (bit_value_mul_zero h_most_sig_byte_decomp_3)
       (bit_value_mul_zero h_most_sig_byte_decomp_4) (bit_value_mul_zero h_most_sig_byte_decomp_5)

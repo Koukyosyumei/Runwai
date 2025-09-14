@@ -4,6 +4,10 @@ import Runwai.Gadget.Utils
 
 open Ast
 
+/--
+The equality operator `Ast.RelOp.eq` is symmetric. If evaluating `v₁ = v₂`
+yields `true`, then evaluating `v₂ = v₁` will also yield `true`.
+-/
 theorem evalRelOp_eq_symm {v₁ v₂: Ast.Value} (h: Eval.evalRelOp Ast.RelOp.eq v₁ v₂ = some true):
   Eval.evalRelOp Ast.RelOp.eq v₂ v₁ = some true := by {
     unfold Eval.evalRelOp at h ⊢
@@ -17,6 +21,11 @@ theorem evalRelOp_eq_symm {v₁ v₂: Ast.Value} (h: Eval.evalRelOp Ast.RelOp.eq
     repeat simp_all
   }
 
+/--
+The symmetry of equality to the expression evaluation level. If the expression `e₁ = e₂`
+evaluates to `true`, then the expression `e₂ = e₁` also evaluates to `true`. This relies on the
+symmetry of the underlying `evalRelOp` function.
+-/
 theorem evalProp_eq_symm
   {σ: Env.ValEnv} {Δ: Env.ChipEnv} {e₁ e₂: Expr} (h: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true)):
   Eval.EvalProp σ Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₁) (Ast.Value.vBool true) := by {
@@ -29,6 +38,11 @@ theorem evalProp_eq_symm
     exact h₃
   }
 
+/--
+The `Eval.EvalProp` relation is deterministic. For any given expression `e`,
+if it can be evaluated to a value `v₁` and also to a value `v₂`, then
+`v₁` and `v₂` must be identical. This ensures that expression evaluation is a function.
+-/
 theorem evalprop_deterministic
   {σ : Env.ValEnv} {Δ : Env.ChipEnv} {e : Expr} :
   ∀ {v₁ v₂}, Eval.EvalProp σ Δ e v₁ → Eval.EvalProp σ Δ e v₂ → v₁ = v₂ := by
@@ -161,6 +175,11 @@ theorem evalprop_deterministic
     simp_all
   }
 
+/--
+The transitivity of equality at the expression level. If `e₁ = e₂` evaluates to true
+and `e₁ = e₃` evaluates to true, then `e₂ = e₃` must also evaluate to true. This relies on
+the deterministic nature of the evaluator.
+-/
 theorem evalProp_eq_trans
   {σ: Env.ValEnv} {Δ: Env.ChipEnv} {e₁ e₂ e₃: Expr}
   (h₁: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true))
@@ -230,6 +249,10 @@ theorem evalProp_eq_trans
     | _ => simp_all
   }
 
+/--
+If `e₁` is proven to be equal to `e₂`, and a less-than relation involving `e₂` holds (i.e., `toZ e₂ < e₃`),
+then the same relation must also hold for `e₁` (i.e., `toZ e₁ < e₃`).
+-/
 lemma eval_eq_then_lt {σ Δ e₁ e₂ e₃}
   (h₁: Eval.EvalProp σ Δ (Ast.exprEq e₁ e₂) (Ast.Value.vBool true))
   (h₂: Eval.EvalProp σ Δ (Ast.Expr.binRel (Ast.Expr.toZ e₂) Ast.RelOp.lt e₃) (Ast.Value.vBool true))
@@ -267,6 +290,12 @@ lemma eval_eq_then_lt {σ Δ e₁ e₂ e₃}
     | _ => simp at hlt
   }
 
+/--
+Connection from the successful evaluation of a symbolic multiplication
+expression `x = y * z` to the concrete values in the environment. It proves that if this
+expression holds, then `x`, `y`, and `z` must be bound to field values `v₁`, `v₂`, `v₃`
+in the environment `σ` such that `v₁ = v₂ * v₃`.
+-/
 lemma eval_mul_expr_val {σ x y z Δ} (h: Eval.EvalProp σ Δ
   (Ast.exprEq (Ast.Expr.var x)
     ((Ast.Expr.var y).fieldExpr Ast.FieldOp.mul (Ast.Expr.var z)))
@@ -301,6 +330,10 @@ lemma eval_mul_expr_val {σ x y z Δ} (h: Eval.EvalProp σ Δ
     | _ => simp at r₂
                  }
 
+/--
+If the expression `x * (x - 1) = 0` evaluates to true, it proves that the variable `x` must
+be bound to a field value `v` in the environment `σ` that represents a bit (i.e., `v` is either 0 or 1).
+-/
 lemma eval_bit_expr_val {σ Δ x} (h: Eval.EvalProp σ Δ
   (Ast.exprEq
     ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul
@@ -335,6 +368,10 @@ lemma eval_bit_expr_val {σ Δ x} (h: Eval.EvalProp σ Δ
     exact r₁
   }
 
+/--
+If `constF v = x * y` evaluates to true, this proves that `x` and `y` must be bound to
+field values `v₀` and `v₁` in the environment `σ` such that their product equals the constant `v`.
+-/
 lemma eval_eq_const_mul_val {σ Δ x y v} (h: Eval.EvalProp σ Δ
   (Ast.exprEq (Ast.Expr.constF v)
     ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul (Ast.Expr.var y)))
@@ -447,6 +484,11 @@ lemma eval_bits_to_byte_expr_val {σ Δ x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇ 
     simp_all
   }
 
+/--
+If the expression `toZ x < constZ t` evaluates to true, it proves that the variable `x` is bound
+to a field value `v` in the environment `σ`, and that the numeric representation of `v` is less
+than the constant `t`.
+-/
 lemma eval_lt_val {σ Δ x t} (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
   ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h

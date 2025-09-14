@@ -30,6 +30,7 @@ abbrev bits_to_byte_expr (i₀ i₁ i₂ i₃ i₄ i₅ i₆ i₇: String) : Ast
                                         Ast.FieldOp.add
                                         ((Ast.Expr.var i₇).fieldExpr Ast.FieldOp.mul
                                           (Ast.Expr.constF 128)))
+
 abbrev eq_mul_refinement (i₁ i₂ i₃: String): Ast.Ty := Ast.Ty.unit.refin
                         (Ast.Predicate.ind
                           (Ast.exprEq (Ast.Expr.var i₁)

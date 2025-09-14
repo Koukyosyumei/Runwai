@@ -55,11 +55,20 @@ inductive SubtypeJudgment :
       SubtypeJudgment Δ Γ T₁ T₂ →
       SubtypeJudgment Δ Γ (Ast.Ty.arr T₁ n) (Ast.Ty.arr T₂ n)
 
+/--
+Constructs the predicate required for a `lookup` expression. It combines the chip's goal
+predicate `φ` with equality constraints for all provided `args`, ensuring variable names
+are fresh to prevent capture.
+-/
 def lookup_pred (args: List (Ast.Expr × Ast.Expr)) (c: Ast.Chip) (φ: Ast.Predicate) (Η: Env.UsedNames): Ast.Predicate :=
   args.foldl
   (fun acc y => Ast.Predicate.and acc (Ast.Predicate.ind (Ast.exprEq y.fst (Ast.renameVar (Ast.renameVar y.snd c.ident_t (Ast.Expr.var (Env.freshName Η c.ident_t)) 1000) c.ident_i (Ast.Expr.var (Env.freshName Η c.ident_i)) 1000))))
   (Ast.renameVarinPred (Ast.renameVarinPred φ c.ident_t (Ast.Expr.var (Env.freshName Η c.ident_t))) c.ident_i (Ast.Expr.var (Env.freshName Η c.ident_i)))
 
+/--
+Updates the set of used names `Η` with the fresh names generated for a chip's trace and
+instance identifiers during a `lookup`.
+-/
 def update_UsedNames (c: Ast.Chip) (Η: Env.UsedNames) : Env.UsedNames :=
   [Env.freshName Η c.ident_i, Env.freshName Η c.ident_t] ++ Η
 
@@ -170,6 +179,10 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     (h₂: @TypeJudgment Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
     TypeJudgment Γ Η (Ast.Expr.lookup vname cname args e) τ
 
+/--
+Creates the initial value (`σ`) and type (`Γ`) environments for verifying a chip's body.
+It binds the chip's trace and instance identifiers to their expected types.
+-/
 def makeEnvs (c : Ast.Chip) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): Env.ValEnv × Env.TyEnv :=
   let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] c.ident_t trace) c.ident_i i
   let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] c.ident_t
@@ -178,6 +191,10 @@ def makeEnvs (c : Ast.Chip) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): En
     c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.v (Ast.Expr.binRel (Ast.Expr.var Ast.v) Ast.RelOp.lt (Ast.Expr.constZ height))))
   (σ, Γ)
 
+/--
+Check of the structure of a trace. It ensures the trace is a 2D array
+of field elements with the expected dimensions (`height` × `width`).
+-/
 def checkInputsTrace (c: Ast.Chip) (trace : Ast.Value) (height: ℕ): Prop :=
   match trace with
   | Ast.Value.vArr rows => rows.length == height ∧ ∀ r ∈ rows, match r with
@@ -202,31 +219,5 @@ def chipCorrect (Δ : Env.ChipEnv) (c : Ast.Chip) (minimum_height: ℕ) : Prop :
     checkInputsTrace c (Ast.Value.vArr trace) trace.length →
     PropSemantics.tyenvToProp σ Δ Γ →
     @TypeJudgment Δ Γ Η c.body c.goal
-
-lemma lookupTy_mem (Γ: Env.TyEnv) (x: String) (τ :Ast.Ty) (φ: Ast.Predicate)
-  (h : Env.lookupTy Γ x = Ast.Ty.refin τ φ) :
-  (x, Ast.Ty.refin τ φ) ∈ Γ := by
-  dsimp [Env.lookupTy] at h
-  cases hfind : Γ.find? (·.1 = x) with
-  | none =>
-    simp [hfind] at h
-  | some p =>
-    simp [hfind] at h
-    have eq_p := List.find?_some hfind
-    have p_1_eq_x : p.1 = x := by simp_all
-    have mem_p : p ∈ Γ := List.mem_of_find?_eq_some hfind
-    cases p with
-    | mk y τ' =>
-      simp_all
-
-lemma tyenvToProp_implies_varToProp
-  (σ : Env.ValEnv) (Δ : Env.ChipEnv) (Γ : Env.TyEnv)
-  (x : String) (τ : Ast.Ty) (φ : Ast.Predicate)
-  (hΓx : Env.lookupTy Γ x = Ast.Ty.refin τ φ)
-  (hmt : PropSemantics.tyenvToProp σ Δ Γ) :
-  PropSemantics.varToProp σ Δ Γ x := by
-  dsimp [PropSemantics.tyenvToProp] at hmt
-  apply hmt
-  exact hΓx
 
 end Ty
