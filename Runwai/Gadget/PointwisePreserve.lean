@@ -29,6 +29,10 @@ lemma lookupTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)
     exact Eq.symm h₂
   }
 
+/--
+If the property `varToProp` holds for a variable `ident` under a type environment `Γ₁`, it will
+also hold under a different environment `Γ₂`, provided that `Γ₁` and `Γ₂` are pointwise equal.
+-/
 theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv) (ident: String)
   (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.varToProp σ Δ Γ₁ ident):
   PropSemantics.varToProp σ Δ Γ₂ ident := by {
@@ -38,6 +42,10 @@ theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁ �
     exact h₂
   }
 
+/--
+If the property `tyenvToProp` holds for an entire type environment `Γ₁` that is pointwise equal to `Γ₂`, it will also hold
+for `Γ₂`.
+-/
 theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv)
   (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.tyenvToProp σ Δ Γ₁):
   PropSemantics.tyenvToProp σ Δ Γ₂ := by {
@@ -49,6 +57,10 @@ theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁
     exact varToProp_pointwise_preserve σ Δ Γ₁ Γ₂ x h₁ h₅
   }
 
+/--
+A subtyping judgment `τ₁ <: τ₂` that is valid in a type environment `Γ₁` remains valid if `Γ₁`
+is replaced by any other environment `Γ₂` that is pointwise equal to it.
+-/
 theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁ τ₂: Ast.Ty)
   (h₂: Ty.SubtypeJudgment Δ Γ₁ τ₁ τ₂) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
@@ -82,6 +94,10 @@ theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁
       }
     }
 
+/--
+A typing judgment `e : τ` that is valid in a type environment `Γ₁` remains valid if `Γ₁` is
+replaced by any other environment `Γ₂` that is pointwise equal to it.
+-/
 theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
   (h₂: @Ty.TypeJudgment Δ Γ₁ Η e τ) :
   ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
