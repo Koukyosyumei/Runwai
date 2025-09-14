@@ -75,7 +75,7 @@ lemma binary_mul_binary_F {x y z: F} (h₁: x = 0 ∨ x = 1) (h₂: y = 0 ∨ y 
   simp_all
 }
 
-lemma word_range_val_bound
+lemma word32_range_under_koalabear --word_range_val_bound
   {value_0 value_1 value_2 value_3 most_sig_byte_decomp_0
    most_sig_byte_decomp_1 most_sig_byte_decomp_2 most_sig_byte_decomp_3
    most_sig_byte_decomp_4 most_sig_byte_decomp_5 most_sig_byte_decomp_6 most_sig_byte_decomp_7

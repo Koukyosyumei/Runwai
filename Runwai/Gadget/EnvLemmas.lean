@@ -3,6 +3,11 @@ import Runwai.Gadget.Utils
 
 open Ast
 
+/--
+If a variable `x` exists in a type environment `Γ`, it will also exist in an environment
+formed by updating `Γ` with another binding `(y, τ)`. This holds regardless of whether `x` and
+`y` are the same.
+-/
 lemma lookup_ext (Γ :Env.TyEnv) (x y : String) (τ : Ty)
   (h: (Env.lookupTy Γ x).isSome = true):
   (Env.lookupTy (Env.updateTy Γ y τ) x).isSome = true := by
@@ -11,6 +16,11 @@ lemma lookup_ext (Γ :Env.TyEnv) (x y : String) (τ : Ty)
   | true => simp [dec]
   | false => simp [dec]; exact h
 
+/--
+Looking up a variable `y` in an environment updated with a *different* variable `x` is
+equivalent to looking up `y` in the original environment. The update at `x` has no effect
+on the lookup of `y`.
+-/
 lemma lookup_update_ne
   (Γ : Env.TyEnv) (x y : String) (τ : Ast.Ty) (hxy : y ≠ x) :
   Env.lookupTy (Env.updateTy Γ x τ) y = Env.lookupTy Γ y := by
@@ -20,6 +30,10 @@ lemma lookup_update_ne
   | true => simp_all
   | false => simp [dec]
 
+/--
+A more specific version of `lookup_update_ne`. If looking up `y` in `Γ` yields `τ₂`,
+then looking up `y` in an environment updated at a different variable `x` will still yield `τ₂`.
+-/
 lemma lookup_update_ne_of_lookup
   (Γ : Env.TyEnv) (x y : String) (τ₁ τ₂ : Ast.Ty) (hxy : y ≠ x) (hy: Env.lookupTy Γ y = τ₂):
   Env.lookupTy (Env.updateTy Γ x τ₁) y = τ₂ := by
@@ -29,32 +43,35 @@ lemma lookup_update_ne_of_lookup
   | true => simp_all
   | false => simp_all
 
+/--
+Looking up a variable `x` in an environment that has just been updated with a binding
+for `x` will return the new type `τ`. This is the "read-your-write" property for the
+type environment.
+-/
 lemma lookup_update_self
   (Γ : Env.TyEnv) (x : String) (τ : Ast.Ty) :
   Env.lookupTy (Env.updateTy Γ x τ) x = τ := by
   unfold Env.updateTy Env.lookupTy
   simp_all
 
-lemma update_preserve_pointwise
-  (Γ₁ Γ₂ : Env.TyEnv) (x : String) (τ : Ast.Ty)
-  (h : ∀ y, Env.lookupTy Γ₁ y = Env.lookupTy Γ₂ y) :
-  ∀ y, Env.lookupTy (Env.updateTy Γ₁ x τ) y = Env.lookupTy (Env.updateTy Γ₂ x τ) y := by
-  intro y
-  by_cases hy : y = x
-  · subst hy
-    simp [lookup_update_self]
-  · simp [lookup_update_ne _ _ _ _ hy, h y]
-
+/-- A helper theorem for `Option`: if an option's `isSome` property is false, the option
+must be `none`. -/
 theorem eq_none_of_isSome_eq_false {α : Type _}
     {o : Option α} (h : o.isSome = false) : o = none := by
   cases o <;> simp_all
 
+/-- Looking up any variable `x` in an empty type environment results in `none`. -/
 lemma lookup_empty_none (x: String):
   Env.lookupTy [] x = none := by {
     unfold Env.lookupTy
     simp
   }
 
+/--
+If looking up a variable `x` in environment `Γ` returns a specific type `τ`, then the
+pair `(x, τ)` must be a member of the list representing `Γ`. This connects the lookup
+operation to list membership.
+-/
 theorem lookup_mem_of_eq {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty}:
   Env.lookupTy Γ x = τ → (x, τ) ∈ Γ := by {
     unfold Env.lookupTy
@@ -78,6 +95,10 @@ theorem lookup_mem_of_eq {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty}:
     }
   }
 
+/--
+If a binding `(x, τ)` is a member of the environment `Γ`, then looking up `x` in `Γ`
+will not result in `none`. It will return `some` value.
+-/
 theorem lookup_mem_impl_some {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty} (hmem: (x, τ) ∈ Γ):
   (Env.lookupTy Γ x).isSome  := by {
     unfold Env.lookupTy
@@ -90,14 +111,10 @@ theorem lookup_mem_impl_some {Γ: Env.TyEnv} {x: String} {τ: Ast.Ty} (hmem: (x,
     | some val => simp
   }
 
-lemma lookupTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)
-  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x):
-  ∀ x, Env.lookupTy Γ₂ x = Env.lookupTy Γ₁ x := by {
-    intro x
-    have h₂ := h₁ x
-    exact Eq.symm h₂
-  }
-
+/--
+If a binding `(x, τ)` is a member of an environment `Γ`, it remains a member after
+the environment is updated with another binding `(x', τ')`.
+-/
 lemma mem_update_preserve (Γ: Env.TyEnv) (x x': String) (τ τ': Ty) (h: (x, τ) ∈ Γ):
   (x, τ) ∈ (Env.updateTy Γ x' τ') := by
   unfold Env.updateTy
