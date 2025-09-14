@@ -5,6 +5,29 @@ import Runwai.Gadget.EvalLemmas
 
 open Ast
 
+/--
+If two environments `Γ₁` and `Γ₂` are pointwise equal (i.e., any lookup yields the same
+result in both), then updating both with the same binding `(x, τ)` preserves this
+pointwise equality.
+-/
+lemma update_preserve_pointwise
+  (Γ₁ Γ₂ : Env.TyEnv) (x : String) (τ : Ast.Ty)
+  (h : ∀ y, Env.lookupTy Γ₁ y = Env.lookupTy Γ₂ y) :
+  ∀ y, Env.lookupTy (Env.updateTy Γ₁ x τ) y = Env.lookupTy (Env.updateTy Γ₂ x τ) y := by
+  intro y
+  by_cases hy : y = x
+  · subst hy
+    simp [lookup_update_self]
+  · simp [lookup_update_ne _ _ _ _ hy, h y]
+
+/-- Pointwise equality of type environments is a symmetric relation. -/
+lemma lookupTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)
+  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x):
+  ∀ x, Env.lookupTy Γ₂ x = Env.lookupTy Γ₁ x := by {
+    intro x
+    have h₂ := h₁ x
+    exact Eq.symm h₂
+  }
 
 theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv) (ident: String)
   (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.varToProp σ Δ Γ₁ ident):
