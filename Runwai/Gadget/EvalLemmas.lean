@@ -506,7 +506,7 @@ lemma eval_lt_val {σ Δ x t} (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binR
 
 lemma eval_lt_lam_val {σ Δ x t}
   (h: Eval.EvalProp σ Δ
-  ((Expr.lam Ast.v Ty.field ((Expr.var Ast.v).toZ.binRel RelOp.lt (Expr.constZ t))).app (Expr.var x))
+  ((Expr.lam Ast.ν Ty.field ((Expr.var Ast.ν).toZ.binRel RelOp.lt (Expr.constZ t))).app (Expr.var x))
   (Value.vBool true)):
   ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h
