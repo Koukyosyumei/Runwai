@@ -79,12 +79,12 @@ def koalabearWordRangeCheckerChip : Ast.Chip := {
   ident_i := "i",
   width := 18,
   goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind
-    (.binRel (.integerExpr (.integerExpr (.integerExpr (.toZ (.var "value_0")) .add ((.integerExpr (.toZ (.var "value_1")) .mul (.constZ 256)))) .add ((.integerExpr (.toZ (.var "value_2")) .mul (.constZ (256^2))))) .add (.integerExpr (.toZ (.var "value_3")) .mul (.constZ (256^3))))
+    (.binRel (.integerExpr (.integerExpr (.integerExpr (.toZ (.var "alpha_0")) .add ((.integerExpr (.toZ (.var "alpha_1")) .mul (.constZ 256)))) .add ((.integerExpr (.toZ (.var "alpha_2")) .mul (.constZ (256^2))))) .add (.integerExpr (.toZ (.var "alpha_3")) .mul (.constZ (256^3))))
       .lt (.constZ 2130706433)))
-  body := (.letIn "value_0" (Ast.trace_i_j "trace" "i" 0)
-          (.letIn "value_1" (Ast.trace_i_j "trace" "i" 1)
-          (.letIn "value_2" (Ast.trace_i_j "trace" "i" 2)
-          (.letIn "value_3" (Ast.trace_i_j "trace" "i" 3)
+  body := (.letIn "alpha_0" (Ast.trace_i_j "trace" "i" 0)
+          (.letIn "alpha_1" (Ast.trace_i_j "trace" "i" 1)
+          (.letIn "alpha_2" (Ast.trace_i_j "trace" "i" 2)
+          (.letIn "alpha_3" (Ast.trace_i_j "trace" "i" 3)
           (.letIn "most_sig_byte_decomp_0" (Ast.trace_i_j "trace" "i" 4)
           (.letIn "most_sig_byte_decomp_1" (Ast.trace_i_j "trace" "i" 5)
           (.letIn "most_sig_byte_decomp_2" (Ast.trace_i_j "trace" "i" 6)
@@ -106,7 +106,7 @@ def koalabearWordRangeCheckerChip : Ast.Chip := {
           (.letIn "u₁"
             (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app
               koalabear_word_range_checker_func
-                (.var "value_0")) (.var "value_1")) (.var "value_2")) (.var "value_3"))
+                (.var "alpha_0")) (.var "alpha_1")) (.var "alpha_2")) (.var "alpha_3"))
                 (.var "most_sig_byte_decomp_0")) (.var "most_sig_byte_decomp_1"))
                 (.var "most_sig_byte_decomp_2")) (.var "most_sig_byte_decomp_3"))
                 (.var "most_sig_byte_decomp_4")) (.var "most_sig_byte_decomp_5"))

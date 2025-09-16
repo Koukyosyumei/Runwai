@@ -72,13 +72,11 @@ import Runwai.Tactic
     rw[h_delta]
     unfold Env.lookupChip; simp }
   rw[hat, hai] at h₃
-  unfold Env.freshName at h₃
-  simp at h₃
-  repeat unfold Ast.renameVarinPred at h₃
-  repeat unfold Ast.renameVar at h₃; simp at h₃
-  unfold PropSemantics.predToProp at h₃
+  simp [Env.freshName] at h₃
+  simp [Ast.renameVarinPred] at h₃
+  simp [Ast.renameVar] at h₃
   obtain ⟨h₄,h₅⟩ := h₃
-  unfold PropSemantics.predToProp PropSemantics.exprToProp at h₄ h₅ ⊢
+  unfold PropSemantics.predToProp PropSemantics.exprToProp at ⊢
   apply evalProp_eq_symm at h₅
   apply evalProp_eq_trans h₅ h₄
 }
