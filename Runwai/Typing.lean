@@ -40,7 +40,7 @@ inductive SubtypeJudgment :
   /-- TSUB-REFINE: Refinement subtyping -/
   | TSub_Refine {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} :
       SubtypeJudgment Δ Γ T₁ T₂ →
-      (∀ σ: Env.ValEnv, ∀ v: Ast.Expr, PropSemantics.tyenvToProp σ Δ Γ → (PropSemantics.predToProp σ Δ T₁ φ₁ v → PropSemantics.predToProp σ Δ T₂ φ₂ v)) →
+      (∀ σ: Env.ValEnv, ∀ T: Env.TraceEnv, ∀ v: Ast.Expr, PropSemantics.tyenvToProp σ T Δ Γ → (PropSemantics.predToProp σ T Δ T₁ φ₁ v → PropSemantics.predToProp σ T Δ T₂ φ₂ v)) →
       SubtypeJudgment Δ Γ (Ast.Ty.refin T₁ φ₁) (Ast.Ty.refin T₂ φ₂)
 
   /-- TSUB-FUN: Function subtyping -/
@@ -183,13 +183,14 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
 Creates the initial value (`σ`) and type (`Γ`) environments for verifying a chip's body.
 It binds the chip's trace and instance identifiers to their expected types.
 -/
-def makeEnvs (c : Ast.Chip) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): Env.ValEnv × Env.TyEnv :=
+def makeEnvs (c : Ast.Chip) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): Env.ValEnv × Env.TraceEnv × Env.TyEnv :=
   let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] c.ident_t trace) c.ident_i i
+  let T: Env.TraceEnv := []
   let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] c.ident_t
     (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.ind (Ast.Expr.constBool true))))
     c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.Expr.binRel (Ast.Expr.var Ast.mu) Ast.RelOp.lt (Ast.Expr.constZ height))))
-  (σ, Γ)
+  (σ, T, Γ)
 
 /--
 Check of the structure of a trace. It ensures the trace is a 2D array
@@ -214,10 +215,10 @@ def chipCorrect (Δ : Env.ChipEnv) (c : Ast.Chip) (minimum_height: ℕ) : Prop :
     minimum_height ≤ trace.length →
     i < trace.length →
     (∃ row: List Ast.Value, (trace.get? i = some (Ast.Value.vArr row))) →
-    let (σ, Γ) := makeEnvs c (Ast.Value.vArr trace) (Ast.Value.vZ i) trace.length
+    let (σ, T, Γ) := makeEnvs c (Ast.Value.vArr trace) (Ast.Value.vZ i) trace.length
     let Η := [c.ident_i, c.ident_t]
     checkInputsTrace c (Ast.Value.vArr trace) trace.length →
-    PropSemantics.tyenvToProp σ Δ Γ →
+    PropSemantics.tyenvToProp σ T Δ Γ →
     @TypeJudgment Δ Γ Η c.body c.goal
 
 end Ty

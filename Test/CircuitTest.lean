@@ -189,9 +189,9 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   apply lookup_update_self
 
 lemma eval_var_lt_of_update
-  (h₀: Eval.EvalProp σ Δ v va)
-  (h₁: Eval.EvalProp σ Δ (v.toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
-  Eval.EvalProp (Env.updateVal σ x va) Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t))
+  (h₀: Eval.EvalProp σ T Δ v va)
+  (h₁: Eval.EvalProp σ T Δ (v.toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
+  Eval.EvalProp (Env.updateVal σ x va) T Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t))
   (Ast.Value.vBool true) := by {
     cases h₁
     rename_i ih₁ ih₂ r
@@ -234,7 +234,7 @@ lemma u8_lookup_refines_lt256 (x u: String)
     exact h₀
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl
-    intro σ v hty hp
+    intro σ T v hty hp
 
     unfold Ty.lookup_pred at h₁
     have hu8_i : (Env.lookupChip Δ "u8").ident_i = "i" := by {
@@ -256,7 +256,7 @@ lemma u8_lookup_refines_lt256 (x u: String)
     cases hp
     rename_i va ih_f ih_a ih_b
 
-    have heq : Eval.EvalProp σ Δ (Ast.exprEq v (Ast.Expr.var x)) (Ast.Value.vBool true) := by {
+    have heq : Eval.EvalProp σ T Δ (Ast.exprEq v (Ast.Expr.var x)) (Ast.Value.vBool true) := by {
       cases ih_f
       cases ih_b
       rename_i ih₁ ih₂ r

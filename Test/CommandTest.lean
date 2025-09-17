@@ -59,7 +59,7 @@ import Runwai.Tactic
   rfl
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
-  intro σ v h₁ h₂
+  intro σ T v h₁ h₂
   unfold PropSemantics.tyenvToProp at h₁
   have h₃ := h₁ "u"
   unfold Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy at h₃

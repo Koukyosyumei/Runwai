@@ -14,12 +14,12 @@ abbrev iszero_func: Ast.Expr :=
     (.letIn "u₁" (.assertE (.var "y") (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var "x")) .mul (.var "inv")) (.add) (.constF 1)))
     (.letIn "u₂" (.assertE (.fieldExpr (.var "x") .mul (.var "y")) (.constF 0)) (.var "u₂"))))))
 
-lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.ChipEnv}
-  (h₁ : Eval.EvalProp σ Δ (exprEq y ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr
+lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {T: Env.TraceEnv} {Δ: Env.ChipEnv}
+  (h₁ : Eval.EvalProp σ T Δ (exprEq y ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr
                   FieldOp.add (Expr.constF 1))) (Value.vBool true))
-  (h₂ : Eval.EvalProp σ Δ (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)) (Value.vBool true))
-  (hx : Eval.EvalProp σ Δ x xv) (hy : Eval.EvalProp σ Δ y yv) (hinv : Eval.EvalProp σ Δ inv invv) :
-  Eval.EvalProp σ Δ (exprEq y (.branch (x.binRel RelOp.eq (Expr.constF 0)) (Expr.constF 1) (Expr.constF 0))) (Value.vBool true) := by {
+  (h₂ : Eval.EvalProp σ T Δ (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)) (Value.vBool true))
+  (hx : Eval.EvalProp σ T Δ x xv) (hy : Eval.EvalProp σ T Δ y yv) (hinv : Eval.EvalProp σ T Δ inv invv) :
+  Eval.EvalProp σ T Δ (exprEq y (.branch (x.binRel RelOp.eq (Expr.constF 0)) (Expr.constF 1) (Expr.constF 0))) (Value.vBool true) := by {
   cases h₁; cases h₂; rename_i v₁ v₂ ih₁ ih₂ r v₃ v₄ ih₃ ih₄ ih₅
   cases ih₂; cases ih₃; cases ih₄; rename_i v₅ v₆ ih₂ ih₃ ih₄ i₃ i₄ ih₆ ih₇ ih₈
   cases ih₂; cases ih₃; rename_i i₅ i₆ ih₂ ih₃ ih₉
@@ -37,19 +37,19 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {Δ: Env.
   simp_all
   rw[← he₅] at ih₅ r
   apply Eval.EvalProp.Rel; exact ih₁
-  have h₃: x_val = 0 → Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 1) := by {
+  have h₃: x_val = 0 → Eval.EvalProp σ T Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 1) := by {
     intro h
     apply Eval.EvalProp.IfTrue; apply Eval.EvalProp.Rel; exact ihh₁
     apply Eval.EvalProp.ConstF; simp [Eval.evalRelOp]
     simp_all; apply Eval.EvalProp.ConstF
   }
-  have h₄: x_val ≠ 0 → Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 0) := by {
+  have h₄: x_val ≠ 0 → Eval.EvalProp σ T Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 0) := by {
     intro h
     apply Eval.EvalProp.IfFalse; apply Eval.EvalProp.Rel; exact ihh₁
     apply Eval.EvalProp.ConstF; simp [Eval.evalRelOp]
     simp_all; apply Eval.EvalProp.ConstF
   }
-  have h₅: Eval.EvalProp σ Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (if x_val = 0 then (Value.vF 1) else (Value.vF 0)) := by {
+  have h₅: Eval.EvalProp σ T Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (if x_val = 0 then (Value.vF 1) else (Value.vF 0)) := by {
     by_cases h : x_val = 0
     . simp_all
     . simp_all
@@ -97,7 +97,7 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
         apply Ty.SubtypeJudgment.TSub_Refl
         unfold PropSemantics.tyenvToProp
         simp[PropSemantics.predToProp]
-        intro σ e h₂
+        intro σ T e h₂
         set φ₁ := (Ast.Predicate.ind
           (exprEq (Expr.var y)
             ((((Expr.constF 0).fieldExpr FieldOp.sub (Expr.var x)).fieldExpr FieldOp.mul (Expr.var inv)).fieldExpr FieldOp.add
@@ -243,7 +243,7 @@ lemma koalabear_word_range_checker_subtype_soundness {Γ Δ}
               .lt (.constZ 2130706433)))) := by {
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl
-    intro σ v h₁ h₂
+    intro σ T v h₁ h₂
 
     have hb₁' := tyenv_to_eval_expr h₁ hb₁
     have hb₂' := tyenv_to_eval_expr h₁ hb₂

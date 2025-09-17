@@ -15,13 +15,14 @@ example : Eval.evalRelOp Ast.RelOp.lt (Ast.Value.vBool true) (Ast.Value.vBool fa
 
 def σ₀ : Env.ValEnv := []
 def Δ₀ : Env.ChipEnv := []
+def T₀ : Env.TraceEnv := []
 
 -- --------------------------------------------------
 -- eval on basic constants & var/let
 -- --------------------------------------------------
-example: Eval.EvalProp σ₀ Δ₀ (.constF 42) (.vF 42) := Eval.EvalProp.ConstF
-example: Eval.EvalProp σ₀ Δ₀ (.constBool false) (.vBool false) := Eval.EvalProp.ConstBool
-example: Eval.EvalProp σ₀ Δ₀ (.arr [.constF 42, .constF 43]) (.vArr [.vF 42, .vF 43]) := by
+example: Eval.EvalProp σ₀ T₀ Δ₀ (.constF 42) (.vF 42) := Eval.EvalProp.ConstF
+example: Eval.EvalProp σ₀ T₀ Δ₀ (.constBool false) (.vBool false) := Eval.EvalProp.ConstBool
+example: Eval.EvalProp σ₀ T₀ Δ₀ (.arr [.constF 42, .constF 43]) (.vArr [.vF 42, .vF 43]) := by
   apply Eval.EvalProp.ConstArr
   rfl
   intro xe hx
@@ -38,13 +39,13 @@ example: Eval.EvalProp σ₀ Δ₀ (.arr [.constF 42, .constF 43]) (.vArr [.vF 4
     contradiction
 
 def σ₁ := Env.updateVal σ₀ "y" (Ast.Value.vF 99)
-example: Eval.EvalProp σ₁ Δ₀ (.var "y") (.vF 99) := by
+example: Eval.EvalProp σ₁ T₀ Δ₀ (.var "y") (.vF 99) := by
   apply Eval.EvalProp.Var
   simp [σ₁, σ₀]
   unfold Env.updateVal Env.lookupVal
   simp_all
 
-example: Eval.EvalProp σ₀ Δ₀
+example: Eval.EvalProp σ₀ T₀ Δ₀
         (.letIn "z" (.constF 7) (.fieldExpr (Ast.Expr.var "z") .mul (.constF 3))) (.vF 21) := by
   apply Eval.EvalProp.Let
   apply Eval.EvalProp.ConstF
@@ -57,18 +58,3 @@ example: Eval.EvalProp σ₀ Δ₀
   unfold Eval.evalFieldOp
   simp_all
   rfl
-
-/-
-def σ₂ := Env.updateVal σ₁ "z" (Ast.Value.vF 123)
-example: Eval.EvalProp σ₂ Δ₀
-  (.app (.lam "x" Ast.Ty.field (Ast.Expr.fieldExpr (Ast.Expr.var "x") Ast.FieldOp.add (Ast.Expr.constF 12))) (Ast.Expr.var "y"))
-  (.vF 111) := by
-  apply Eval.EvalProp.App
-  apply Eval.EvalProp.Lam
-  apply Eval.EvalProp.Var
-  unfold σ₂ σ₁ σ₀
-  unfold Env.lookupVal Env.updateVal
-  simp
-  rfl
-  apply Eval.Eval
--/

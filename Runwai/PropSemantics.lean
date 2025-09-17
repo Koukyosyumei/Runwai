@@ -19,8 +19,8 @@ This proposition holds true if and only if `e` evaluates to the specific value `
 within the given value environment `σ` and chip environment `Δ`.
 -/
 @[simp]
-def exprToProp (σ : Env.ValEnv) (Δ : Env.ChipEnv) (e: Ast.Expr): Prop :=
-  Eval.EvalProp σ Δ e (Ast.Value.vBool true)
+def exprToProp (σ : Env.ValEnv) (T: Env.TraceEnv) (Δ : Env.ChipEnv) (e: Ast.Expr): Prop :=
+  Eval.EvalProp σ T Δ e (Ast.Value.vBool true)
 
 /--
 Translates a syntactic predicate from a refinement type (`Ast.Predicate`) into a semantic
@@ -34,12 +34,12 @@ property in Lean's logic (`Prop`).
   counterparts in Lean (`∧`, `∨`, `¬`).
 -/
 @[simp]
-def predToProp (σ: Env.ValEnv) (Δ: Env.ChipEnv) (τ: Ast.Ty): Ast.Predicate → (Ast.Expr → Prop)
- | Ast.Predicate.dep ident body => fun v => exprToProp σ Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
- | Ast.Predicate.ind body => fun _ => exprToProp σ Δ body
- | Ast.Predicate.and left right => fun v => (predToProp σ Δ τ left v) ∧ (predToProp σ Δ τ right v)
- | Ast.Predicate.or  left right => fun v => (predToProp σ Δ τ left v) ∨ (predToProp σ Δ τ right v)
- | Ast.Predicate.not φ => fun v => ¬ (predToProp σ Δ τ φ v)
+def predToProp (σ: Env.ValEnv) (T: Env.TraceEnv) (Δ: Env.ChipEnv) (τ: Ast.Ty): Ast.Predicate → (Ast.Expr → Prop)
+ | Ast.Predicate.dep ident body => fun v => exprToProp σ T Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
+ | Ast.Predicate.ind body => fun _ => exprToProp σ T Δ body
+ | Ast.Predicate.and left right => fun v => (predToProp σ T Δ τ left v) ∧ (predToProp σ T Δ τ right v)
+ | Ast.Predicate.or  left right => fun v => (predToProp σ T Δ τ left v) ∨ (predToProp σ T Δ τ right v)
+ | Ast.Predicate.not φ => fun v => ¬ (predToProp σ T Δ τ φ v)
 
 /--
 Defines the semantic validity condition for a single variable `ident` within a type
@@ -53,10 +53,10 @@ of that type:
 - For any other type or if the variable is not found, the condition is false.
 -/
 @[simp]
-def varToProp (σ : Env.ValEnv) (Δ : Env.ChipEnv) (Γ : Env.TyEnv) (ident : String): Prop :=
+def varToProp (σ : Env.ValEnv) (T: Env.TraceEnv) (Δ : Env.ChipEnv) (Γ : Env.TyEnv) (ident : String): Prop :=
 match Env.lookupTy Γ ident with
 | Ast.Ty.refin τ pred =>
-  predToProp σ Δ τ pred (Ast.Expr.var ident)
+  predToProp σ T Δ τ pred (Ast.Expr.var ident)
 | Ast.Ty.field        => True
 | Ast.Ty.bool         => True
 | Ast.Ty.int          => True
@@ -69,7 +69,7 @@ This proposition holds if and only if **every** variable binding in the environm
 satisfies its own type constraints, as checked by `varToProp`. It serves as the top-level
 semantic judgment for a well-formed context, ensuring all declared properties are met.
 -/
-def tyenvToProp (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ: Env.TyEnv): Prop :=
-  ∀ (x: String) (τ: Ast.Ty), Env.lookupTy Γ x = some τ → varToProp σ Δ Γ x
+def tyenvToProp (σ: Env.ValEnv) (T: Env.TraceEnv) (Δ: Env.ChipEnv) (Γ: Env.TyEnv): Prop :=
+  ∀ (x: String) (τ: Ast.Ty), Env.lookupTy Γ x = some τ → varToProp σ T Δ Γ x
 
 end PropSemantics

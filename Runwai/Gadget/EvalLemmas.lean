@@ -26,8 +26,8 @@ evaluates to `true`, then the expression `e₂ = e₁` also evaluates to `true`.
 symmetry of the underlying `evalRelOp` function.
 -/
 theorem evalProp_eq_symm
-  {σ: Env.ValEnv} {Δ: Env.ChipEnv} {e₁ e₂: Expr} (h: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true)):
-  Eval.EvalProp σ Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₁) (Ast.Value.vBool true) := by {
+  {σ: Env.ValEnv} {T: Env.TraceEnv} {Δ: Env.ChipEnv} {e₁ e₂: Expr} (h: Eval.EvalProp σ T Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true)):
+  Eval.EvalProp σ T Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₁) (Ast.Value.vBool true) := by {
     cases h
     rename_i v₁ v₂ h₁ h₂ h₃
     apply evalRelOp_eq_symm at h₃
@@ -43,8 +43,8 @@ if it can be evaluated to a value `v₁` and also to a value `v₂`, then
 `v₁` and `v₂` must be identical. This ensures that expression evaluation is a function.
 -/
 theorem evalprop_deterministic
-  {σ : Env.ValEnv} {Δ : Env.ChipEnv} {e : Expr} :
-  ∀ {v₁ v₂}, Eval.EvalProp σ Δ e v₁ → Eval.EvalProp σ Δ e v₂ → v₁ = v₂ := by
+  {σ : Env.ValEnv} {T: Env.TraceEnv} {Δ : Env.ChipEnv} {e : Expr} :
+  ∀ {v₁ v₂}, Eval.EvalProp σ T Δ e v₁ → Eval.EvalProp σ T Δ e v₂ → v₁ = v₂ := by
   intro v₁ v₂ h₁ h₂
   induction h₁ generalizing v₂ with
   | ConstF => cases h₂; rfl
@@ -163,8 +163,8 @@ theorem evalprop_deterministic
   }
   | LookUp => {
     cases h₂
-    rename_i ih₁ ih₂
-    apply ih₁ ih₂
+    rename_i h_body h_chip h_trace i h_bound vs h_evals h_asserts h_body_ih h_evals_ih h_asserts_ih c' row' i' h_bound' vs' h_trace' h_chip' h_eval' h_asserts' h_body'
+    apply h_body_ih h_body'
   }
   | toZ => {
     cases h₂
@@ -180,10 +180,10 @@ and `e₁ = e₃` evaluates to true, then `e₂ = e₃` must also evaluate to tr
 the deterministic nature of the evaluator.
 -/
 theorem evalProp_eq_trans
-  {σ: Env.ValEnv} {Δ: Env.ChipEnv} {e₁ e₂ e₃: Expr}
-  (h₁: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true))
-  (h₂: Eval.EvalProp σ Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₃) (Ast.Value.vBool true)):
-  Eval.EvalProp σ Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₃) (Ast.Value.vBool true) := by {
+  {σ: Env.ValEnv} {T: Env.TraceEnv} {Δ: Env.ChipEnv} {e₁ e₂ e₃: Expr}
+  (h₁: Eval.EvalProp σ T Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₂) (Ast.Value.vBool true))
+  (h₂: Eval.EvalProp σ T Δ (Ast.Expr.binRel e₁ Ast.RelOp.eq e₃) (Ast.Value.vBool true)):
+  Eval.EvalProp σ T Δ (Ast.Expr.binRel e₂ Ast.RelOp.eq e₃) (Ast.Value.vBool true) := by {
     cases h₁
     cases h₂
     rename_i v₁ v₂ ih₁ ih₂ ih₃ v₃ v₄ ih₄ ih₅ ih₆
@@ -246,10 +246,10 @@ theorem evalProp_eq_trans
 If `e₁` is proven to be equal to `e₂`, and a less-than relation involving `e₂` holds (i.e., `toZ e₂ < e₃`),
 then the same relation must also hold for `e₁` (i.e., `toZ e₁ < e₃`).
 -/
-lemma eval_eq_then_lt {σ Δ e₁ e₂ e₃}
-  (h₁: Eval.EvalProp σ Δ (Ast.exprEq e₁ e₂) (Ast.Value.vBool true))
-  (h₂: Eval.EvalProp σ Δ (Ast.Expr.binRel (Ast.Expr.toZ e₂) Ast.RelOp.lt e₃) (Ast.Value.vBool true))
-  : Eval.EvalProp σ Δ (Ast.Expr.binRel (Ast.Expr.toZ e₁) Ast.RelOp.lt e₃) (Ast.Value.vBool true) := by {
+lemma eval_eq_then_lt {σ T Δ e₁ e₂ e₃}
+  (h₁: Eval.EvalProp σ T Δ (Ast.exprEq e₁ e₂) (Ast.Value.vBool true))
+  (h₂: Eval.EvalProp σ T Δ (Ast.Expr.binRel (Ast.Expr.toZ e₂) Ast.RelOp.lt e₃) (Ast.Value.vBool true))
+  : Eval.EvalProp σ T Δ (Ast.Expr.binRel (Ast.Expr.toZ e₁) Ast.RelOp.lt e₃) (Ast.Value.vBool true) := by {
     cases h₂
     rename_i ih₁ ih₂ r
     cases ih₁
@@ -286,7 +286,7 @@ expression `x = y * z` to the concrete values in the environment. It proves that
 expression holds, then `x`, `y`, and `z` must be bound to field values `v₁`, `v₂`, `v₃`
 in the environment `σ` such that `v₁ = v₂ * v₃`.
 -/
-lemma eval_mul_expr_val {σ x y z Δ} (h: Eval.EvalProp σ Δ
+lemma eval_mul_expr_val {σ T x y z Δ} (h: Eval.EvalProp σ T Δ
   (Ast.exprEq (Ast.Expr.var x)
     ((Ast.Expr.var y).fieldExpr Ast.FieldOp.mul (Ast.Expr.var z)))
   (Ast.Value.vBool true)) :
@@ -324,7 +324,7 @@ lemma eval_mul_expr_val {σ x y z Δ} (h: Eval.EvalProp σ Δ
 If the expression `x * (x - 1) = 0` evaluates to true, it proves that the variable `x` must
 be bound to a field value `v` in the environment `σ` that represents a bit (i.e., `v` is either 0 or 1).
 -/
-lemma eval_bit_expr_val {σ Δ x} (h: Eval.EvalProp σ Δ
+lemma eval_bit_expr_val {σ T Δ x} (h: Eval.EvalProp σ T Δ
   (Ast.exprEq
     ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul
       ((Ast.Expr.var x).fieldExpr Ast.FieldOp.sub (Ast.Expr.constF 1)))
@@ -361,7 +361,7 @@ lemma eval_bit_expr_val {σ Δ x} (h: Eval.EvalProp σ Δ
 If `constF v = x * y` evaluates to true, this proves that `x` and `y` must be bound to
 field values `v₀` and `v₁` in the environment `σ` such that their product equals the constant `v`.
 -/
-lemma eval_eq_const_mul_val {σ Δ x y v} (h: Eval.EvalProp σ Δ
+lemma eval_eq_const_mul_val {σ T Δ x y v} (h: Eval.EvalProp σ T Δ
   (Ast.exprEq (Ast.Expr.constF v)
     ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul (Ast.Expr.var y)))
   (Ast.Value.vBool true)):
@@ -383,7 +383,7 @@ lemma eval_eq_const_mul_val {σ Δ x y v} (h: Eval.EvalProp σ Δ
     simp_all
   }
 
-lemma eval_bits_to_byte_expr_val {σ Δ x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇ x₈} (h: Eval.EvalProp σ Δ
+lemma eval_bits_to_byte_expr_val {σ T Δ x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇ x₈} (h: Eval.EvalProp σ T Δ
   (Ast.exprEq
     (bits_to_byte_expr x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇)
     (Ast.Expr.var x₈))
@@ -476,7 +476,7 @@ If the expression `toZ x < constZ t` evaluates to true, it proves that the varia
 to a field value `v` in the environment `σ`, and that the numeric representation of `v` is less
 than the constant `t`.
 -/
-lemma eval_lt_val {σ Δ x t} (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
+lemma eval_lt_val {σ T Δ x t} (h: Eval.EvalProp σ T Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
   ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h
     rename_i ih₀ ih₁ r₁
@@ -490,8 +490,8 @@ lemma eval_lt_val {σ Δ x t} (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binR
     simp_all
   }
 
-lemma eval_lt_lam_val {σ Δ x t}
-  (h: Eval.EvalProp σ Δ
+lemma eval_lt_lam_val {σ T Δ x t}
+  (h: Eval.EvalProp σ T Δ
   ((Expr.lam Ast.mu Ty.field ((Expr.var Ast.mu).toZ.binRel RelOp.lt (Expr.constZ t))).app (Expr.var x))
   (Value.vBool true)):
   ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
