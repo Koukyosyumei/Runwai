@@ -188,6 +188,115 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_self
 
+/-
+he₄ : Eval.EvalProp σ Δ (v.toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)) (Ast.Value.vBool true)
+⊢ Eval.EvalProp (Env.updateVal σ Ast.mu va) Δ ((Ast.Expr.var Ast.mu).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))
+  (Ast.Value.vBool true)
+-/
+
+lemma eval_lt_update
+  (h₀: Eval.EvalProp σ Δ v va)
+  (h₁: Eval.EvalProp σ Δ (v.toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
+  Eval.EvalProp (Env.updateVal σ x va) Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t))
+  (Ast.Value.vBool true) := by {
+    cases h₁
+    rename_i ih₁ ih₂ r
+    cases ih₁
+    rename_i h
+    cases va with
+    | vF x => {
+      have := evalprop_deterministic h h₀
+      simp at this
+      rw[this] at r
+      cases ih₂
+      apply Eval.EvalProp.Rel
+      apply Eval.EvalProp.toZ
+      apply Eval.EvalProp.Var
+      simp [Env.lookupVal, Env.updateVal]
+      rfl
+      apply Eval.EvalProp.ConstZ
+      exact r
+    }
+    | _ => {
+      have := evalprop_deterministic h h₀
+      simp at this
+    }
+  }
+
+lemma u8_lookup_refines_lt256_eval (x u: String)
+  (h₀: Env.lookupTy Γ x = Ast.Ty.refin Ast.Ty.field φ)
+  (h₁: Env.lookupTy Γ u = some ((Ast.Ty.unit.refin
+          (Ty.lookup_pred [(Ast.Expr.var x, Ast.trace_i_j "trace" "i" 0)] (Env.lookupChip Δ "u8")
+            (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+            Η))))
+  (h₂: (Env.freshName Η (Env.lookupChip Δ "u8").ident_i) = new_ident_i)
+  (h₃: (Env.freshName Η (Env.lookupChip Δ "u8").ident_t) = new_ident_t)
+  (h₄: new_ident_t ≠ "i")
+  (h₅: x ≠ Ast.mu):
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x)
+    (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))) := by {
+    apply Ty.TypeJudgment.TE_SUB
+    apply Ty.TypeJudgment.TE_Var
+    exact h₀
+    apply Ty.SubtypeJudgment.TSub_Refine
+    apply Ty.SubtypeJudgment.TSub_Refl
+    intro σ v hty hp
+
+    unfold Ty.lookup_pred at h₁
+    have hu8_i : (Env.lookupChip Δ "u8").ident_i = "i" := by {
+      unfold Env.lookupChip Δ
+      simp
+    }
+    have hu8_t : (Env.lookupChip Δ "u8").ident_t = "trace" := by {
+      unfold Env.lookupChip Δ
+      simp
+    }
+    rw[h₂, h₃, hu8_i, hu8_t] at h₁
+    simp [Ast.renameVarinPred, Ast.renameVar] at h₁
+    rw [if_neg h₄] at h₁
+    have he := tyenv_and_to_eval_exprs hty h₁
+    obtain ⟨he₁,he₂⟩ := he
+    have he₃ := eval_eq_then_lt he₂ he₁
+
+    simp [PropSemantics.predToProp] at hp
+    cases hp
+    rename_i va ih_f ih_a ih_b
+
+    have heq : Eval.EvalProp σ Δ (Ast.exprEq v (Ast.Expr.var x)) (Ast.Value.vBool true) := by {
+      cases ih_f
+      cases ih_b
+      rename_i ih₁ ih₂ r
+      cases ih₁
+      rename_i ih₁
+      simp [Env.lookupVal, Env.updateVal] at ih₁
+      rw[← ih₁] at r
+      cases ih₂
+      rename_i ih₂
+      have : Env.lookupVal (Env.updateVal σ Ast.mu va) x = Env.lookupVal σ x := by {
+        apply lookup_val_update_ne
+        exact h₅
+      }
+      rw[this] at ih₂
+      rw[← ih₂] at r
+      apply Eval.EvalProp.Rel
+      exact ih_a
+      apply Eval.EvalProp.Var
+      exact ih₂
+      rw[← ih₂]
+      exact r
+    }
+    have he₄ := eval_eq_then_lt heq he₃
+    simp [PropSemantics.predToProp]
+    apply Eval.EvalProp.App
+    apply Eval.EvalProp.Lam
+    exact ih_a
+    apply eval_lt_update
+    exact ih_a
+    exact he₄
+    }
+
+
+
 lemma u8_lookup_refines_lt256 (u: String)
   (h₁: @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.refin Ast.Ty.field Ast.constTruePred))
   (h₂: Env.lookupTy Γ u = some ((Ast.Ty.unit.refin
