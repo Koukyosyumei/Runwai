@@ -148,18 +148,53 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
       (idx : vs[j]? = some v) :
       EvalProp σ T Δ (Expr.arrIdx a i) v
 
-  -- E-LOOKUP // This is actually the combination of E-LOOKUP and E-LETIN. We adopt this design to propoage used names in the following body.
-  | LookUp {σ T Δ vname cname args e v c row}
+  -- E-LOOKUP
+  | LookUp {σ T Δ vname cname args e v c rows}
+    -- This constructor defines the semantics for a lookup expression, which serves a dual purpose:
+    -- 1. It enforces a set of constraints (a "lookup argument") between the calling context
+    --    and a callee chip's execution trace.
+    -- 2. It provides `let-in`-like scoping, where a subsequent expression `e` is evaluated
+    --    after the lookup constraints are satisfied.
+
+    -- == Body Evaluation Semantics ==
+    -- Premise for the `let-in` behavior. After all lookup constraints pass, this ensures
+    -- that the body expression `e` evaluates to the final value `v` of the whole expression.
     (h_body: EvalProp σ T Δ e v)
+
+    -- == Context Setup ==
+    -- Premise to retrieve the callee's chip definition `c` from the global chip environment `Δ`.
     (h_chip: Env.lookupChip Δ cname = c)
-    (h_trace: Env.lookupTrace T c = some (Ast.Value.vArr (row)))
+    -- Premise to retrieve the callee's full execution trace `rows` from the global trace environment `T`.
+    (h_trace: Env.lookupTrace T c = some (Ast.Value.vArr (rows)))
+
+    -- == Verification of Callee's Trace ==
+    -- Premise ensuring the internal consistency of the callee's trace. It guarantees that we
+    -- are looking up into a well-formed "table" by checking that the callee's constraint body
+    -- (`c.body`) holds for ALL rows `j` of its trace.
+    (h_callee_validity:
+      ∀ j: ℕ, (j < rows.length) →
+        let σ' := Env.updateVal (Env.updateVal σ c.ident_t (Value.vArr rows)) c.ident_i (Value.vZ j)
+        EvalProp σ' T Δ c.body Value.vUnit
+    )
+
+    -- == Witnesses provided by the Prover ==
     (i: ℕ)
-    (h_bound: i < row.length)
     (vs: List F)
+
+    -- == Verification of Witnesses and Lookup Connection ==
+    -- Premise checking that the witness row index `i` is within the bounds of the callee's trace.
+    (h_bound: i < rows.length)
+    -- Premise ensuring the argument list and the witness value list have the same length.
+    (h_args_len: args.length = vs.length)
+    -- Premise verifying the witness values `vs`. It proves that the caller-side expressions
+    -- (`args.map Prod.fst`) indeed evaluate to the claimed values in `vs`.
     (h_evals:∀ p ∈ List.zip (args.map Prod.fst) vs,
         EvalProp σ T Δ p.fst (Value.vF p.snd))
+    -- The central lookup premise. It verifies the connection between the caller and callee.
+    -- Using the witness row `i` and the verified witness values `vs`, it checks that for each
+    -- value-expression pair, the assertion holds in the callee's context at row `i`.
     (h_asserts:
-      let σ' := Env.updateVal (Env.updateVal σ c.ident_t (Value.vArr row)) c.ident_i (Value.vZ i)
+      let σ' := Env.updateVal (Env.updateVal σ c.ident_t (Value.vArr rows)) c.ident_i (Value.vZ i)
       ∀ p ∈ List.zip vs (args.map Prod.snd),
         EvalProp σ' T Δ (Expr.assertE (Expr.constF p.fst) p.snd) Value.vUnit
     )

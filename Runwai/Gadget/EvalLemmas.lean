@@ -163,7 +163,10 @@ theorem evalprop_deterministic
   }
   | LookUp => {
     cases h₂
-    rename_i h_body h_chip h_trace i h_bound vs h_evals h_asserts h_body_ih h_evals_ih h_asserts_ih c' row' i' h_bound' vs' h_trace' h_chip' h_eval' h_asserts' h_body'
+    rename_i h_body h_chip h_trace h_callee_validity i vs h_bound h_args_len h_evals
+             h_asserts h_body_ih h_callee_validity_ih h_evals_ih h_asserts_ih c' row'
+             i' vs' h_bound' h_trace' h_callee_validity' h_chip' h_args_len' h_eval'
+             h_asserts' h_body'
     apply h_body_ih h_body'
   }
   | toZ => {
