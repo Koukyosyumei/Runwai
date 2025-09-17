@@ -33,9 +33,9 @@ lemma lookupTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)
 If the property `varToProp` holds for a variable `ident` under a type environment `Γ₁`, it will
 also hold under a different environment `Γ₂`, provided that `Γ₁` and `Γ₂` are pointwise equal.
 -/
-theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv) (ident: String)
-  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.varToProp σ Δ Γ₁ ident):
-  PropSemantics.varToProp σ Δ Γ₂ ident := by {
+theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (T: Env.TraceEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv) (ident: String)
+  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.varToProp σ T Δ Γ₁ ident):
+  PropSemantics.varToProp σ T Δ Γ₂ ident := by {
     simp [PropSemantics.varToProp] at h₂ ⊢
     have h₁' := h₁ ident
     rw[← h₁']
@@ -46,15 +46,15 @@ theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁ �
 If the property `tyenvToProp` holds for an entire type environment `Γ₁` that is pointwise equal to `Γ₂`, it will also hold
 for `Γ₂`.
 -/
-theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv)
-  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.tyenvToProp σ Δ Γ₁):
-  PropSemantics.tyenvToProp σ Δ Γ₂ := by {
+theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (T: Env.TraceEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv)
+  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.tyenvToProp σ T Δ Γ₁):
+  PropSemantics.tyenvToProp σ T Δ Γ₂ := by {
     unfold PropSemantics.tyenvToProp at h₂ ⊢
     intro x τ h₃
     have h₄ := h₁ x
     rw[← h₄] at h₃
     have h₅ := h₂ x τ h₃
-    exact varToProp_pointwise_preserve σ Δ Γ₁ Γ₂ x h₁ h₅
+    exact varToProp_pointwise_preserve σ T Δ Γ₁ Γ₂ x h₁ h₅
   }
 
 /--
@@ -77,9 +77,9 @@ theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁
         intro Γ₂ h
         apply Ty.SubtypeJudgment.TSub_Refine
         apply ih₂; exact h
-        intro σ e h₂
+        intro σ T e h₂
         apply ih₁
-        exact tyenvToProp_pointwise_preserve σ Δ Γ₂ Γ₁ (lookupTy_pointwise_symm Γ₁ Γ₂ h) h₂
+        exact tyenvToProp_pointwise_preserve σ T Δ Γ₂ Γ₁ (lookupTy_pointwise_symm Γ₁ Γ₂ h) h₂
       }
       | TSub_Fun h₁ h₂ ih₁ ih₂ => {
         intro Γ₂ h

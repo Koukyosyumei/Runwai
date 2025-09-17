@@ -80,6 +80,15 @@ def lookupTy (Γ : TyEnv) (ident : String) : Option Ast.Ty :=
   | some (_, τ) => some τ
   | none        => none
 
+/- A trace environment: maps a chip to a trace-/
+abbrev TraceEnv := List (String × Ast.Value)
+
+@[inline]
+def lookupTrace (T: TraceEnv) (c: Ast.Chip) : Option Ast.Value :=
+  match T.find? (·.1 = c.name) with
+  | some (_, v) => v
+  | none        => none
+
 abbrev UsedNames := List String
 
 @[inline]

@@ -68,7 +68,7 @@ theorem lookupChip_correct : Ty.chipCorrect Δ' lookupChip 1 := by
   rfl
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
-  intro σ v h₁ h₂
+  intro σ T v h₁ h₂
   unfold PropSemantics.tyenvToProp at h₁
   have h₃ := h₁ "u"
   unfold Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy at h₃
@@ -116,7 +116,7 @@ theorem lookupChip_correct_2 : Ty.chipCorrect Δ' lookupChip_2 1 := by
   rfl
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
-  intro σ v h₁ h₂
+  intro σ T v h₁ h₂
   unfold PropSemantics.tyenvToProp at h₁
   have h₃ := h₁ "u₂"
   unfold Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy Ty.lookup_pred at h₃
