@@ -30,6 +30,14 @@ lemma lookup_update_ne
   | true => simp_all
   | false => simp [dec]
 
+lemma lookup_val_update_ne
+  (σ : Env.ValEnv) (x y : String) (v : Ast.Value) (hxy : y ≠ x) :
+  Env.lookupVal (Env.updateVal σ x v) y = Env.lookupVal σ y := by
+  simp [Env.updateVal, Env.lookupVal]
+  cases dec : (decide (x = y)) with
+  | true => simp_all
+  | false => simp [dec]
+
 /--
 A more specific version of `lookup_update_ne`. If looking up `y` in `Γ` yields `τ₂`,
 then looking up `y` in an environment updated at a different variable `x` will still yield `τ₂`.

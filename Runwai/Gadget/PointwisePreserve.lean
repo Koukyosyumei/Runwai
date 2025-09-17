@@ -36,7 +36,7 @@ also hold under a different environment `Γ₂`, provided that `Γ₁` and `Γ�
 theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv) (ident: String)
   (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.varToProp σ Δ Γ₁ ident):
   PropSemantics.varToProp σ Δ Γ₂ ident := by {
-    unfold PropSemantics.varToProp at h₂ ⊢
+    simp [PropSemantics.varToProp] at h₂ ⊢
     have h₁' := h₁ ident
     rw[← h₁']
     exact h₂

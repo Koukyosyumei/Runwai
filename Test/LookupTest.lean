@@ -81,11 +81,9 @@ theorem lookupChip_correct : Ty.chipCorrect Δ' lookupChip 1 := by
   rw[hat, hai] at h₃
   unfold Env.freshName at h₃
   simp at h₃
-  repeat unfold Ast.renameVarinPred at h₃
-  repeat unfold Ast.renameVar at h₃; simp at h₃
-  unfold PropSemantics.predToProp at h₃
+  simp [Ast.renameVarinPred, Ast.renameVar] at h₃
   obtain ⟨h₄,h₅⟩ := h₃
-  unfold PropSemantics.predToProp PropSemantics.exprToProp at h₄ h₅ ⊢
+  simp [PropSemantics.exprToProp] at h₄ h₅ ⊢
   apply evalProp_eq_symm at h₅
   apply evalProp_eq_trans h₅ h₄
 
@@ -127,10 +125,7 @@ theorem lookupChip_correct_2 : Ty.chipCorrect Δ' lookupChip_2 1 := by
   rw[hat, hai] at h₃
   unfold Env.freshName at h₃
   simp at h₃
-  repeat unfold Ast.renameVarinPred at h₃
-  repeat unfold Ast.renameVar at h₃; simp at h₃
-  unfold PropSemantics.predToProp at h₃
+  simp [Ast.renameVarinPred, Ast.renameVar] at h₃
   obtain ⟨h₄,h₅⟩ := h₃
-  unfold PropSemantics.predToProp PropSemantics.exprToProp at h₄ h₅ ⊢
   apply evalProp_eq_symm at h₅
   apply evalProp_eq_trans h₅ h₄

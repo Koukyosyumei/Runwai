@@ -10,8 +10,7 @@ yields `true`, then evaluating `v₂ = v₁` will also yield `true`.
 -/
 theorem evalRelOp_eq_symm {v₁ v₂: Ast.Value} (h: Eval.evalRelOp Ast.RelOp.eq v₁ v₂ = some true):
   Eval.evalRelOp Ast.RelOp.eq v₂ v₁ = some true := by {
-    unfold Eval.evalRelOp at h ⊢
-    simp at h ⊢
+    simp [Eval.evalRelOp] at h ⊢
     cases v₁
     cases v₂
     repeat simp_all
@@ -190,20 +189,18 @@ theorem evalProp_eq_trans
     rename_i v₁ v₂ ih₁ ih₂ ih₃ v₃ v₄ ih₄ ih₅ ih₆
     have h := evalprop_deterministic ih₁ ih₄
     rw[← h] at ih₆
-    unfold Eval.evalRelOp at ih₃ ih₆
+    simp [Eval.evalRelOp] at ih₃ ih₆
     cases v₁ with
     | vF => {
       cases v₂ with
       | vF => {
-        simp at ih₆
         cases v₄ with
         | vF => {
           simp at ih₃ ih₆
           apply Eval.EvalProp.Rel
           exact ih₂
           exact ih₅
-          unfold Eval.evalRelOp
-          simp
+          simp [Eval.evalRelOp]
           rw[← ih₃, ← ih₆]
         }
         | _ => simp at ih₆
@@ -213,15 +210,13 @@ theorem evalProp_eq_trans
     | vZ => {
       cases v₂ with
       | vZ => {
-        simp at ih₆
         cases v₄ with
         | vZ => {
           simp at ih₃ ih₆
           apply Eval.EvalProp.Rel
           exact ih₂
           exact ih₅
-          unfold Eval.evalRelOp
-          simp
+          simp [Eval.evalRelOp]
           rw[← ih₃, ← ih₆]
         }
         | _ => simp at ih₆
@@ -231,15 +226,13 @@ theorem evalProp_eq_trans
     | vBool => {
       cases v₂ with
       | vBool => {
-        simp at ih₆
         cases v₄ with
         | vBool => {
           simp at ih₃ ih₆
           apply Eval.EvalProp.Rel
           exact ih₂
           exact ih₅
-          unfold Eval.evalRelOp
-          simp
+          simp [Eval.evalRelOp]
           rw[← ih₃, ← ih₆]
         }
         | _ => simp at ih₆
@@ -265,14 +258,12 @@ lemma eval_eq_then_lt {σ Δ e₁ e₂ e₃}
     rename_i ih₁ ih₂ r
     have hv := evalprop_deterministic h ih₂
     rename_i ev₃ hev₃ v₂ hlt ev₁ ev₂
-    unfold Eval.evalRelOp at hlt
-    simp at hlt
+    simp [Eval.evalRelOp] at hlt
     cases ev₃ with
     | vZ v₃ => {
       simp at hlt
       rw[← hv] at r
-      unfold Eval.evalRelOp at r
-      simp at r
+      simp [Eval.evalRelOp] at r
       cases ev₁ with
       | vF v₁ => {
         simp at r
@@ -280,8 +271,7 @@ lemma eval_eq_then_lt {σ Δ e₁ e₂ e₃}
         apply Eval.EvalProp.toZ
         exact ih₁
         exact hev₃
-        unfold Eval.evalRelOp
-        simp
+        simp [Eval.evalRelOp]
         rw[r]
         exact hlt
       }
@@ -352,8 +342,7 @@ lemma eval_bit_expr_val {σ Δ x} (h: Eval.EvalProp σ Δ
     cases ih₂;
     cases r₂;
     simp at r₂;
-    unfold Eval.evalRelOp at r₁;
-    simp at r₁;
+    simp [Eval.evalRelOp] at r₁;
     rw [← r₂] at r₁;
     simp at r₁;
     rename_i v₁ vf₁ h₁ vf₂ h₂
@@ -386,9 +375,8 @@ lemma eval_eq_const_mul_val {σ Δ x y v} (h: Eval.EvalProp σ Δ
     rename_i v₈' u₈' ih₁ ih₂ r₈'
     cases ih₁
     cases ih₂
-    unfold Eval.evalFieldOp at r₈'
-    simp at r₈'
-    unfold Eval.evalRelOp at r₈
+    simp [Eval.evalFieldOp] at r₈'
+    simp [Eval.evalRelOp] at r₈
     cases u₈ <;> simp at r₈
     use v₈'
     use u₈'
@@ -452,8 +440,7 @@ lemma eval_bits_to_byte_expr_val {σ Δ x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇ 
     rename_i ih₃₁ ih₃₂ r₁₇
     cases ih₃₁
     cases ih₃₂
-    unfold Eval.evalFieldOp at r₂ r₄ r₅ r₇ r₈ r₉ r₁₀ r₁₁ r₁₂ r₁₃ r₁₄ r₁₅
-    simp at r₂ r₄ r₅ r₇ r₈ r₉ r₁₀ r₁₁ r₁₂ r₁₃ r₁₄ r₁₅ r₁₆ r₁₇
+    simp [Eval.evalFieldOp] at r₂ r₄ r₅ r₇ r₈ r₉ r₁₀ r₁₁ r₁₂ r₁₃ r₁₄ r₁₅ r₁₆ r₁₇
     rw[← r₁₅] at r₁₄
     rw[← r₁₄] at r₁₃
     rw[← r₁₃] at r₁₁
@@ -468,7 +455,7 @@ lemma eval_bits_to_byte_expr_val {σ Δ x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇ 
     rw[← r₄] at r₂
     rw[← r₁₇] at r₂
     rename_i e₀ v₀ fff₀ fff₁ v₂ ff₀ ff₁ ff₂ ff₃ ff₄ ff₅ h₀ f₀ f₁ f₂ h₁ f₃ f₄ f₅ h₂ f₆ f₇ h₃ f₈ f₉ h₄ f₁₀ h₅ f₁₁ h₆ f₁₂ h₇
-    unfold Eval.evalRelOp at r₁
+    simp [Eval.evalRelOp] at r₁
     rw[← r₂] at r₁
     cases v₀ <;> simp at r₁;
     rename_i v₉
@@ -497,8 +484,7 @@ lemma eval_lt_val {σ Δ x t} (h: Eval.EvalProp σ Δ ((Ast.Expr.var x).toZ.binR
     rename_i ih₀
     cases ih₀
     cases ih₁
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
+    simp [Eval.evalRelOp] at r₁
     rename_i v h
     use v
     simp_all
@@ -522,35 +508,13 @@ lemma eval_lt_lam_val {σ Δ x t}
     cases ih₁
     cases ih₂
     rename_i r₃
-    unfold Eval.evalRelOp at r₁
-    simp at r₁
+    simp [Eval.evalRelOp] at r₁
     rename_i v
     use v
     apply And.intro
     unfold Env.lookupVal Env.updateVal at r₃
     simp at r₃
-    unfold Env.lookupVal
-    simp
+    simp [Env.lookupVal]
     exact r₃
     exact r₁
   }
-
-/-
-Eval.EvalProp σ Δ
-  ((Expr.lam Ast.v Ty.field ((Expr.var Ast.v).toZ.binRel RelOp.lt (Expr.constZ 256))).app (Expr.var "value_0"))
-  (Value.vBool true)
--/
-
-/-
-    cases hl₀'
-    rename_i ih₁ ih₂ ih₃
-    cases ih₁
-    cases ih₂
-    rename_i value_0_v h_value_0_v
-    cases ih₃
-    rename_i ih₁ ih₂ ih₃
-    cases ih₁
-    rename_i ih₄
-    cases ih₂
-    cases ih₄
--/

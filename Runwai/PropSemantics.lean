@@ -18,6 +18,7 @@ Defines the semantic interpretation of an expression `e` as a formal proposition
 This proposition holds true if and only if `e` evaluates to the specific value `vBool true`
 within the given value environment `σ` and chip environment `Δ`.
 -/
+@[simp]
 def exprToProp (σ : Env.ValEnv) (Δ : Env.ChipEnv) (e: Ast.Expr): Prop :=
   Eval.EvalProp σ Δ e (Ast.Value.vBool true)
 
@@ -32,6 +33,7 @@ property in Lean's logic (`Prop`).
 - Logical connectives (`and`, `or`, `not`) are mapped directly to their logical
   counterparts in Lean (`∧`, `∨`, `¬`).
 -/
+@[simp]
 def predToProp (σ: Env.ValEnv) (Δ: Env.ChipEnv) (τ: Ast.Ty): Ast.Predicate → (Ast.Expr → Prop)
  | Ast.Predicate.dep ident body => fun v => exprToProp σ Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
  | Ast.Predicate.ind body => fun _ => exprToProp σ Δ body
@@ -50,6 +52,7 @@ of that type:
 - For simple, unrefined base types (`field`, `bool`, `int`), the condition is trivially true.
 - For any other type or if the variable is not found, the condition is false.
 -/
+@[simp]
 def varToProp (σ : Env.ValEnv) (Δ : Env.ChipEnv) (Γ : Env.TyEnv) (ident : String): Prop :=
 match Env.lookupTy Γ ident with
 | Ast.Ty.refin τ pred =>
