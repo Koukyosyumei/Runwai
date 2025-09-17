@@ -137,10 +137,9 @@ mutual
         EvalProp σ Δ (Expr.branch c e₁ e₂) (v₂)
 
     -- E‑ASSERT
-    | Assert   {σ Δ e₁ e₂ v₁ v₂ b}
-        (ih₁ : EvalProp σ Δ e₁ v₁)
-        (ih₂ : EvalProp σ Δ e₂ v₂)
-        (ok  : evalRelOp RelOp.eq v₁ v₂ = some b) :
+    | Assert   {σ Δ e₁ e₂ v}
+        (ih₁ : EvalProp σ Δ e₁ (Ast.Value.vF v))
+        (ih₂ : EvalProp σ Δ e₂ (Ast.Value.vF v)) :
         EvalProp σ Δ (Expr.assertE e₁ e₂) (Value.vUnit)
 
     -- E‑ARRIDX
