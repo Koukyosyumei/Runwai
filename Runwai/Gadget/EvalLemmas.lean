@@ -147,7 +147,7 @@ theorem evalprop_deterministic
       have h₁_eq := ihc_ih ih₁'
       simp_all
   }
-  | Assert ih₁ ih₂ ok ih₁_ih ih₂_ih => {
+  | Assert ih₁ ih₂ ih₁_ih ih₂_ih => {
     cases h₂
     case Assert v₁' v₂' b he ih₁' ih₂' =>
       have h₁_eq := ih₁_ih ih₁'
