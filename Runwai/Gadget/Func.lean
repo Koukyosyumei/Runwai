@@ -147,10 +147,10 @@ lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: En
     }
 
 abbrev koalabear_word_range_checker_func: Ast.Expr :=
-  (.lam "value_0" (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_0").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))))
-  (.lam "value_1" (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_1").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))))
-  (.lam "value_2" (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_2").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))))
-  (.lam "value_3" (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_3").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))))
+  (.lam "value_0" (field_lt_const 256)
+  (.lam "value_1" (field_lt_const 256)
+  (.lam "value_2" (field_lt_const 256)
+  (.lam "value_3" (field_lt_const 256)
   (.lam "most_sig_byte_decomp_0" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
   (.lam "most_sig_byte_decomp_1" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
   (.lam "most_sig_byte_decomp_2" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
@@ -229,10 +229,10 @@ lemma koalabear_word_range_checker_subtype_soundness {Γ Δ}
                   (Ast.exprEq (Ast.Expr.constF 0)
                     ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
                       (Ast.Expr.var "value_2"))))))
-  ( hl₀: Env.lookupTy Γ "value_0" = some (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_0").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))))
-  ( hl₁: Env.lookupTy Γ "value_1" = some (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_1").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))))
-  ( hl₂: Env.lookupTy Γ "value_2" = some (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_2").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))))
-  ( hl₃: Env.lookupTy Γ "value_3" = some (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_3").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))))
+  ( hl₀: Env.lookupTy Γ "value_0" = some (field_lt_const 256))
+  ( hl₁: Env.lookupTy Γ "value_1" = some (field_lt_const 256))
+  ( hl₂: Env.lookupTy Γ "value_2" = some (field_lt_const 256))
+  ( hl₃: Env.lookupTy Γ "value_3" = some (field_lt_const 256))
   : @Ty.SubtypeJudgment Δ Γ
       (Ty.unit.refin (Predicate.ind (exprEq (Expr.constF 0) ((Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr FieldOp.mul (Expr.var "value_2")))))
       (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind
@@ -264,10 +264,10 @@ lemma koalabear_word_range_checker_subtype_soundness {Γ Δ}
     have hu₉' := tyenv_to_eval_expr h₁ hu₉
     have hu₁₀' := tyenv_to_eval_expr h₁ hu₁₀
     have hu₁₁' := tyenv_to_eval_expr h₁ hu₁₁
-    have hl₀' := tyenv_to_eval_expr h₁ hl₀
-    have hl₁' := tyenv_to_eval_expr h₁ hl₁
-    have hl₂' := tyenv_to_eval_expr h₁ hl₂
-    have hl₃' := tyenv_to_eval_expr h₁ hl₃
+    have hl₀' := tyenv_dep_to_eval_expr h₁ hl₀
+    have hl₁' := tyenv_dep_to_eval_expr h₁ hl₁
+    have hl₂' := tyenv_dep_to_eval_expr h₁ hl₂
+    have hl₃' := tyenv_dep_to_eval_expr h₁ hl₃
 
     have hb₁'' := eval_bit_expr_val hb₁'
     have hb₂'' := eval_bit_expr_val hb₂'
@@ -288,10 +288,10 @@ lemma koalabear_word_range_checker_subtype_soundness {Γ Δ}
     have hu₁₀'' := eval_eq_const_mul_val hu₁₀'
     have hu₁₁'' := eval_eq_const_mul_val hu₁₁'
 
-    have hvl₀ := eval_lt_val hl₀'
-    have hvl₁ := eval_lt_val hl₁'
-    have hvl₂ := eval_lt_val hl₂'
-    have hvl₃ := eval_lt_val hl₃'
+    have hvl₀ := eval_lt_lam_val hl₀'
+    have hvl₁ := eval_lt_lam_val hl₁'
+    have hvl₂ := eval_lt_lam_val hl₂'
+    have hvl₃ := eval_lt_lam_val hl₃'
 
     cases hu₂'
     rename_i v₁ u₁ ih₁ ih₂ h_most_sig_byte_decomp_7_is_0
@@ -456,10 +456,10 @@ lemma koalabear_word_range_checker_subtype_soundness {Γ Δ}
 
 lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) :
   @Ty.TypeJudgment Δ Γ Η koalabear_word_range_checker_func
-    (Ast.Ty.func "value_0" (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_0").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))))
-    (Ast.Ty.func "value_1" (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_1").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))))
-    (Ast.Ty.func "value_2" (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_2").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))))
-    (Ast.Ty.func "value_3" (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var "value_3").toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))))
+    (Ast.Ty.func "value_0" (field_lt_const 256)
+    (Ast.Ty.func "value_1" (field_lt_const 256)
+    (Ast.Ty.func "value_2" (field_lt_const 256)
+    (Ast.Ty.func "value_3" (field_lt_const 256)
     (Ast.Ty.func "most_sig_byte_decomp_0" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
     (Ast.Ty.func "most_sig_byte_decomp_1" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
     (Ast.Ty.func "most_sig_byte_decomp_2" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
