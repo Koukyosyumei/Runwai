@@ -99,10 +99,10 @@ def koalabearWordRangeCheckerChip : Ast.Chip := {
           (.letIn "and_most_sig_byte_decomp_0_to_5" (Ast.trace_i_j "trace" "i" 15)
           (.letIn "and_most_sig_byte_decomp_0_to_6" (Ast.trace_i_j "trace" "i" 16)
           (.letIn "and_most_sig_byte_decomp_0_to_7" (Ast.trace_i_j "trace" "i" 17)
-          (.lookup "l₀" "u8" [(.var "value_0", (Ast.trace_i_j "trace" "i" 0))]
-          (.lookup "l₁" "u8" [(.var "value_1", (Ast.trace_i_j "trace" "i" 0))]
-          (.lookup "l₂" "u8" [(.var "value_2", (Ast.trace_i_j "trace" "i" 0))]
-          (.lookup "l₃" "u8" [(.var "value_3", (Ast.trace_i_j "trace" "i" 0))]
+          (.lookup "l₀" "u8" [(.var "alpha_0", (Ast.trace_i_j "trace" "i" 0))]
+          (.lookup "l₁" "u8" [(.var "alpha_1", (Ast.trace_i_j "trace" "i" 0))]
+          (.lookup "l₂" "u8" [(.var "alpha_2", (Ast.trace_i_j "trace" "i" 0))]
+          (.lookup "l₃" "u8" [(.var "alpha_3", (Ast.trace_i_j "trace" "i" 0))]
           (.letIn "u₁"
             (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app
               koalabear_word_range_checker_func
@@ -188,13 +188,7 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_self
 
-/-
-he₄ : Eval.EvalProp σ Δ (v.toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)) (Ast.Value.vBool true)
-⊢ Eval.EvalProp (Env.updateVal σ Ast.mu va) Δ ((Ast.Expr.var Ast.mu).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))
-  (Ast.Value.vBool true)
--/
-
-lemma eval_lt_update
+lemma eval_var_lt_of_update
   (h₀: Eval.EvalProp σ Δ v va)
   (h₁: Eval.EvalProp σ Δ (v.toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
   Eval.EvalProp (Env.updateVal σ x va) Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t))
@@ -223,7 +217,7 @@ lemma eval_lt_update
     }
   }
 
-lemma u8_lookup_refines_lt256_eval (x u: String)
+lemma u8_lookup_refines_lt256 (x u: String)
   (h₀: Env.lookupTy Γ x = Ast.Ty.refin Ast.Ty.field φ)
   (h₁: Env.lookupTy Γ u = some ((Ast.Ty.unit.refin
           (Ty.lookup_pred [(Ast.Expr.var x, Ast.trace_i_j "trace" "i" 0)] (Env.lookupChip Δ "u8")
@@ -290,51 +284,10 @@ lemma u8_lookup_refines_lt256_eval (x u: String)
     apply Eval.EvalProp.App
     apply Eval.EvalProp.Lam
     exact ih_a
-    apply eval_lt_update
+    apply eval_var_lt_of_update
     exact ih_a
     exact he₄
     }
-
-
-
-lemma u8_lookup_refines_lt256 (u: String)
-  (h₁: @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.refin Ast.Ty.field Ast.constTruePred))
-  (h₂: Env.lookupTy Γ u = some ((Ast.Ty.unit.refin
-          (Ty.lookup_pred [(Ast.Expr.var x, Ast.trace_i_j "trace" "i" 0)] (Env.lookupChip Δ "u8")
-            (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
-            Η))))
-  (h₃: (Env.freshName Η (Env.lookupChip Δ "u8").ident_i) = new_ident_i)
-  (h₄: (Env.freshName Η (Env.lookupChip Δ "u8").ident_t) = new_ident_t)
-  (h₇: new_ident_t ≠ "i"):
-  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x)
-    (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256))))
-  := by {
-    apply Ty.TypeJudgment.TE_SUB
-    apply h₁
-    apply Ty.SubtypeJudgment.TSub_Refine
-    apply Ty.SubtypeJudgment.TSub_Refl
-    intro σ' v h₈ h₉
-
-    unfold Ty.lookup_pred at h₂
-    have hu8_i : (Env.lookupChip Δ "u8").ident_i = "i" := by {
-      unfold Env.lookupChip Δ
-      simp
-    }
-    have hu8_t : (Env.lookupChip Δ "u8").ident_t = "trace" := by {
-      unfold Env.lookupChip Δ
-      simp
-    }
-    rw[h₃, h₄, hu8_i, hu8_t] at h₂
-    simp [Ast.renameVarinPred, Ast.renameVar] at h₂
-    rw [if_neg h₇] at h₂
-
-    have he := tyenv_and_to_eval_exprs h₈ h₂
-    obtain ⟨he₁,he₂⟩ := he
-    have he₃ := eval_eq_then_lt he₂ he₁
-
-    unfold PropSemantics.predToProp PropSemantics.exprToProp
-    exact he₃
-  }
 
 lemma u8_freshName_ne_i : Env.freshName
     (Ty.update_UsedNames (Env.lookupChip Δ "u8")
@@ -361,36 +314,58 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
   apply lookup_update_self
   repeat apply Ty.TypeJudgment.TE_App
   apply koalabear_word_range_checker_func_typing_soundness
-  apply u8_lookup_refines_lt256 "l₀"
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply u8_lookup_refines_lt256 "alpha_0" "l₀"
+  apply lookup_update_ne
+  simp
   apply lookup_update_ne
   simp
   repeat rfl
   exact u8_freshName_ne_i
+  decide
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply u8_lookup_refines_lt256 "l₁"
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply u8_lookup_refines_lt256 "alpha_1" "l₁"
+  apply lookup_update_ne
+  simp
   apply lookup_update_ne
   simp
   repeat rfl
   exact u8_freshName_ne_i
+  decide
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply u8_lookup_refines_lt256 "l₂"
-  apply Ty.TypeJudgment.TE_VarEnv
+  have hmu₀ : (Ast.mu ≠ "value_0") := by decide
+  rw[if_neg hmu₀]
+  rw[if_neg hmu₀]
+  simp [Ast.renameVarinPred, Ast.renameVar]
+  apply u8_lookup_refines_lt256 "alpha_2" "l₂"
+  apply lookup_update_ne
+  simp
   apply lookup_update_ne
   simp
   repeat rfl
   exact u8_freshName_ne_i
+  decide
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply u8_lookup_refines_lt256 "l₃"
-  apply Ty.TypeJudgment.TE_VarEnv
+  have hmu₀ : (Ast.mu ≠ "value_0") := by decide
+  rw[if_neg hmu₀]
+  rw[if_neg hmu₀]
+  simp [Ast.renameVarinPred, Ast.renameVar]
+  have hmu₁ : (Ast.mu ≠ "value_1") := by decide
+  rw[if_neg hmu₁]
+  rw[if_neg hmu₁]
+  simp [Ast.renameVarinPred, Ast.renameVar]
+  have hmu₂ : (Ast.mu ≠ "value_2") := by decide
+  rw[if_neg hmu₂]
+  rw[if_neg hmu₂]
+  apply u8_lookup_refines_lt256 "alpha_3" "l₃"
   apply lookup_update_ne
   simp
+  apply lookup_update_self
   repeat rfl
   exact u8_freshName_ne_i
+  decide
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
