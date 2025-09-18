@@ -121,10 +121,7 @@ def Δ : Env.ChipEnv := [("assert", assertChip), ("u8", u8chip)]
 
 theorem assertChip_correct : Ty.chipCorrect Δ assertChip 1 := by
   unfold Ty.chipCorrect
-  intro x i hs hi hrow ht hσ
-  let envs := Ty.makeEnvs assertChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
-  let σ := envs.1
-  let Γ := envs.2
+  intro i hi Γ Η
   apply Ty.TypeJudgment.TE_LetIn
   · apply lookup_update_self
   · apply Ty.TypeJudgment.TE_Assert
@@ -141,12 +138,31 @@ theorem assertChip_correct : Ty.chipCorrect Δ assertChip 1 := by
   . constructor;
     apply lookup_update_self
 
+/-
+syntax "auto_trace_index" : tactic
+macro_rules
+| `(tactic| auto_trace_index) => `(tactic|
+    repeat
+      apply Ty.TypeJudgment.TE_LetIn
+      · apply lookup_update_self
+      · apply Ty.TypeJudgment.TE_ArrayIndex
+        apply Ty.TypeJudgment.TE_ArrayIndex
+        apply Ty.TypeJudgment.TE_VarEnv
+        simp
+        apply lookup_update_ne
+        simp
+        apply Ty.TypeJudgment.TE_VarEnv
+        try (apply lookup_update_self)
+        try (apply lookup_update_ne)
+        try (simp)
+        apply constZ_refine_lt
+        simp
+  )
+-/
+
 theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
   unfold Ty.chipCorrect
-  intro x i height hs hi hrow ht
-  let envs := Ty.makeEnvs iszeroChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
-  let σ := envs.1
-  let Γ := envs.2
+  intro i hi Γ Η
   auto_trace_index
   apply isZero_typing_soundness
   repeat apply lookup_update_ne; simp
@@ -156,10 +172,7 @@ theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
 
 theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   unfold Ty.chipCorrect
-  intro x i height hs hi hrow ht
-  let envs := Ty.makeEnvs iszeroChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
-  let σ := envs.1
-  let Γ := envs.2
+  intro i hi Γ Η
   auto_trace_index
   apply Ty.TypeJudgment.TE_LetIn
   rfl
@@ -302,10 +315,7 @@ lemma u8_freshName_ne_i : Env.freshName
 
 theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordRangeCheckerChip 1 := by
   unfold Ty.chipCorrect
-  intro x i hs hi hrow ht hσ
-  let envs := Ty.makeEnvs assertChip (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
-  let σ := envs.1
-  let Γ := envs.2
+  intro i hi Γ Η
   auto_trace_index
   repeat
     apply Ty.TypeJudgment.TE_LookUp

@@ -52,12 +52,7 @@ def Δ' : Env.ChipEnv := [("assert", assertCircuit), ("assert_2", assertCircuit_
 
 theorem lookupChip_correct : Ty.chipCorrect Δ' lookupChip 1 := by
   unfold Ty.chipCorrect lookupChip
-  intro x i hs hi hrow ht
-  let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
-  let σ := envs.1
-  let Γ := envs.2
-  simp_all
-  intro h
+  intro i hi Γ Η
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
@@ -89,12 +84,7 @@ theorem lookupChip_correct : Ty.chipCorrect Δ' lookupChip 1 := by
 
 theorem lookupChip_correct_2 : Ty.chipCorrect Δ' lookupChip_2 1 := by
   unfold Ty.chipCorrect lookupChip_2
-  intro x i hs hi hrow ht
-  let envs := Ty.makeEnvs assertCircuit (Ast.Value.vArr x) (Ast.Value.vZ i) x.length
-  let σ := envs.1
-  let Γ := envs.2
-  simp_all
-  intro h
+  intro i hi Γ Η
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   have ht : (Ty.update_UsedNames (Env.lookupChip Δ' "assert") ["i", "trace"]) = ["i'", "trace'", "i", "trace"] := by {

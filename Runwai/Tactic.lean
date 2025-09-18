@@ -10,15 +10,14 @@ macro_rules
       · apply Ty.TypeJudgment.TE_ArrayIndex
         apply Ty.TypeJudgment.TE_ArrayIndex
         apply Ty.TypeJudgment.TE_VarEnv
-        simp
         apply lookup_update_ne
-        simp
+        try (simp)
         apply Ty.TypeJudgment.TE_VarEnv
         try (apply lookup_update_self)
         try (apply lookup_update_ne)
         try (simp)
         apply constZ_refine_lt
-        simp
+        try (simp)
   )
 
 syntax "auto_let_assert" : tactic
