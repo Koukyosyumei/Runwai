@@ -53,8 +53,8 @@ unsafe def elabLodaProve : Elab.Command.CommandElab
     -- Generate the theorem syntax
     let theoremStx ← `(command|
       theorem $theoremIdent (Δ: Env.ChipEnv) (h_delta: Δ = $deltaTerm) : (Ty.chipCorrect $deltaTerm $circTerm 1) := by
-        (unfold Ty.chipCorrect; intro x i hs hi hrow ht hσ; set envs := Ty.makeEnvs $circTerm (Ast.Value.vArr x) (Ast.Value.vZ i) x.length);
-        (set σ := envs.1); (set Γ := envs.2); ($proof);
+        (unfold Ty.chipCorrect; intro i hi Γ Η;);
+        ($proof);
     )
     logInfo m!"Proof state opened for '{theoremName}' - continue with tactics!"
     -- Elaborate the generated theorem command

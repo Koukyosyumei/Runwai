@@ -183,14 +183,11 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
 Creates the initial value (`σ`) and type (`Γ`) environments for verifying a chip's body.
 It binds the chip's trace and instance identifiers to their expected types.
 -/
-def makeEnvs (c : Ast.Chip) (trace : Ast.Value) (i: Ast.Value) (height: ℕ): Env.ValEnv × Env.TraceEnv × Env.TyEnv :=
-  let σ: Env.ValEnv := Env.updateVal (Env.updateVal [] c.ident_t trace) c.ident_i i
-  let T: Env.TraceEnv := []
-  let Γ: Env.TyEnv := Env.updateTy (Env.updateTy [] c.ident_t
+def makeEnvs (c : Ast.Chip) (height: ℕ): Env.TyEnv :=
+  Env.updateTy (Env.updateTy [] c.ident_t
     (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.ind (Ast.Expr.constBool true))))
     c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.Expr.binRel (Ast.Expr.var Ast.mu) Ast.RelOp.lt (Ast.Expr.constZ height))))
-  (σ, T, Γ)
 
 /--
 Check of the structure of a trace. It ensures the trace is a 2D array
@@ -211,14 +208,10 @@ def checkInputsTrace (c: Ast.Chip) (trace : Ast.Value) (height: ℕ): Prop :=
   yields a value satisfying the output refinement.
 -/
 def chipCorrect (Δ : Env.ChipEnv) (c : Ast.Chip) (minimum_height: ℕ) : Prop :=
-  ∀ (trace: List Ast.Value) (i: ℕ),
-    minimum_height ≤ trace.length →
-    i < trace.length →
-    (∃ row: List Ast.Value, (trace.get? i = some (Ast.Value.vArr row))) →
-    let (σ, T, Γ) := makeEnvs c (Ast.Value.vArr trace) (Ast.Value.vZ i) trace.length
+  ∀ (trace_height: ℕ),
+    minimum_height ≤ trace_height →
+    let Γ := makeEnvs c trace_height
     let Η := [c.ident_i, c.ident_t]
-    checkInputsTrace c (Ast.Value.vArr trace) trace.length →
-    PropSemantics.tyenvToProp σ T Δ Γ →
     @TypeJudgment Δ Γ Η c.body c.goal
 
 end Ty
