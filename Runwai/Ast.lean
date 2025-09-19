@@ -71,6 +71,7 @@ mutual
     | lookup      : (vname cname: String) →
                       (args: List (Expr × Expr)) → (body: Expr) → Expr   -- let x = lookup(c, (f₁:t₁, ⋯ fκ:tκ)) in e
     | toZ         : (body: Expr) → Expr
+    | toF         : (body: Expr) → Expr
     deriving Lean.ToExpr
 
   inductive Predicate where
@@ -132,6 +133,7 @@ def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr
     | Expr.lookup n c args e =>
         Expr.lookup n c (args.map (fun (a, b) => (renameVar a oldName newExpr (cnt - 1), renameVar b oldName newExpr (cnt - 1)))) (renameVar e oldName newExpr (cnt - 1))
     | Expr.toZ body => Expr.toZ ((renameVar body oldName newExpr (cnt - 1)))
+    | Expr.toF body => Expr.toF ((renameVar body oldName newExpr (cnt - 1)))
   else e
 
 def renameVarinPred (p: Predicate) (oldName : String) (newExpr: Ast.Expr) : Predicate :=
@@ -167,6 +169,7 @@ instance : BEq Value where
 abbrev exprEq (e₁ e₂: Expr): Expr := Expr.binRel e₁ RelOp.eq e₂
 abbrev constTruePred : Predicate := Predicate.ind (Ast.Expr.constBool true)
 abbrev trace_i_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.var ident_i)).arrIdx (Ast.Expr.constZ j)
+abbrev trace_ip1_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.integerExpr (Ast.Expr.var ident_i) Ast.IntegerOp.add (Ast.Expr.constZ 1))).arrIdx (Ast.Expr.constZ j)
 abbrev mu: String := "ν"
 
 structure Chip where
@@ -221,6 +224,7 @@ mutual
     | Expr.letIn n v b       => s!"let {n} = {exprToString v} in {exprToString b}"
     | Expr.lookup n c args e  => s!"let {n} = #{c}(" ++ String.intercalate ", " (args.map fun xy => (exprToString xy.fst) ++ ": " ++ exprToString xy.snd) ++ s!") in {exprToString e}"
     | Expr.toZ b             => s!"toZ({exprToString b})"
+    | Expr.toF b             => s!"toF({exprToString b})"
 
 
   partial def predicateToString : Predicate → String

@@ -101,8 +101,8 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   -- TE-BRANCH
   | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₀ φ₁ φ₂: Ast.Predicate}:
     TypeJudgment Γ Η c  (Ast.Ty.refin Ast.Ty.bool φ₀) →
-    TypeJudgment Γ Η e₁ (Ast.Ty.refin τ φ₁) →
-    TypeJudgment Γ Η e₂ (Ast.Ty.refin τ φ₂) →
+    TypeJudgment (Env.updateTy Γ (Env.freshName Η "branch") (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind c))) ((Env.freshName Η "branch") :: Η) e₁ (Ast.Ty.refin τ φ₁) →
+    TypeJudgment (Env.updateTy Γ (Env.freshName Η "branch") (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.not (Ast.Predicate.ind c)))) ((Env.freshName Η "branch") :: Η) e₂ (Ast.Ty.refin τ φ₂) →
     TypeJudgment Γ Η (Ast.Expr.branch c e₁ e₂)
       (Ast.Ty.refin τ (Ast.Predicate.or
         (Ast.Predicate.and (Ast.Predicate.ind c) φ₁)
@@ -184,10 +184,11 @@ Creates the initial value (`σ`) and type (`Γ`) environments for verifying a ch
 It binds the chip's trace and instance identifiers to their expected types.
 -/
 def makeEnvs (c : Ast.Chip) (height: ℕ): Env.TyEnv :=
-  Env.updateTy (Env.updateTy [] c.ident_t
-    (.refin (.arr (.refin (.arr (.refin .field
+  Env.updateTy (Env.updateTy (Env.updateTy []
+    c.ident_t (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.ind (Ast.Expr.constBool true))))
-    c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.Expr.binRel (Ast.Expr.var Ast.mu) Ast.RelOp.lt (Ast.Expr.constZ height))))
+    c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.Expr.binRel (Ast.Expr.var Ast.mu) Ast.RelOp.lt (Ast.Expr.constZ height)))))
+    "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ height))))
 
 /--
 Check of the structure of a trace. It ensures the trace is a 2D array

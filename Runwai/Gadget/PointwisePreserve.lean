@@ -121,7 +121,17 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       apply a_ih
       exact h
     }
-    | TE_Branch _ _ _ ih₀ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Branch (ih₀ Γ₂ h) (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_Branch _ _ _ ih₀ ih₁ ih₂ =>
+      intro Γ₂ h
+      apply Ty.TypeJudgment.TE_Branch
+      apply ih₀
+      exact h
+      apply ih₁
+      apply update_preserve_pointwise
+      exact h
+      apply ih₂
+      apply update_preserve_pointwise
+      exact h
     | TE_ConstF => intros; constructor
     | TE_ConstZ => intros; constructor
     | TE_ConstBool => intros; constructor

@@ -176,6 +176,13 @@ theorem evalprop_deterministic
     have h' : v₁ = fv₂ := by simp_all
     simp_all
   }
+  | toF => {
+    cases h₂
+    rename_i v₁ ih₀ ih₁ fv₂ ih₃
+    have h := ih₁ ih₃
+    have h' : v₁ = fv₂ := by simp_all
+    simp_all
+  }
 
 /--
 The transitivity of equality at the expression level. If `e₁ = e₂` evaluates to true

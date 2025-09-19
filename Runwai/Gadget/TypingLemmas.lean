@@ -54,7 +54,7 @@ lemma tyenvToProp_implies_varToProp
   apply hmt
   exact hΓx
 
-lemma constZ_refine_lt {Δ Η x y} {h: x < y} :
+lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
   @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_ConstZ
@@ -79,4 +79,52 @@ lemma constZ_refine_lt {Δ Η x y} {h: x < y} :
   apply Eval.EvalProp.ConstZ
   simp [Eval.evalRelOp]
   exact h
+}
+
+lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ v₁))))} {h₁: v₁ < v₂} :
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).binRel Ast.RelOp.lt (Ast.Expr.constZ v₂)))) := by {
+  apply Ty.TypeJudgment.TE_SUB
+  apply Ty.TypeJudgment.TE_VarEnv
+  exact h₀
+  apply Ty.SubtypeJudgment.TSub_Refine
+  apply Ty.SubtypeJudgment.TSub_Refl
+  intro σ T v h₃ h₄
+  unfold PropSemantics.tyenvToProp at h₃
+  have h₅ := h₃ x ((Ty.int.refin (Predicate.dep mu (exprEq (Expr.var mu) (Expr.constZ v₁))))) h₀
+  simp [PropSemantics.predToProp] at h₄ ⊢
+  simp [PropSemantics.varToProp] at h₅
+  rw[h₀] at h₅
+  simp at h₅
+  cases h₄
+  rename_i ih_f ih_a ih_b
+  cases ih_f
+  cases ih_b
+  rename_i ih₁ ih₂ r
+  cases ih₁
+  rename_i a
+  unfold Env.lookupVal Env.updateVal at a
+  simp at a
+  rw[← a] at r
+  cases ih₂
+  simp [Eval.evalRelOp] at r
+  rename_i va₁ va₂
+  cases va₁ with
+  | vZ x => {
+    simp at r
+    apply Eval.EvalProp.App
+    apply Eval.EvalProp.Lam
+    exact ih_a
+    apply Eval.EvalProp.Rel
+    apply Eval.EvalProp.Var
+    unfold Env.lookupVal Env.updateVal
+    simp
+    rfl
+    apply Eval.EvalProp.ConstZ
+    rw[r]
+    simp [Eval.evalRelOp]
+    exact h₁
+  }
+  | _ => {
+    simp at r
+  }
 }

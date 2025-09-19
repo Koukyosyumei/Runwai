@@ -77,6 +77,9 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
   | toZ {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vF v)) :
       EvalProp σ T Δ (Expr.toZ e) (Ast.Value.vZ v.val)
 
+  | toF {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vZ v)) :
+      EvalProp σ T Δ (Expr.toF e) (Ast.Value.vF v)
+
   -- E‑VAR
   | Var {σ T Δ x v} : lookupVal σ x = v → EvalProp σ T Δ (Expr.var x) v
 
