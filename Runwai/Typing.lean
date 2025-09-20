@@ -51,7 +51,7 @@ inductive SubtypeJudgment :
       SubtypeJudgment Δ Γ (Ast.Ty.func x τx τr) (Ast.Ty.func y τy τs)
 
   /-- TSUB-ARR: Array subtyping -/
-  | TSub_Arr {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {n: Int} :
+  | TSub_Arr {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {n: ℕ} :
       SubtypeJudgment Δ Γ T₁ T₂ →
       SubtypeJudgment Δ Γ (Ast.Ty.arr T₁ n) (Ast.Ty.arr T₂ n)
 

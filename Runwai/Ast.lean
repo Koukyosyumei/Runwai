@@ -99,7 +99,7 @@ mutual
     | field    : Ty                                               -- F p
     | int      : Ty
     | bool     : Ty                                               -- Bool
-    | arr      : (ty: Ty) → Int → Ty                              -- [T; n]
+    | arr      : (ty: Ty) → ℕ → Ty                              -- [T; n]
     | refin    : (ty: Ty) → (pred: Predicate) → Ty                -- {ν : T | ϕ}
     | func     : (param: String) → (dom: Ty) → (cond: Ty) → Ty    -- x: τ₁ → τ₂
     deriving Lean.ToExpr
@@ -178,7 +178,7 @@ structure Chip where
   name    : String
   ident_t : String
   ident_i : String
-  width   : ℤ
+  width   : ℕ
   goal    : Ast.Ty
   body    : Ast.Expr
 deriving Lean.ToExpr

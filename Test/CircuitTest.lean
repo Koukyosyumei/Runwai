@@ -496,22 +496,10 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
     have hu₅ := h₁ "trace" (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) 1) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.len (.var Ast.mu)) (.constZ height))))
     simp [Env.lookupTy, Env.updateTy, Γ', Γ, Ty.makeEnvs] at hu₀ hu₁ hu₄ hu₅
-    cases hu₅
-    rename_i ihf iha ihb
-    cases ihf
-    cases iha
-    cases ihb
-    rename_i ih₁ ih₂ trace_arr_length
-    cases ih₂
-    cases ih₁
-    rename_i h
-    cases h
-    rename_i a
-    unfold Env.lookupVal Env.updateVal at a
-    simp at a
-    rename_i h_trace trace_arr
-    rw[a] at h_trace
-    simp[Eval.evalRelOp] at trace_arr_length
+
+    have hu₅' := eval_height_check hu₅
+    obtain ⟨trace_arr, ⟨h_trace, trace_arr_length⟩⟩ := hu₅'
+    simp at h_trace
 
     obtain ⟨h₁', h₂'⟩ := hu₄
     cases h₂'
@@ -523,155 +511,124 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
     cases v' with
     | vF trace_i_0_val => {
       simp[Eval.evalRelOp] at trace_i_0_val_k
-      cases h₁'
-      rename_i ih₁ ih₂ r
-      cases ih₂
-      cases ih₁
-      rename_i v' i_is_k
-      cases v' with
-      | vZ i_val => {
-        simp[Eval.evalRelOp] at r
-        rw[r] at i_is_k
-        cases hu₀
-        rename_i ih_f ih_a ih_b
-        cases ih_f
-        cases ih_a
-        rename_i va' a
-        cases ih_b
-        rename_i ih₁ ih₂ r
-        cases ih₂
+      have i_is_k := eval_var_eq_int h₁'
+      have n_is_height := eval_app_lam_eq_int hu₀
+      simp [PropSemantics.predToProp] at h₂
+      cases h₂ with
+      | inl h => {
+        obtain ⟨h₁, h₂⟩ := h
+        cases h₂
+        rename_i trace_ip1_0_eval ih₂' r
+        cases ih₂'
+        rename_i ih₁' ih₂' r
+        have := evalprop_deterministic ih₁ ih₁'
+        rw[← this] at r
+        cases ih₂'
+        simp [Eval.evalFieldOp] at r
+        rename_i v₁ v₂ r' i₂
+        rw[← r] at r'
+        cases h₁
+        rename_i ih₁ ih₂ r''
         cases ih₁
-        rename_i v₁' a
-        unfold Env.lookupVal Env.updateVal at a
-        simp at a
-        cases v₁' with
-        | vZ x => {
-          simp[Eval.evalRelOp] at r
-          rw[r] at a
-          rename_i n_is_height
-          rw[a] at n_is_height
-          simp [PropSemantics.predToProp] at h₂
-          cases h₂ with
-          | inl h => {
-            obtain ⟨h₁, h₂⟩ := h
-            cases h₂
-            rename_i trace_ip1_0_eval ih₂' r
-            cases ih₂'
-            rename_i ih₁' ih₂' r
-            have := evalprop_deterministic ih₁ ih₁'
-            rw[← this] at r
-            cases ih₂'
-            simp [Eval.evalFieldOp] at r
-            rename_i v₁ v₂ r' i₂
-            rw[← r] at r'
-            cases h₁
-            rename_i ih₁ ih₂ r''
-            cases ih₁
-            rename_i a
-            rw[i_is_k] at a
-            rw[← a] at r''
-            cases ih₂
-            rename_i ih₁ ih₂ r
-            cases ih₁
-            cases ih₂
-            rename_i a
-            rw[n_is_height] at a
-            rw[← a] at r
-            simp[Eval.evalIntegerOp] at r
-            rw[← r] at r''
-            simp[Eval.evalRelOp] at r''
-            have r''' := Nat.lt_sub_iff_add_lt.mp r''
-            have hb : Eval.EvalProp σ T Δ ((Ast.Expr.constZ (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
-              apply Eval.EvalProp.Rel
-              apply Eval.EvalProp.ConstZ
-              apply Eval.EvalProp.Var
-              exact n_is_height
-              simp [Eval.evalRelOp]
-              exact r'''
-            }
-            apply Eval.EvalProp.IfTrue
-            exact hb
-            cases v₁ with
-            | vF => {
-              simp[Eval.evalRelOp] at r'
-              rw[r'] at trace_ip1_0_eval
-              rw[trace_i_0_val_k] at trace_ip1_0_eval
-              cases trace_ip1_0_eval
-              rename_i iha ihi idx_kp1
-              cases ihi
-              cases iha
-              rename_i iha ihi idx_0
-              cases ihi
-              rename_i ih₁ ih₂ r
-              cases ih₂
-              cases ih₁
-              rename_i a
-              rw[i_is_k] at a
-              rw[← a] at r
-              simp [Eval.evalIntegerOp] at r
-              rw[← r] at idx_0
-              cases iha
-              rename_i a
-              rw[h_trace] at a
-              simp at a
-              rw[← a] at idx_0
-              apply Eval.EvalProp.Rel
-              apply Eval.EvalProp.ArrIdx
-              apply Eval.EvalProp.ArrIdx
-              apply Eval.EvalProp.Var
-              exact h_trace
-              apply Eval.EvalProp.ConstZ
-              exact idx_0
-              apply Eval.EvalProp.ConstZ
-              exact idx_kp1
-              apply Eval.EvalProp.toF
-              apply Eval.EvalProp.ConstZ
-              simp[Eval.evalRelOp]
-            }
-            | _ => {
-              simp[Eval.evalRelOp] at r'
-            }
-          }
-          | inr h => {
-              have hk : k ≥ height - 1 := by {
-                by_contra
-                rename_i hx
-                simp at hx
-                obtain ⟨h₁, _⟩ := h
-                have : Eval.EvalProp σ T Δ ((Ast.Expr.var "i").binRel Ast.RelOp.lt ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1))) (Ast.Value.vBool true) := by {
-                  apply Eval.EvalProp.Rel
-                  apply Eval.EvalProp.Var
-                  exact i_is_k
-                  apply Eval.EvalProp.ZBinOp
-                  apply Eval.EvalProp.Var
-                  exact n_is_height
-                  apply Eval.EvalProp.ConstZ
-                  simp[Eval.evalIntegerOp]
-                  rfl
-                  simp[Eval.evalRelOp]
-                  apply Nat.lt_sub_iff_add_lt.mpr
-                  exact hx
-                }
-                contradiction
-              }
-              have : Eval.EvalProp σ T Δ ((Ast.Expr.constZ (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool false) := by {
-                apply Eval.EvalProp.Rel
-                apply Eval.EvalProp.ConstZ
-                apply Eval.EvalProp.Var
-                exact n_is_height
-                simp [Eval.evalRelOp]
-                omega
-              }
-              apply Eval.EvalProp.IfFalse
-              exact this
-              apply Eval.EvalProp.ConstBool
-          }
+        rename_i a
+        rw[i_is_k] at a
+        rw[← a] at r''
+        cases ih₂
+        rename_i ih₁ ih₂ r
+        cases ih₁
+        cases ih₂
+        rename_i a
+        rw[n_is_height] at a
+        rw[← a] at r
+        simp[Eval.evalIntegerOp] at r
+        rw[← r] at r''
+        simp[Eval.evalRelOp] at r''
+        have r''' := Nat.lt_sub_iff_add_lt.mp r''
+        have hb : Eval.EvalProp σ T Δ ((Ast.Expr.constZ (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
+          apply Eval.EvalProp.Rel
+          apply Eval.EvalProp.ConstZ
+          apply Eval.EvalProp.Var
+          exact n_is_height
+          simp [Eval.evalRelOp]
+          exact r'''
+        }
+        apply Eval.EvalProp.IfTrue
+        exact hb
+        cases v₁ with
+        | vF => {
+          simp[Eval.evalRelOp] at r'
+          rw[r'] at trace_ip1_0_eval
+          rw[trace_i_0_val_k] at trace_ip1_0_eval
+          cases trace_ip1_0_eval
+          rename_i iha ihi idx_kp1
+          cases ihi
+          cases iha
+          rename_i iha ihi idx_0
+          cases ihi
+          rename_i ih₁ ih₂ r
+          cases ih₂
+          cases ih₁
+          rename_i a
+          rw[i_is_k] at a
+          rw[← a] at r
+          simp [Eval.evalIntegerOp] at r
+          rw[← r] at idx_0
+          cases iha
+          rename_i a
+          rw[h_trace] at a
+          simp at a
+          rw[← a] at idx_0
+          apply Eval.EvalProp.Rel
+          apply Eval.EvalProp.ArrIdx
+          apply Eval.EvalProp.ArrIdx
+          apply Eval.EvalProp.Var
+          exact h_trace
+          apply Eval.EvalProp.ConstZ
+          exact idx_0
+          apply Eval.EvalProp.ConstZ
+          exact idx_kp1
+          apply Eval.EvalProp.toF
+          apply Eval.EvalProp.ConstZ
+          simp[Eval.evalRelOp]
         }
         | _ => {
-          simp[Eval.evalRelOp] at r
+          simp[Eval.evalRelOp] at r'
         }
       }
-      | _ => simp[Eval.evalRelOp] at r
+      | inr h => {
+          have hk : k ≥ height - 1 := by {
+            by_contra
+            rename_i hx
+            simp at hx
+            obtain ⟨h₁, _⟩ := h
+            have : Eval.EvalProp σ T Δ ((Ast.Expr.var "i").binRel Ast.RelOp.lt ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1))) (Ast.Value.vBool true) := by {
+              apply Eval.EvalProp.Rel
+              apply Eval.EvalProp.Var
+              exact i_is_k
+              apply Eval.EvalProp.ZBinOp
+              apply Eval.EvalProp.Var
+              exact n_is_height
+              apply Eval.EvalProp.ConstZ
+              simp[Eval.evalIntegerOp]
+              rfl
+              simp[Eval.evalRelOp]
+              apply Nat.lt_sub_iff_add_lt.mpr
+              exact hx
+            }
+            contradiction
+          }
+          have : Eval.EvalProp σ T Δ ((Ast.Expr.constZ (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool false) := by {
+            apply Eval.EvalProp.Rel
+            apply Eval.EvalProp.ConstZ
+            apply Eval.EvalProp.Var
+            exact n_is_height
+            simp [Eval.evalRelOp]
+            omega
+          }
+          apply Eval.EvalProp.IfFalse
+          exact this
+          apply Eval.EvalProp.ConstBool
+      }
     }
     | _ => simp[Eval.evalRelOp] at trace_i_0_val_k
   }
