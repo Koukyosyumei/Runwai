@@ -78,7 +78,7 @@ def clkChip : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i",
   width := 1,
-  goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.var "i"))))
+  goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.Expr.branch (.binRel (.var "i") Ast.RelOp.lt (.var "n")) (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.var "i"))) (Ast.Expr.constBool true)))
   body := (.letIn "u₀" (.branch (Ast.exprEq (.var "i") (.constZ 0))
                           (.assertE (Ast.trace_i_j "trace" "i" 0) (.constF 0))
                           (.assertE (.constF 1) (.constF 1)))
@@ -476,7 +476,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
             @Ty.TypeJudgment Δ (Env.updateTy Γ' "u₄" (Ast.Ty.refin Ast.Ty.unit
                 (Ast.Predicate.and (Ast.Predicate.ind (Ast.exprEq (.var "i") (.constZ k)))
                                    (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.constZ k))))))) Η (Ast.Expr.var "u₁")
-              (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.renameVar (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.var "i"))) "i" (Ast.Expr.constZ (k + 1)) 1000))):= by {
+              (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.renameVar (Ast.Expr.branch (.binRel (.var "i") Ast.RelOp.lt (.var "n")) (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.var "i"))) (Ast.Expr.constBool true)) "i" (Ast.Expr.constZ (k + 1)) 1000))):= by {
     intro k
     apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_VarEnv
@@ -553,7 +553,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           simp [PropSemantics.predToProp] at h₂
           cases h₂ with
           | inl h => {
-            obtain ⟨_, h₂⟩ := h
+            obtain ⟨h₁, h₂⟩ := h
             cases h₂
             rename_i trace_ip1_0_eval ih₂' r
             cases ih₂'
@@ -564,6 +564,33 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
             simp [Eval.evalFieldOp] at r
             rename_i v₁ v₂ r' i₂
             rw[← r] at r'
+            cases h₁
+            rename_i ih₁ ih₂ r''
+            cases ih₁
+            rename_i a
+            rw[i_is_k] at a
+            rw[← a] at r''
+            cases ih₂
+            rename_i ih₁ ih₂ r
+            cases ih₁
+            cases ih₂
+            rename_i a
+            rw[n_is_height] at a
+            rw[← a] at r
+            simp[Eval.evalIntegerOp] at r
+            rw[← r] at r''
+            simp[Eval.evalRelOp] at r''
+            have r''' := Nat.lt_sub_iff_add_lt.mp r''
+            have hb : Eval.EvalProp σ T Δ ((Ast.Expr.constZ (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
+              apply Eval.EvalProp.Rel
+              apply Eval.EvalProp.ConstZ
+              apply Eval.EvalProp.Var
+              exact n_is_height
+              simp [Eval.evalRelOp]
+              exact r'''
+            }
+            apply Eval.EvalProp.IfTrue
+            exact hb
             cases v₁ with
             | vF => {
               simp[Eval.evalRelOp] at r'
@@ -606,7 +633,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
             }
           }
           | inr h => {
-              have : k ≥ height - 1 := by {
+              have hk : k ≥ height - 1 := by {
                 by_contra
                 rename_i hx
                 simp at hx
@@ -627,20 +654,17 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
                 }
                 contradiction
               }
-              have hnone : trace_arr[k+1]? = none := by
-                have hk : k + 1 ≥ height := by omega
-                rw [← ‹trace_arr.length = height›] at hk
-                have hle : trace_arr.length ≤ k + 1 := hk
-                simp
-                exact hle
-
-              apply Eval.EvalProp.Rel
-              apply Eval.EvalProp.ArrIdx
-              apply Eval.EvalProp.ArrIdx
-              apply Eval.EvalProp.Var
-              exact h_trace
-              apply Eval.EvalProp.ConstZ
-              contradiction
+              have : Eval.EvalProp σ T Δ ((Ast.Expr.constZ (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool false) := by {
+                apply Eval.EvalProp.Rel
+                apply Eval.EvalProp.ConstZ
+                apply Eval.EvalProp.Var
+                exact n_is_height
+                simp [Eval.evalRelOp]
+                omega
+              }
+              apply Eval.EvalProp.IfFalse
+              exact this
+              apply Eval.EvalProp.ConstBool
           }
         }
         | _ => {
