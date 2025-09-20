@@ -151,6 +151,10 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
       (idx : vs[j]? = some v) :
       EvalProp σ T Δ (Expr.arrIdx a i) v
 
+  | Len {σ T Δ e vs}
+      (h: EvalProp σ T Δ e (Ast.Value.vArr vs)) :
+      EvalProp σ T Δ (Expr.len e) (Value.vZ (vs.length))
+
   -- E-LOOKUP
   | LookUp {σ T Δ vname cname args e v c rows}
     -- This constructor defines the semantics for a lookup expression, which serves a dual purpose:

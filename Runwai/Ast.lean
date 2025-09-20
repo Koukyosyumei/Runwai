@@ -64,6 +64,7 @@ mutual
     | integerExpr : (lhs: Expr) → (op: IntegerOp) → (rhs: Expr) → Expr
     | binRel      : (lhs: Expr) → (op: RelOp) → (rhs: Expr) → Expr       -- e₁ ⊘ e₂
     | arrIdx      : (arr: Expr) → (idx: Expr) → Expr                     -- e₁[e₂]
+    | len         : (arr: Expr) → Expr
     | branch      : (cond: Expr) → (th: Expr) → (els: Expr) → Expr       -- if cond then e₁ else e₂
     | lam         : (param: String) → (τ: Ty) → (body: Expr) → Expr      -- λx : τ. e
     | app         : (f: Expr) → (arg: Expr) → Expr                       -- e₁ e₂
@@ -118,6 +119,7 @@ def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr
     | Expr.integerExpr l o r => Expr.integerExpr (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
     | Expr.binRel l o r  => Expr.binRel (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
     | Expr.arrIdx a i    => Expr.arrIdx (renameVar a oldName newExpr (cnt - 1)) (renameVar i oldName newExpr (cnt - 1))
+    | Expr.len arr       => Expr.len (renameVar arr oldName newExpr (cnt - 1))
     | Expr.branch c t e  => Expr.branch (renameVar c oldName newExpr (cnt - 1)) (renameVar t oldName newExpr (cnt - 1)) (renameVar e oldName newExpr (cnt - 1))
     | Expr.lam p τ b     =>
         if p = oldName then
@@ -217,6 +219,7 @@ mutual
     | Expr.integerExpr l op r  => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.binRel l op r     => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.arr elems         => "[" ++ String.intercalate ", " (elems.map exprToString) ++ "]"
+    | Expr.len arr           => s!"len({exprToString arr})"
     | Expr.arrIdx a i        => s!"{exprToString a}[{exprToString i}]"
     | Expr.branch c e₁ e₂    => s!"if {exprToString c} then {exprToString e₁} else {exprToString e₂}"
     | Expr.lam param τ body  => s!"λ{param} : {tyToString τ}. {exprToString body}"

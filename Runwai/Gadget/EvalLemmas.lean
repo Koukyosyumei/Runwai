@@ -169,6 +169,13 @@ theorem evalprop_deterministic
              h_asserts' h_body'
     apply h_body_ih h_body'
   }
+  | Len => {
+    cases h₂
+    rename_i h h_ih vs h'
+    have h := h_ih h'
+    simp at h ⊢
+    rw[h]
+  }
   | toZ => {
     cases h₂
     rename_i v₁ ih₀ ih₁ fv₂ ih₃
