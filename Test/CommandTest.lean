@@ -28,7 +28,8 @@ import Runwai.Tactic
       apply lookup_update_ne
       simp
       apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_self
+      apply lookup_update_ne
+      simp
       apply constZ_refine_lt
       simp
     . apply Ty.TypeJudgment.TE_ConstF

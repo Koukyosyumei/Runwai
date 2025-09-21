@@ -172,7 +172,7 @@ abbrev exprEq (e₁ e₂: Expr): Expr := Expr.binRel e₁ RelOp.eq e₂
 abbrev constTruePred : Predicate := Predicate.ind (Ast.Expr.constBool true)
 abbrev trace_i_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.var ident_i)).arrIdx (Ast.Expr.constZ j)
 abbrev trace_ip1_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.integerExpr (Ast.Expr.var ident_i) Ast.IntegerOp.add (Ast.Expr.constZ 1))).arrIdx (Ast.Expr.constZ j)
-abbrev mu: String := "ν"
+abbrev nu: String := "ν"
 
 structure Chip where
   name    : String

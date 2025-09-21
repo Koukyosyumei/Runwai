@@ -509,7 +509,7 @@ lemma eval_lt_val {σ T Δ x t} (h: Eval.EvalProp σ T Δ ((Ast.Expr.var x).toZ.
 
 lemma eval_lt_lam_val {σ T Δ x t}
   (h: Eval.EvalProp σ T Δ
-  ((Expr.lam Ast.mu Ty.field ((Expr.var Ast.mu).toZ.binRel RelOp.lt (Expr.constZ t))).app (Expr.var x))
+  ((Expr.lam Ast.nu Ty.field ((Expr.var Ast.nu).toZ.binRel RelOp.lt (Expr.constZ t))).app (Expr.var x))
   (Value.vBool true)):
   ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h
@@ -559,7 +559,7 @@ lemma eval_var_eq_int (h: Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var x) (As
 
 /-
 Eval.EvalProp σ T Δ
-  ((Ast.Expr.lam Ast.mu Ast.Ty.int (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ height))).app (Ast.Expr.var "n"))
+  ((Ast.Expr.lam Ast.nu Ast.Ty.int (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ height))).app (Ast.Expr.var "n"))
   (Ast.Value.vBool true)
 -/
 lemma eval_app_lam_eq_int (h: Eval.EvalProp σ T Δ
@@ -592,11 +592,11 @@ lemma eval_app_lam_eq_int (h: Eval.EvalProp σ T Δ
   }
 
 lemma eval_height_check (h: Eval.EvalProp σ T Δ
-  ((Ast.Expr.lam Ast.mu
+  ((Ast.Expr.lam Ast.nu
         ((((Ast.Ty.field.refin (Ast.Predicate.ind (Ast.Expr.constBool true))).arr 1).refin
               (Ast.Predicate.ind (Ast.Expr.constBool true))).arr
           height)
-        (Ast.exprEq (Ast.Expr.var Ast.mu).len (Ast.Expr.constZ height))).app
+        (Ast.exprEq (Ast.Expr.var Ast.nu).len (Ast.Expr.constZ height))).app
     (Ast.Expr.var trace))
   (Ast.Value.vBool true)):
   ∃ trace_array: List Ast.Value, Env.lookupVal σ trace = some (Ast.Value.vArr trace_array) ∧

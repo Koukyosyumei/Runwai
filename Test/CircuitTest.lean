@@ -240,7 +240,7 @@ lemma clp_base
           have : Eval.EvalProp σ T Δ ((Ast.Expr.constZ 0).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
             apply Eval.EvalProp.Rel
             apply Eval.EvalProp.ConstZ
-            have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ height))))
+            have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ height))))
             simp [Env.lookupTy, Env.updateTy, Ty.makeEnvs] at hu₀
             have n_is_height := eval_app_lam_eq_int hu₀
             apply Eval.EvalProp.Var
@@ -343,7 +343,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply lookup_update_self
   apply lookup_update_ne
   simp[Η, Env.freshName]
-  unfold Ast.mu
+  unfold Ast.nu
   simp
   apply constZ_refine_lt
   simp
@@ -401,9 +401,9 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   unfold Η at h₁
   simp[Env.freshName] at h₁
   have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int
-    (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ height))))
+    (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ height))))
   have hu₁ := h₁ "i" (Ast.Ty.refin Ast.Ty.int
-    (Ast.Predicate.dep Ast.mu (Ast.Expr.binRel (Ast.Expr.var Ast.mu) Ast.RelOp.lt (Ast.Expr.constZ height))))
+    (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ height))))
   have hu₂ := h₁ "@ind_step_prev" (Ast.Ty.unit.refin
               (Ast.renameVarinPred
                 (Ast.Predicate.ind
@@ -423,7 +423,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
                 ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1)))).not.and
         (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))
   have hu₅ := h₁ "trace" (.refin (.arr (.refin (.arr (.refin .field
-    (Ast.Predicate.ind (Ast.Expr.constBool true))) 1) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.len (.var Ast.mu)) (.constZ height))))
+    (Ast.Predicate.ind (Ast.Expr.constBool true))) 1) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constZ height))))
   simp [Env.lookupTy, Env.updateTy, Γ', Γ, Ty.makeEnvs] at hu₀ hu₁ hu₂ hu₃ hu₄ hu₅
   have h_n_is_height := eval_app_lam_eq_int hu₀
   have h_i_kp1 := eval_var_eq_int hu₃
@@ -676,9 +676,9 @@ lemma u8_lookup_refines_lt256 (x u: String)
   (h₂: (Env.freshName Η (Env.lookupChip Δ "u8").ident_i) = new_ident_i)
   (h₃: (Env.freshName Η (Env.lookupChip Δ "u8").ident_t) = new_ident_t)
   (h₄: new_ident_t ≠ "i")
-  (h₅: x ≠ Ast.mu):
+  (h₅: x ≠ Ast.nu):
   @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x)
-    (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))) := by {
+    (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))) := by {
     apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_Var
     exact h₀
@@ -716,7 +716,7 @@ lemma u8_lookup_refines_lt256 (x u: String)
       rw[← ih₁] at r
       cases ih₂
       rename_i ih₂
-      have : Env.lookupVal (Env.updateVal σ Ast.mu va) x = Env.lookupVal σ x := by {
+      have : Env.lookupVal (Env.updateVal σ Ast.nu va) x = Env.lookupVal σ x := by {
         apply lookup_val_update_ne
         exact h₅
       }
@@ -781,7 +781,7 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
   decide
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  have hmu₀ : (Ast.mu ≠ "value_0") := by decide
+  have hmu₀ : (Ast.nu ≠ "value_0") := by decide
   rw[if_neg hmu₀]
   rw[if_neg hmu₀]
   simp [Ast.renameVarinPred, Ast.renameVar]
@@ -795,15 +795,15 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
   decide
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  have hmu₀ : (Ast.mu ≠ "value_0") := by decide
+  have hmu₀ : (Ast.nu ≠ "value_0") := by decide
   rw[if_neg hmu₀]
   rw[if_neg hmu₀]
   simp [Ast.renameVarinPred, Ast.renameVar]
-  have hmu₁ : (Ast.mu ≠ "value_1") := by decide
+  have hmu₁ : (Ast.nu ≠ "value_1") := by decide
   rw[if_neg hmu₁]
   rw[if_neg hmu₁]
   simp [Ast.renameVarinPred, Ast.renameVar]
-  have hmu₂ : (Ast.mu ≠ "value_2") := by decide
+  have hmu₂ : (Ast.nu ≠ "value_2") := by decide
   rw[if_neg hmu₂]
   rw[if_neg hmu₂]
   apply u8_lookup_refines_lt256 "alpha_3" "l₃"

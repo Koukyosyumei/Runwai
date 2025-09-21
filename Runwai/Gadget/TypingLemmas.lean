@@ -56,7 +56,7 @@ lemma tyenvToProp_implies_varToProp
   exact hΓx
 
 lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
-  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_ConstZ
   apply Ty.SubtypeJudgment.TSub_Refine
@@ -82,8 +82,8 @@ lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
   exact h
 }
 
-lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ v₁))))} {h₁: v₁ < v₂} :
-  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).binRel Ast.RelOp.lt (Ast.Expr.constZ v₂)))) := by {
+lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ v₁))))} {h₁: v₁ < v₂} :
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constZ v₂)))) := by {
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
   exact h₀
@@ -91,7 +91,7 @@ lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.r
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ T v h₃ h₄
   unfold PropSemantics.tyenvToProp at h₃
-  have h₅ := h₃ x ((Ty.int.refin (Predicate.dep mu (exprEq (Expr.var mu) (Expr.constZ v₁))))) h₀
+  have h₅ := h₃ x ((Ty.int.refin (Predicate.dep Ast.nu (exprEq (Expr.var Ast.nu) (Expr.constZ v₁))))) h₀
   simp [PropSemantics.predToProp] at h₄ ⊢
   simp [PropSemantics.varToProp] at h₅
   rw[h₀] at h₅
@@ -132,15 +132,15 @@ lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.r
 
 lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
   (h₀: Env.lookupTy Γ n = (Ast.Ty.refin Ast.Ty.int
-      (Ast.Predicate.dep mu (Ast.exprEq (Ast.Expr.var mu) (Ast.Expr.constZ height)))))
+      (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu ) (Ast.Expr.constZ height)))))
   (h₁: Env.lookupTy Γ x = (Ast.Ty.unit.refin
       (Ast.Predicate.ind
         ((Ast.Expr.var i).binRel Ast.RelOp.lt
           ((Ast.Expr.var n).integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ d))))))
   (h₂: Env.lookupTy Γ i = (Ast.Ty.int.refin φ))
-  (h₃: i ≠ mu):
+  (h₃: i ≠ Ast.nu ):
   @Ty.TypeJudgment Δ Γ Η ((Ast.Expr.var i).integerExpr Ast.IntegerOp.add (Ast.Expr.constZ d))
-    (Ast.Ty.int.refin (Ast.Predicate.dep mu ((Ast.Expr.var mu).binRel Ast.RelOp.lt (Ast.Expr.constZ height)))) := by {
+    (Ast.Ty.int.refin (Ast.Predicate.dep Ast.nu  ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constZ height)))) := by {
     apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_BinOpInteger
     apply Ty.TypeJudgment.TE_VarEnv
@@ -150,7 +150,7 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
     apply Ty.SubtypeJudgment.TSub_Refl
     intro σ T v ha hb
     unfold PropSemantics.tyenvToProp at ha
-    have h₀' := ha n (Ty.int.refin (Predicate.dep mu (exprEq (Expr.var mu) (Expr.constZ height)))) h₀
+    have h₀' := ha n (Ty.int.refin (Predicate.dep Ast.nu (exprEq (Expr.var Ast.nu) (Expr.constZ height)))) h₀
     have h₁' := ha x (Ty.unit.refin
       (Predicate.ind ((Expr.var i).binRel RelOp.lt ((Expr.var n).integerExpr IntegerOp.sub (Expr.constZ d))))) h₁
     simp at h₀' h₁'
@@ -221,7 +221,7 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
         rw[ih₁]
         rename_i a'
         rename_i va' v2₂' i'
-        have : Env.lookupVal (Env.updateVal σ mu va') i = Env.lookupVal σ i := by {
+        have : Env.lookupVal (Env.updateVal σ Ast.nu va') i = Env.lookupVal σ i := by {
           apply lookup_val_update_ne
           exact h₃
         }
