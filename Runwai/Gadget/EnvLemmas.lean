@@ -62,6 +62,26 @@ lemma lookup_update_self
   unfold Env.updateTy Env.lookupTy
   simp_all
 
+lemma lookup_val_update_self
+  (σ : Env.ValEnv) (x : String) (v : Ast.Value) :
+  Env.lookupVal (Env.updateVal σ x v) x = v := by
+  unfold Env.updateVal Env.lookupVal
+  simp_all
+
+lemma lookup_after_update_self:
+  (Env.lookupVal (Env.updateVal σ y (Env.lookupVal σ x)) x) = (Env.lookupVal σ x) := by {
+    by_cases h: x = y
+    {
+      unfold Env.lookupVal Env.updateVal
+      simp_all
+    }
+    {
+      apply lookup_val_update_ne
+      simp
+      exact h
+    }
+  }
+
 /-- A helper theorem for `Option`: if an option's `isSome` property is false, the option
 must be `none`. -/
 theorem eq_none_of_isSome_eq_false {α : Type _}
