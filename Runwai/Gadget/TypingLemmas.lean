@@ -128,3 +128,93 @@ lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.r
     simp at r
   }
 }
+
+/-
+  (Env.updateTy
+    (Env.updateTy Γ "u₀"
+      (Ast.Ty.unit.refin
+        (((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))).and
+              (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 0)))).or
+          ((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))).not.and
+            (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1)))))))
+    (Env.freshName Η "branch")
+    (Ast.Ty.unit.refin
+      (Ast.Predicate.ind
+        ((Ast.Expr.var "i").binRel Ast.RelOp.lt
+          ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1))))))
+-/
+
+lemma varZ_refine_int_diff_lt {Γ Η} (x: String)
+  (h₀: Env.lookupTy Γ n = (Ast.Ty.refin Ast.Ty.int
+      (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ height)))))
+  (h₁: Env.lookupTy Γ x = (Ast.Ty.unit.refin
+      (Ast.Predicate.ind
+        ((Ast.Expr.var i).binRel Ast.RelOp.lt
+          ((Ast.Expr.var n).integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ d))))))
+  (h₂: Env.lookupTy Γ i = (Ast.Ty.int.refin φ)):
+  @Ty.TypeJudgment Δ Γ Η ((Ast.Expr.var i).integerExpr Ast.IntegerOp.add (Ast.Expr.constZ d))
+    (Ast.Ty.int.refin (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).binRel Ast.RelOp.lt (Ast.Expr.constZ height)))) := by {
+    apply Ty.TypeJudgment.TE_SUB
+    apply Ty.TypeJudgment.TE_BinOpInteger
+    apply Ty.TypeJudgment.TE_VarEnv
+    exact h₂
+    apply Ty.TypeJudgment.TE_ConstZ
+    apply Ty.SubtypeJudgment.TSub_Refine
+    apply Ty.SubtypeJudgment.TSub_Refl
+    intro σ T v ha hb
+    unfold PropSemantics.tyenvToProp at ha
+    have h₀' := ha n (Ty.int.refin (Predicate.dep mu (exprEq (Expr.var mu) (Expr.constZ height)))) h₀
+    have h₁' := ha x (Ty.unit.refin
+      (Predicate.ind ((Expr.var i).binRel RelOp.lt ((Expr.var n).integerExpr IntegerOp.sub (Expr.constZ d))))) h₁
+    simp at h₀' h₁'
+    rw[h₀] at h₀'
+    simp at h₀'
+    rw[h₁] at h₁'
+    simp at h₁'
+    cases h₀'
+    rename_i ihf iha idx
+    cases ihf
+    cases iha
+    cases idx
+    rename_i ih₁ ih₂ r
+    cases ih₂
+    cases ih₁
+    rename_i a
+    unfold Env.lookupVal Env.updateVal at a
+    simp at a
+    cases h₁'
+    rename_i ih₁ ih₂ r
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r
+    cases ih₂
+    cases ih₁
+    simp at r
+    rename_i hn' _ r' i_val _ r hi n_val hn
+    rw[hn] at hn'
+    rw[← hn'] at a
+    rw[← a] at r'
+    simp at r'
+    rename_i r''
+    rw[← r] at r''
+    simp at hb
+    cases hb
+    rename_i ihf iha ihb
+    cases ihf
+    cases i_val with
+    | vZ i_val' => {
+      simp at r''
+      simp[PropSemantics.predToProp]
+      apply Eval.EvalProp.App
+      apply Eval.EvalProp.Lam
+      exact iha
+      apply Eval.EvalProp.Rel
+      apply Eval.EvalProp.Var
+      unfold Env.lookupVal Env.updateVal
+      simp
+
+    }
+    | _ => {
+      simp at r''
+    }
+  }
