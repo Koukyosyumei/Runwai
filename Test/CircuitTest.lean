@@ -336,11 +336,11 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
   simp
-  simp[Η, Env.freshName]
+  simp[Η, Env.freshName, Ty.branchLabel]
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
   simp
-  simp[Η, Env.freshName]
+  simp[Η, Env.freshName, Ty.branchLabel]
   apply constZ_refine_lt
   simp
   apply Ty.TypeJudgment.TE_ConstF
@@ -366,14 +366,14 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
   simp
-  simp[Η, Env.freshName]
-  apply varZ_refine_int_diff_lt "n" (Env.freshName Η "branch")
+  simp[Η, Env.freshName, Ty.branchLabel]
+  apply varZ_refine_int_diff_lt "n" (Env.freshName Η Ty.branchLabel)
   apply lookup_update_ne
-  simp[Η, Env.freshName]
-  simp[Η, Env.freshName]
+  simp[Η, Env.freshName, Ty.branchLabel]
+  simp[Η, Env.freshName, Ty.branchLabel]
   apply lookup_update_self
   apply lookup_update_ne
-  simp[Η, Env.freshName]
+  simp[Η, Env.freshName, Ty.branchLabel]
   unfold Ast.nu
   simp
   apply constZ_refine_lt
@@ -383,10 +383,10 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
-  simp[Η, Env.freshName]
+  simp[Η, Env.freshName, Ty.branchLabel]
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
-  simp[Η, Env.freshName]
+  simp[Η, Env.freshName, Ty.branchLabel]
   apply constZ_refine_lt
   simp
   apply Ty.TypeJudgment.TE_ConstF
@@ -423,7 +423,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
-  simp[Η, Env.freshName]
+  simp[Η, Env.freshName, Ty.indStepEqKLabel]
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ T v h₁ h₂
@@ -435,13 +435,13 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
     (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ height))))
   have hu₁ := h₁ "i" (Ast.Ty.refin Ast.Ty.int
     (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ height))))
-  have hu₂ := h₁ "@ind_step_prev" (Ast.Ty.unit.refin
+  have hu₂ := h₁ Ty.indStepPrevLabel (Ast.Ty.unit.refin
               (Ast.renameVarinPred
                 (Ast.Predicate.ind
                   (((Ast.Expr.var "i").binRel Ast.RelOp.lt (Ast.Expr.var "n")).branch
                     (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.var "i").toF) (Ast.Expr.constBool true)))
                 "i" (Ast.Expr.constZ k)))
-  have hu₃ := h₁ "@ind_step_i_eq_kp1" (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ (k)))))
+  have hu₃ := h₁ Ty.indStepEqKLabel (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ (k)))))
   have hu₄ := h₁ "u₁" (Ast.Ty.unit.refin
     (((Ast.Predicate.ind
               ((Ast.Expr.var "i").binRel Ast.RelOp.lt
@@ -455,7 +455,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
         (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))
   have hu₅ := h₁ "trace" (.refin (.arr (.refin (.arr (.refin .field
     (Ast.Predicate.ind (Ast.Expr.constBool true))) 1) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constZ height))))
-  simp [Env.lookupTy, Env.updateTy, Γ', Γ, Ty.makeEnvs] at hu₀ hu₁ hu₂ hu₃ hu₄ hu₅
+  simp [Env.lookupTy, Env.updateTy, Γ', Γ, Ty.makeEnvs, Ty.indStepPrevLabel, Ty.indStepEqKLabel] at hu₀ hu₁ hu₂ hu₃ hu₄ hu₅
   have h_n_is_height := eval_app_lam_eq_int hu₀
   have h_i_kp1 := eval_var_eq_int hu₃
   have hu₅' := eval_height_check hu₅

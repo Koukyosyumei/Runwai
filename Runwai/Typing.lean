@@ -72,6 +72,11 @@ instance identifiers during a `lookup`.
 def update_UsedNames (c: Ast.Chip) (Η: Env.UsedNames) : Env.UsedNames :=
   [Env.freshName Η c.ident_i, Env.freshName Η c.ident_t] ++ Η
 
+abbrev branchLabel      : String := "@branch"
+abbrev indBaseLabel     : String := "@ind_base"
+abbrev indStepPrevLabel : String := "@ind_step_prev"
+abbrev indStepEqKLabel  : String := "@ind_step_eq_k"
+
 /--
   Typing judgment `Γ ⊢ e : τ`: expression `e` has type `τ`
   under type environment `Γ`, valuation `σ`, Chips `Δ`, and fuel.
@@ -101,8 +106,8 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   -- TE-BRANCH
   | TE_Branch {Γ: Env.TyEnv} {Η: Env.UsedNames} {c e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₀ φ₁ φ₂: Ast.Predicate}:
     TypeJudgment Γ Η c  (Ast.Ty.refin Ast.Ty.bool φ₀) →
-    TypeJudgment (Env.updateTy Γ (Env.freshName Η "branch") (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind c))) ((Env.freshName Η "branch") :: Η) e₁ (Ast.Ty.refin τ φ₁) →
-    TypeJudgment (Env.updateTy Γ (Env.freshName Η "branch") (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.not (Ast.Predicate.ind c)))) ((Env.freshName Η "branch") :: Η) e₂ (Ast.Ty.refin τ φ₂) →
+    TypeJudgment (Env.updateTy Γ (Env.freshName Η branchLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind c))) ((Env.freshName Η branchLabel) :: Η) e₁ (Ast.Ty.refin τ φ₁) →
+    TypeJudgment (Env.updateTy Γ (Env.freshName Η branchLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.not (Ast.Predicate.ind c)))) ((Env.freshName Η branchLabel) :: Η) e₂ (Ast.Ty.refin τ φ₂) →
     TypeJudgment Γ Η (Ast.Expr.branch c e₁ e₂)
       (Ast.Ty.refin τ (Ast.Predicate.or
         (Ast.Predicate.and (Ast.Predicate.ind c) φ₁)
@@ -183,13 +188,13 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   | TE_Inductive {Γ: Env.TyEnv} {Η: Env.UsedNames} {φ: Ast.Predicate} {e: Ast.Expr} {τ: Ast.Ty} {b: ℕ} (i: String)
     (h₀: Env.lookupTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ b)))))
     (h₁: @TypeJudgment Δ
-      (Env.updateTy Γ (Env.freshName Η "@ind_base") (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ 0)))))
-      ((Env.freshName Η "@ind_base")::Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constZ 0))))
+      (Env.updateTy Γ (Env.freshName Η indBaseLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ 0)))))
+      ((Env.freshName Η indBaseLabel)::Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constZ 0))))
     (h₂: ∀ k: ℕ, k < b - 1 → @TypeJudgment Δ
       (Env.updateTy (Env.updateTy Γ
-        (Env.freshName Η "@ind_step_prev") (Ast.Ty.refin Ast.Ty.unit (Ast.renameVarinPred φ i (Ast.Expr.constZ k))))
-        (Env.freshName Η "@ind_step_i_eq_kp1") (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ k)))))
-      ([(Env.freshName Η "@ind_step_i_eq_kp1"), (Env.freshName Η "@ind_base")] ++ Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constZ (k + 1)))))
+        (Env.freshName Η indStepPrevLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.renameVarinPred φ i (Ast.Expr.constZ k))))
+        (Env.freshName Η indStepEqKLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ k)))))
+      ([(Env.freshName Η indStepEqKLabel), (Env.freshName Η indStepPrevLabel), (Env.freshName Η indBaseLabel)] ++ Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constZ (k + 1)))))
     : TypeJudgment Γ Η e (Ast.Ty.refin τ φ)
 
 /--
