@@ -165,7 +165,38 @@ theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
   apply lookup_update_self;
   repeat decide
 
-lemma clp_base
+theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
+  unfold Ty.chipCorrect
+  intro i hi Γ Η
+  auto_trace_index
+  apply Ty.TypeJudgment.TE_LetIn
+  rfl
+  apply Ty.TypeJudgment.TE_App
+  apply Ty.TypeJudgment.TE_App
+  apply Ty.TypeJudgment.TE_App
+  apply iszero_func_typing_soundness
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_ne_of_lookup
+  simp
+  apply lookup_update_ne_of_lookup
+  simp
+  apply lookup_update_self
+  rfl
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_ne_of_lookup
+  simp
+  apply lookup_update_self
+  rfl
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_self
+  rfl
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_self
+
+lemma clkChip_correctness_base
   (hh : 2 ≤ height)
   (hΓ: Γ = Ty.makeEnvs clkChip height)
   (hΗ: Η = ["i", "trace"])
@@ -384,7 +415,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_Inductive "i"
   apply lookup_update_ne
   simp
-  apply clp_base hh
+  apply clkChip_correctness_base hh
   rfl
   rfl
   exact hΓ'
@@ -606,37 +637,6 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
     contradiction
   }
 }
-
-theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
-  unfold Ty.chipCorrect
-  intro i hi Γ Η
-  auto_trace_index
-  apply Ty.TypeJudgment.TE_LetIn
-  rfl
-  apply Ty.TypeJudgment.TE_App
-  apply Ty.TypeJudgment.TE_App
-  apply Ty.TypeJudgment.TE_App
-  apply iszero_func_typing_soundness
-  apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne_of_lookup
-  simp
-  apply lookup_update_ne_of_lookup
-  simp
-  apply lookup_update_self
-  rfl
-  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne_of_lookup
-  simp
-  apply lookup_update_self
-  rfl
-  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self
-  rfl
-  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self
 
 lemma eval_var_lt_of_update
   (h₀: Eval.EvalProp σ T Δ v va)
