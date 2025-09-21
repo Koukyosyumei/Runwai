@@ -1,5 +1,6 @@
 import Runwai.Typing
 import Runwai.Gadget.Utils
+import Runwai.Gadget.EnvLemmas
 
 open Ast
 
@@ -129,31 +130,17 @@ lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.r
   }
 }
 
-/-
-  (Env.updateTy
-    (Env.updateTy Γ "u₀"
-      (Ast.Ty.unit.refin
-        (((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))).and
-              (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 0)))).or
-          ((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))).not.and
-            (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1)))))))
-    (Env.freshName Η "branch")
-    (Ast.Ty.unit.refin
-      (Ast.Predicate.ind
-        ((Ast.Expr.var "i").binRel Ast.RelOp.lt
-          ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1))))))
--/
-
-lemma varZ_refine_int_diff_lt {Γ Η} (x: String)
+lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
   (h₀: Env.lookupTy Γ n = (Ast.Ty.refin Ast.Ty.int
-      (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ height)))))
+      (Ast.Predicate.dep mu (Ast.exprEq (Ast.Expr.var mu) (Ast.Expr.constZ height)))))
   (h₁: Env.lookupTy Γ x = (Ast.Ty.unit.refin
       (Ast.Predicate.ind
         ((Ast.Expr.var i).binRel Ast.RelOp.lt
           ((Ast.Expr.var n).integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ d))))))
-  (h₂: Env.lookupTy Γ i = (Ast.Ty.int.refin φ)):
+  (h₂: Env.lookupTy Γ i = (Ast.Ty.int.refin φ))
+  (h₃: i ≠ mu):
   @Ty.TypeJudgment Δ Γ Η ((Ast.Expr.var i).integerExpr Ast.IntegerOp.add (Ast.Expr.constZ d))
-    (Ast.Ty.int.refin (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).binRel Ast.RelOp.lt (Ast.Expr.constZ height)))) := by {
+    (Ast.Ty.int.refin (Ast.Predicate.dep mu ((Ast.Expr.var mu).binRel Ast.RelOp.lt (Ast.Expr.constZ height)))) := by {
     apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_BinOpInteger
     apply Ty.TypeJudgment.TE_VarEnv
@@ -201,6 +188,17 @@ lemma varZ_refine_int_diff_lt {Γ Η} (x: String)
     cases hb
     rename_i ihf iha ihb
     cases ihf
+    cases ihb
+    rename_i ih₁ ih₂ r
+    cases ih₁
+    rename_i a
+    unfold Env.lookupVal Env.updateVal at a
+    simp at a
+    cases ih₂
+    rename_i ih₁ ih₂ r
+    cases ih₁
+    cases ih₂
+    simp at r
     cases i_val with
     | vZ i_val' => {
       simp at r''
@@ -212,7 +210,32 @@ lemma varZ_refine_int_diff_lt {Γ Η} (x: String)
       apply Eval.EvalProp.Var
       unfold Env.lookupVal Env.updateVal
       simp
-
+      rfl
+      apply Eval.EvalProp.ConstZ
+      rename_i ih₂ _ u₁ _ ih₁ _ _
+      rw[← r] at ih₁
+      cases u₁ with
+      | vZ uv₁ => {
+        simp at ih₁
+        rw[a]
+        rw[ih₁]
+        rename_i a'
+        rename_i va' v2₂' i'
+        have : Env.lookupVal (Env.updateVal σ mu va') i = Env.lookupVal σ i := by {
+          apply lookup_val_update_ne
+          exact h₃
+        }
+        rw[this] at a'
+        rw[hi] at a'
+        rw[r'] at r''
+        simp at a'
+        rw[a'] at r''
+        simp [Eval.evalRelOp]
+        omega
+      }
+      | _ => {
+        simp at ih₁
+      }
     }
     | _ => {
       simp at r''

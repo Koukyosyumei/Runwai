@@ -473,7 +473,15 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply lookup_update_ne
   simp
   simp[Η, Env.freshName]
-  sorry
+  apply varZ_refine_int_diff_lt "n" (Env.freshName Η "branch")
+  apply lookup_update_ne
+  simp[Η, Env.freshName]
+  simp[Η, Env.freshName]
+  apply lookup_update_self
+  apply lookup_update_ne
+  simp[Η, Env.freshName]
+  unfold Ast.mu
+  simp
   apply constZ_refine_lt
   simp
   apply Ty.TypeJudgment.TE_BinOpField
@@ -482,7 +490,9 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
   simp[Η, Env.freshName]
-  sorry
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_ne
+  simp[Η, Env.freshName]
   apply constZ_refine_lt
   simp
   apply Ty.TypeJudgment.TE_ConstF
@@ -519,8 +529,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne
-  unfold Η
-  simp[Env.freshName]
+  simp[Η, Env.freshName]
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ T v h₁ h₂
