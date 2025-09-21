@@ -29,6 +29,116 @@ lemma tyenv_dep_to_eval_expr {σ T Δ Γ x τ body} (h₁: PropSemantics.tyenvTo
     exact h₁'
   }
 
+theorem ty_bounded_induction
+  (hi: Env.lookupTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ b)))))
+  (h_base: PropSemantics.tyenvToProp σ T Δ Γ → Env.lookupVal σ i = Value.vZ 0 → (PropSemantics.predToProp σ T Δ T₁ φ₁ v → PropSemantics.predToProp σ T Δ T₂ φ₂ v))
+  (h_step: ∀ k: ℕ, k < b - 1 →
+    (Env.lookupVal σ i = Value.vZ k → PropSemantics.predToProp σ T Δ T₁ φ₁ v → PropSemantics.predToProp σ T Δ T₂ φ₂ v) →
+    (Env.lookupVal σ i = Value.vZ (k + 1) → PropSemantics.predToProp σ T Δ T₁ φ₁ v → PropSemantics.predToProp σ T Δ T₂ φ₂ v))
+  : PropSemantics.tyenvToProp σ T Δ Γ → (PropSemantics.predToProp σ T Δ T₁ φ₁ v → PropSemantics.predToProp σ T Δ T₂ φ₂ v) := by {
+  intro h₁
+  unfold PropSemantics.tyenvToProp at h₁
+  have := h₁ i (Ty.int.refin (Predicate.dep nu ((Expr.var nu).binRel RelOp.lt (Expr.constZ b)))) hi
+  simp at this
+  rw[hi] at this
+  simp at this
+  cases this
+  rename_i ihf iha ihb
+  cases ihf
+  cases iha
+  rename_i i_val h_i_val
+  cases ihb
+  rename_i ih₁ ih₂ r
+  cases ih₂
+  cases ih₁
+  rename_i a
+  unfold Env.lookupVal Env.updateVal at a
+  simp at a
+  rw[← a] at r
+  cases i_val with
+  | vZ i_val_i => {
+    rename_i i_val
+    simp at r
+    induction i_val_i generalizing i_val with
+    | zero => {
+      apply h_base
+      unfold PropSemantics.tyenvToProp
+      exact h₁
+      exact h_i_val
+    }
+    | succ k ih => {
+      simp at ih
+      have : k < b - 1 := by omega
+      apply h_step
+      exact this
+      have : k < b := by omega
+      simp [this] at ih
+      exact ih
+      exact h_i_val
+    }
+  }
+  | _ => {
+    simp at r
+  }
+}
+
+
+/-
+lemma a (h₁: PropSemantics.tyenvToProp σ T Δ Γ):
+  ∀ e: Ast.Expr, ∀ τ τ_b: Ast.Ty, ∀ φ: Ast.Predicate, τ = Ast.Ty.refin Ast.Ty.unit φ → @Ty.TypeJudgment Δ Γ Η e τ → PropSemantics.predToProp σ T Δ Ast.Ty.unit φ e := by {
+    intro e τ τ_b φ h₂ h₃
+    induction h₃ generalizing τ_b φ with
+    | TE_Var _ => {
+      simp at h₂
+      obtain ⟨h₃, h₄⟩ := h₂
+      rw[← h₄]
+      simp
+      apply Eval.EvalProp.App
+      apply Eval.EvalProp.Lam
+      apply Eval.EvalProp.Var
+      rfl
+      apply Eval.EvalProp.Rel
+      apply Eval.EvalProp.Var
+      apply lookup_val_update_self
+      apply Eval.EvalProp.Var
+      apply lookup_after_update_self
+      sorry
+    }
+    | TE_VarEnv ih => {
+      unfold PropSemantics.tyenvToProp at h₁
+      rename_i Γ' _ x' τ' φ'
+      have := (h₁ x' (τ'.refin φ')) ih
+      simp at this
+      rw[ih] at this
+      simp at this
+      simp at h₂
+      obtain ⟨h₃, h₄⟩ := h₂
+      rw[h₃, h₄] at this
+      exact this
+    }
+    | TE_ArrayIndex _ _ _ _ => sorry
+    | TE_Branch _ _ _ _ _ _ => sorry
+    | TE_Assert _ _ _ _ => sorry
+    | TE_App h₁ h₂ h₃ h₁_ih h₂_ih => sorry
+    | TE_SUB ht h₀ ih => sorry
+    | TE_LetIn h₀ h₁ h₂ h₁_ih h₂_ih => {
+      cases φ
+      simp_all
+      apply Eval.EvalProp.App
+      apply Eval.EvalProp.Lam
+      apply Eval.EvalProp.Let
+
+    }
+    | TE_LookUp hc hτ hn h₂' ih => {
+      sorry
+    }
+    | TE_Inductive i h₀ h₁ h₂ h₁_ih h₂_ih => sorry
+    | _ => {
+      simp at h₂
+    }
+  }
+-/
+
 /--
 Deconstructs a **conjunctive type guarantee** into individual runtime proofs.
 
