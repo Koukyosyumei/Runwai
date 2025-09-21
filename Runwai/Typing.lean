@@ -179,6 +179,19 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     (h₂: @TypeJudgment Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
     TypeJudgment Γ Η (Ast.Expr.lookup vname cname args e) τ
 
+  -- TE-INDUCTIVE (TODO: convert this rule to a theorem via TSUB-REFINE)
+  | TE_Inductive {Γ: Env.TyEnv} {Η: Env.UsedNames} {φ: Ast.Predicate} {e: Ast.Expr} {τ: Ast.Ty} {b: ℕ} (i: String)
+    (h₀: Env.lookupTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.Expr.binRel (Ast.Expr.var Ast.mu) Ast.RelOp.lt (Ast.Expr.constZ b)))))
+    (h₁: @TypeJudgment Δ
+      (Env.updateTy Γ (Env.freshName Η "@ind_base") (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ 0)))))
+      ((Env.freshName Η "@ind_base")::Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constZ 0))))
+    (h₂: ∀ k: ℕ, k < b - 1 → @TypeJudgment Δ
+      (Env.updateTy (Env.updateTy Γ
+        (Env.freshName Η "@ind_step_prev") (Ast.Ty.refin Ast.Ty.unit (Ast.renameVarinPred φ i (Ast.Expr.constZ k))))
+        (Env.freshName Η "@ind_step_i_eq_kp1") (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ k)))))
+      ([(Env.freshName Η "@ind_step_i_eq_kp1"), (Env.freshName Η "@ind_base")] ++ Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constZ (k + 1)))))
+    : TypeJudgment Γ Η e (Ast.Ty.refin τ φ)
+
 /--
 Creates the initial value (`σ`) and type (`Γ`) environments for verifying a chip's body.
 It binds the chip's trace and instance identifiers to their expected types.

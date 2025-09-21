@@ -302,8 +302,11 @@ lemma eval_exprEq_trace_eq (h_lookup : Env.lookupVal σ i = .vZ k) :
     }
   }
 
-lemma clp_base (hΓ: Γ = Ty.makeEnvs clkChip height) (hΓ': Γ' =
-  Env.updateTy
+lemma clp_base
+  (hh : 2 ≤ height)
+  (hΓ: Γ = Ty.makeEnvs clkChip height)
+  (hΗ: Η = ["i", "trace"])
+  (hΓ': Γ' = Env.updateTy
     (Env.updateTy Γ "u₀"
       (Ast.Ty.unit.refin
         (((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))).and
@@ -322,16 +325,24 @@ lemma clp_base (hΓ: Γ = Ty.makeEnvs clkChip height) (hΓ': Γ' =
                 ((Ast.Expr.var "i").binRel Ast.RelOp.lt
                   ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1)))).not.and
           (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))) :
-  @Ty.TypeJudgment Δ (Env.updateTy Γ' "u₄" (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var "i") (.constZ 0))))) Η (Ast.Expr.var "u₁")
-              (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.var "i"))))) := by {
+  @Ty.TypeJudgment Δ
+        (Env.updateTy Γ' (Env.freshName Η "@ind_base") (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var "i") (.constZ 0)))))
+        ((Env.freshName Η "@ind_base")::Η)
+        (Ast.Expr.var "u₁")
+        (Ast.Ty.refin Ast.Ty.unit
+          (Ast.renameVarinPred (Ast.Predicate.ind (Ast.Expr.branch (.binRel (.var "i") Ast.RelOp.lt (.var "n"))
+            (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.var "i")))
+            (Ast.Expr.constBool true)))
+            "i" (Ast.Expr.constZ 0))) := by {
     apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_VarEnv
     rw [hΓ']
     apply lookup_update_ne
-    simp
+    simp [Env.freshName, hΗ]
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl
     intro σ T v h₁ h₂
+    simp [Env.freshName, hΗ] at h₁
     unfold PropSemantics.tyenvToProp at h₁
     rw [hΓ', hΓ] at h₁
     have hu₀ := h₁ "u₀" (Ast.Ty.unit.refin
@@ -339,7 +350,7 @@ lemma clp_base (hΓ: Γ = Ty.makeEnvs clkChip height) (hΓ': Γ' =
                     (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 0)))).or
                 ((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))).not.and
                   (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))
-    have hu₄ := h₁ "u₄" (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))))
+    have hu₄ := h₁ "@ind_base" (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))))
     simp [Env.lookupTy, Env.updateTy] at hu₀ hu₄
     cases hu₀ with
     | inl h => {
@@ -361,13 +372,44 @@ lemma clp_base (hΓ: Γ = Ty.makeEnvs clkChip height) (hΓ': Γ' =
           simp at r'
           rw[r'] at ih₁
           rw[r] at a
-          simp [PropSemantics.predToProp]
+          simp [Ast.renameVarinPred]
+          simp [Ast.renameVar]
+          have : Eval.EvalProp σ T Δ ((Ast.Expr.constZ 0).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
+            apply Eval.EvalProp.Rel
+            apply Eval.EvalProp.ConstZ
+            have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ height))))
+            simp [Env.lookupTy, Env.updateTy, Ty.makeEnvs] at hu₀
+            have n_is_height := eval_app_lam_eq_int hu₀
+            apply Eval.EvalProp.Var
+            exact n_is_height
+            simp[Eval.evalRelOp]
+            have : 0 < 2 := by decide
+            exact Nat.lt_of_lt_of_le this hh
+          }
+          apply Eval.EvalProp.IfTrue
+          exact this
           apply Eval.EvalProp.Rel
-          exact ih₁
+          cases ih₁
+          rename_i iha ihi idx
+          cases ihi
+          cases iha
+          rename_i iha ihi idx
+          cases ihi
+          rename_i a'
+          rw[a] at a'
+          simp at a'
+          rw[← a'] at idx
+          apply Eval.EvalProp.ArrIdx
+          apply Eval.EvalProp.ArrIdx
+          exact iha
+          apply Eval.EvalProp.ConstZ
+          exact idx
+          apply Eval.EvalProp.ConstZ
+          rename_i idx' _ _ _ _
+          exact idx'
           apply Eval.EvalProp.toF
-          apply Eval.EvalProp.Var
-          exact a
-          simp [Eval.evalRelOp]
+          apply Eval.EvalProp.ConstZ
+          simp[Eval.evalRelOp]
         }
         | _ => {
           simp at r'
@@ -381,7 +423,7 @@ lemma clp_base (hΓ: Γ = Ty.makeEnvs clkChip height) (hΓ': Γ' =
       obtain ⟨h₁, h₂⟩ := h
       contradiction
     }
-              }
+}
 
 theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   unfold Ty.chipCorrect
@@ -466,173 +508,231 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
                 ((Ast.Expr.var "i").binRel Ast.RelOp.lt
                   ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1)))).not.and
           (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))) with hΓ'
-  have ih0 : @Ty.TypeJudgment Δ (Env.updateTy Γ' "u₄" (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var "i") (.constZ 0))))) Η (Ast.Expr.var "u₁")
-              (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.var "i"))))) := by {
-    apply clp_base
-    rfl
-    exact hΓ'
-  }
-  have ih1 : ∀ k: ℕ,
-            @Ty.TypeJudgment Δ (Env.updateTy Γ' "u₄" (Ast.Ty.refin Ast.Ty.unit
-                (Ast.Predicate.and (Ast.Predicate.ind (Ast.exprEq (.var "i") (.constZ k)))
-                                   (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.constZ k))))))) Η (Ast.Expr.var "u₁")
-              (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.renameVar (Ast.Expr.branch (.binRel (.var "i") Ast.RelOp.lt (.var "n")) (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.var "i"))) (Ast.Expr.constBool true)) "i" (Ast.Expr.constZ (k + 1)) 1000))):= by {
-    intro k
-    apply Ty.TypeJudgment.TE_SUB
-    apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
-    simp
-    apply Ty.SubtypeJudgment.TSub_Refine
-    apply Ty.SubtypeJudgment.TSub_Refl
-    intro σ T v h₁ h₂
-    unfold PropSemantics.tyenvToProp at h₁
-    simp[Ast.renameVar]
-    have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ height))))
-    have hu₁ := h₁ "i" (Ast.Ty.refin Ast.Ty.int
-      (Ast.Predicate.dep Ast.mu (Ast.Expr.binRel (Ast.Expr.var Ast.mu) Ast.RelOp.lt (Ast.Expr.constZ height))))
-    have hu₄ := h₁ "u₄" (Ast.Ty.unit.refin
-            ((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ k))).and
-              (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constZ k).toF))))
-    have hu₅ := h₁ "trace" (.refin (.arr (.refin (.arr (.refin .field
-      (Ast.Predicate.ind (Ast.Expr.constBool true))) 1) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.len (.var Ast.mu)) (.constZ height))))
-    simp [Env.lookupTy, Env.updateTy, Γ', Γ, Ty.makeEnvs] at hu₀ hu₁ hu₄ hu₅
-
-    have hu₅' := eval_height_check hu₅
-    obtain ⟨trace_arr, ⟨h_trace, trace_arr_length⟩⟩ := hu₅'
-    simp at h_trace
-
-    obtain ⟨h₁', h₂'⟩ := hu₄
-    cases h₂'
-    rename_i ih₁ ih₂ trace_i_0_val_k
+  apply Ty.TypeJudgment.TE_Inductive "i"
+  apply lookup_update_ne
+  simp
+  apply clp_base hh
+  rfl
+  rfl
+  exact hΓ'
+  intro k hb
+  apply Ty.TypeJudgment.TE_SUB
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply lookup_update_ne
+  unfold Η
+  simp[Env.freshName]
+  apply Ty.SubtypeJudgment.TSub_Refine
+  apply Ty.SubtypeJudgment.TSub_Refl
+  intro σ T v h₁ h₂
+  unfold PropSemantics.tyenvToProp at h₁
+  simp[Ast.renameVarinPred, Ast.renameVar]
+  unfold Η at h₁
+  simp[Env.freshName] at h₁
+  have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int
+    (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.var Ast.mu) (Ast.Expr.constZ height))))
+  have hu₁ := h₁ "i" (Ast.Ty.refin Ast.Ty.int
+    (Ast.Predicate.dep Ast.mu (Ast.Expr.binRel (Ast.Expr.var Ast.mu) Ast.RelOp.lt (Ast.Expr.constZ height))))
+  have hu₂ := h₁ "@ind_step_prev" (Ast.Ty.unit.refin
+              (Ast.renameVarinPred
+                (Ast.Predicate.ind
+                  (((Ast.Expr.var "i").binRel Ast.RelOp.lt (Ast.Expr.var "n")).branch
+                    (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.var "i").toF) (Ast.Expr.constBool true)))
+                "i" (Ast.Expr.constZ k)))
+  have hu₃ := h₁ "@ind_step_i_eq_kp1" (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ (k)))))
+  have hu₄ := h₁ "u₁" (Ast.Ty.unit.refin
+    (((Ast.Predicate.ind
+              ((Ast.Expr.var "i").binRel Ast.RelOp.lt
+                ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1)))).and
+          (Ast.Predicate.ind
+            (Ast.exprEq (Ast.trace_ip1_j "trace" "i" 0)
+              ((Ast.trace_i_j "trace" "i" 0).fieldExpr Ast.FieldOp.add (Ast.Expr.constF 1))))).or
+      ((Ast.Predicate.ind
+              ((Ast.Expr.var "i").binRel Ast.RelOp.lt
+                ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1)))).not.and
+        (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))
+  have hu₅ := h₁ "trace" (.refin (.arr (.refin (.arr (.refin .field
+    (Ast.Predicate.ind (Ast.Expr.constBool true))) 1) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.mu (Ast.exprEq (Ast.Expr.len (.var Ast.mu)) (.constZ height))))
+  simp [Env.lookupTy, Env.updateTy, Γ', Γ, Ty.makeEnvs] at hu₀ hu₁ hu₂ hu₃ hu₄ hu₅
+  have h_n_is_height := eval_app_lam_eq_int hu₀
+  have h_i_kp1 := eval_var_eq_int hu₃
+  have hu₅' := eval_height_check hu₅
+  obtain ⟨trace_arr, ⟨h_trace, trace_arr_length⟩⟩ := hu₅'
+  simp at h_trace
+  cases hu₁
+  rename_i ih_f ih_a ih_b
+  cases ih_f
+  cases ih_a
+  rename_i a
+  rw[h_i_kp1] at a
+  rw[← a] at ih_b
+  cases ih_b
+  rename_i ih₁ ih₂ h_k_le_height
+  cases ih₂
+  cases ih₁
+  rename_i a'
+  unfold Env.lookupVal Env.updateVal at a'
+  simp at a'
+  rw[← a'] at h_k_le_height
+  simp[Eval.evalRelOp] at h_k_le_height
+  simp[Ast.renameVarinPred, Ast.renameVar] at hu₂
+  cases hu₂
+  {
+    rename_i ihc ih₁
+    cases ih₁
+    rename_i ih₁ ih₂ hkk
     cases ih₂
     rename_i h
     cases h
-    rename_i v'
-    cases v' with
-    | vF trace_i_0_val => {
-      simp[Eval.evalRelOp] at trace_i_0_val_k
-      have i_is_k := eval_var_eq_int h₁'
-      have n_is_height := eval_app_lam_eq_int hu₀
-      simp [PropSemantics.predToProp] at h₂
-      cases h₂ with
-      | inl h => {
-        obtain ⟨h₁, h₂⟩ := h
+    cases ih₁
+    rename_i iha ihi idx
+    cases ihi
+    cases iha
+    rename_i iha ihi idx
+    cases ihi
+    cases iha
+    rename_i a
+    rw[h_trace] at a
+    simp at a
+    rename_i idx' _
+    rw[← a] at idx
+    rename_i trace_arr_k vs'
+    have := List.getElem_of_getElem? idx
+    obtain ⟨h_k_trace_arr_length, h_trace_arr_k⟩ := this
+    have := List.getElem_of_getElem? idx'
+    obtain ⟨_,h_trace_arr_k_0⟩ := this
+    rw[← h_trace_arr_k_0] at hkk
+    simp [Eval.evalRelOp] at hkk
+    rename_i trace_arr_k_0 _
+    rw[h_trace_arr_k_0] at hkk
+    cases trace_arr_k_0 with
+    | vF => {
+      simp at hkk
+      rename_i trace_arr_k_0
+      cases hu₄
+      {
+        rename_i h
+        obtain ⟨h₁,h₂⟩ := h
         cases h₂
-        rename_i trace_ip1_0_eval ih₂' r
-        cases ih₂'
-        rename_i ih₁' ih₂' r
-        have := evalprop_deterministic ih₁ ih₁'
-        rw[← this] at r
-        cases ih₂'
-        simp [Eval.evalFieldOp] at r
-        rename_i v₁ v₂ r' i₂
-        rw[← r] at r'
-        cases h₁
-        rename_i ih₁ ih₂ r''
-        cases ih₁
-        rename_i a
-        rw[i_is_k] at a
-        rw[← a] at r''
-        cases ih₂
         rename_i ih₁ ih₂ r
         cases ih₁
-        cases ih₂
+        rename_i iha ihi idx
+        cases ihi
+        cases iha
+        rename_i iha ihi idx
+        cases iha
         rename_i a
-        rw[n_is_height] at a
+        rw[h_trace] at a
+        simp at a
+        rw[← a] at idx
+        cases ihi
+        rename_i ih₁ ih₂ r
+        cases ih₁
+        rename_i a
+        rw[h_i_kp1] at a
+        simp at a
         rw[← a] at r
-        simp[Eval.evalIntegerOp] at r
-        rw[← r] at r''
-        simp[Eval.evalRelOp] at r''
-        have r''' := Nat.lt_sub_iff_add_lt.mp r''
-        have hb : Eval.EvalProp σ T Δ ((Ast.Expr.constZ (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
+        cases ih₂
+        simp at r
+        rw[← r] at idx
+        cases ih₂
+        rename_i ih₁ ih₂ r
+        cases ih₂
+        cases ih₁
+        rename_i iha ihi idx
+        cases ihi
+        cases iha
+        rename_i iha ihi idx
+        cases iha
+        rename_i a
+        rw[h_trace] at a
+        cases ihi
+        rename_i a
+        rw[h_i_kp1] at a
+        rename_i a'
+        simp at a' a
+        rw[← a', ← a] at idx
+        have := List.getElem_of_getElem? idx
+        obtain ⟨_,h_trace_arr_k'⟩ := this
+        rw[h_trace_arr_k] at h_trace_arr_k'
+        simp at h_trace_arr_k'
+        rename_i _ idx' _ _ _
+        rw[← h_trace_arr_k'] at idx'
+        have := List.getElem_of_getElem? idx'
+        obtain ⟨_,h_trace_arr_k_0'⟩ := this
+        rw[← h_trace_arr_k_0'] at r
+        rw[h_trace_arr_k_0] at r
+        simp [Eval.evalFieldOp] at r
+        rename_i trace_arr_kp1_0 _ r' trace_arr_kp1 idx''' _ _ idx'' _ _ hki _ _ _ _ _ _ _
+        have := List.getElem_of_getElem? idx''
+        obtain ⟨hkp1_b ,h_trace_arr_kp1⟩ := this
+        have := List.getElem_of_getElem? idx'''
+        obtain ⟨_,h_trace_arr_kp1_0⟩ := this
+        rw[← r] at r'
+        rw[hkk] at r'
+        rw[trace_arr_length] at hkp1_b
+        have : Eval.EvalProp σ T Δ ((Ast.Expr.constZ (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
           apply Eval.EvalProp.Rel
           apply Eval.EvalProp.ConstZ
           apply Eval.EvalProp.Var
-          exact n_is_height
+          exact h_n_is_height
           simp [Eval.evalRelOp]
-          exact r'''
+          exact hkp1_b
         }
         apply Eval.EvalProp.IfTrue
-        exact hb
-        cases v₁ with
-        | vF => {
-          simp[Eval.evalRelOp] at r'
-          rw[r'] at trace_ip1_0_eval
-          rw[trace_i_0_val_k] at trace_ip1_0_eval
-          cases trace_ip1_0_eval
-          rename_i iha ihi idx_kp1
-          cases ihi
-          cases iha
-          rename_i iha ihi idx_0
-          cases ihi
-          rename_i ih₁ ih₂ r
-          cases ih₂
-          cases ih₁
-          rename_i a
-          rw[i_is_k] at a
-          rw[← a] at r
-          simp [Eval.evalIntegerOp] at r
-          rw[← r] at idx_0
-          cases iha
-          rename_i a
-          rw[h_trace] at a
-          simp at a
-          rw[← a] at idx_0
-          apply Eval.EvalProp.Rel
-          apply Eval.EvalProp.ArrIdx
-          apply Eval.EvalProp.ArrIdx
-          apply Eval.EvalProp.Var
-          exact h_trace
-          apply Eval.EvalProp.ConstZ
-          exact idx_0
-          apply Eval.EvalProp.ConstZ
-          exact idx_kp1
-          apply Eval.EvalProp.toF
-          apply Eval.EvalProp.ConstZ
-          simp[Eval.evalRelOp]
+        exact this
+        apply Eval.EvalProp.Rel
+        apply Eval.EvalProp.ArrIdx
+        apply Eval.EvalProp.ArrIdx
+        apply Eval.EvalProp.Var
+        exact h_trace
+        apply Eval.EvalProp.ConstZ
+        exact idx''
+        apply Eval.EvalProp.ConstZ
+        exact idx'''
+        apply Eval.EvalProp.toF
+        apply Eval.EvalProp.ConstZ
+        have : (k: ℕ) + (1: F) = ((k + 1): ℕ) := by {
+          simp
         }
-        | _ => {
-          simp[Eval.evalRelOp] at r'
-        }
+        rw[this] at r'
+        exact r'
       }
-      | inr h => {
-          have hk : k ≥ height - 1 := by {
-            by_contra
-            rename_i hx
-            simp at hx
-            obtain ⟨h₁, _⟩ := h
-            have : Eval.EvalProp σ T Δ ((Ast.Expr.var "i").binRel Ast.RelOp.lt ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1))) (Ast.Value.vBool true) := by {
-              apply Eval.EvalProp.Rel
-              apply Eval.EvalProp.Var
-              exact i_is_k
-              apply Eval.EvalProp.ZBinOp
-              apply Eval.EvalProp.Var
-              exact n_is_height
-              apply Eval.EvalProp.ConstZ
-              simp[Eval.evalIntegerOp]
-              rfl
-              simp[Eval.evalRelOp]
-              apply Nat.lt_sub_iff_add_lt.mpr
-              exact hx
-            }
-            contradiction
-          }
-          have : Eval.EvalProp σ T Δ ((Ast.Expr.constZ (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool false) := by {
-            apply Eval.EvalProp.Rel
-            apply Eval.EvalProp.ConstZ
-            apply Eval.EvalProp.Var
-            exact n_is_height
-            simp [Eval.evalRelOp]
-            omega
-          }
-          apply Eval.EvalProp.IfFalse
-          exact this
-          apply Eval.EvalProp.ConstBool
+      {
+        have : Eval.EvalProp σ T Δ ((Ast.Expr.var "i").binRel Ast.RelOp.lt ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1))) (Ast.Value.vBool true) := by {
+          apply Eval.EvalProp.Rel
+          apply Eval.EvalProp.Var
+          exact h_i_kp1
+          apply Eval.EvalProp.ZBinOp
+          apply Eval.EvalProp.Var
+          exact h_n_is_height
+          apply Eval.EvalProp.ConstZ
+          simp[Eval.evalIntegerOp]
+          rfl
+          simp[Eval.evalRelOp]
+          exact hb
+        }
+        rename_i h
+        obtain ⟨h₁,_⟩ := h
+        contradiction
       }
     }
-    | _ => simp[Eval.evalRelOp] at trace_i_0_val_k
+    | _ => {
+      simp at hkk
+    }
   }
-  sorry
+  {
+    rename_i ihc ihf
+    cases ihc
+    rename_i ih₁ ih₂ r
+    cases ih₁
+    cases ih₂
+    rename_i a
+    rw[h_n_is_height] at a
+    rw[← a ] at r
+    simp[Eval.evalRelOp] at r
+    have := Nat.not_le_of_gt h_k_le_height
+    contradiction
+  }
 }
 
 theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by

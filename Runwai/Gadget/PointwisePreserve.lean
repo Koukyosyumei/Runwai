@@ -182,4 +182,21 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       have hu := @update_preserve_pointwise Γ' Γ₂ vname (Ty.unit.refin (Ty.lookup_pred args c φ Η')) h₉
       exact hu
     }
+    | TE_Inductive i h₁ h₂ h₃ => {
+      rename_i ih₁ ih₂
+      intro Γ₂ ih
+      apply Ty.TypeJudgment.TE_Inductive i
+      have := ih i
+      rw[← this]
+      exact h₁
+      apply ih₁
+      apply update_preserve_pointwise
+      exact ih
+      intro k hb
+      apply ih₂
+      exact hb
+      apply update_preserve_pointwise
+      apply update_preserve_pointwise
+      exact ih
+    }
   }
