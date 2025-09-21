@@ -1,5 +1,6 @@
 import Runwai.Typing
 import Runwai.Gadget.Utils
+import Runwai.Gadget.EnvLemmas
 
 open Ast
 
@@ -54,8 +55,8 @@ lemma tyenvToProp_implies_varToProp
   apply hmt
   exact hΓx
 
-lemma constZ_refine_lt {Δ Η x y} {h: x < y} :
-  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.mu ((Ast.Expr.var Ast.mu).binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
+lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.constZ x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constZ y)))) := by {
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_ConstZ
   apply Ty.SubtypeJudgment.TSub_Refine
@@ -80,3 +81,163 @@ lemma constZ_refine_lt {Δ Η x y} {h: x < y} :
   simp [Eval.evalRelOp]
   exact h
 }
+
+lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ v₁))))} {h₁: v₁ < v₂} :
+  @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constZ v₂)))) := by {
+  apply Ty.TypeJudgment.TE_SUB
+  apply Ty.TypeJudgment.TE_VarEnv
+  exact h₀
+  apply Ty.SubtypeJudgment.TSub_Refine
+  apply Ty.SubtypeJudgment.TSub_Refl
+  intro σ T v h₃ h₄
+  unfold PropSemantics.tyenvToProp at h₃
+  have h₅ := h₃ x ((Ty.int.refin (Predicate.dep Ast.nu (exprEq (Expr.var Ast.nu) (Expr.constZ v₁))))) h₀
+  simp [PropSemantics.predToProp] at h₄ ⊢
+  simp [PropSemantics.varToProp] at h₅
+  rw[h₀] at h₅
+  simp at h₅
+  cases h₄
+  rename_i ih_f ih_a ih_b
+  cases ih_f
+  cases ih_b
+  rename_i ih₁ ih₂ r
+  cases ih₁
+  rename_i a
+  unfold Env.lookupVal Env.updateVal at a
+  simp at a
+  rw[← a] at r
+  cases ih₂
+  simp [Eval.evalRelOp] at r
+  rename_i va₁ va₂
+  cases va₁ with
+  | vZ x => {
+    simp at r
+    apply Eval.EvalProp.App
+    apply Eval.EvalProp.Lam
+    exact ih_a
+    apply Eval.EvalProp.Rel
+    apply Eval.EvalProp.Var
+    unfold Env.lookupVal Env.updateVal
+    simp
+    rfl
+    apply Eval.EvalProp.ConstZ
+    rw[r]
+    simp [Eval.evalRelOp]
+    exact h₁
+  }
+  | _ => {
+    simp at r
+  }
+}
+
+lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
+  (h₀: Env.lookupTy Γ n = (Ast.Ty.refin Ast.Ty.int
+      (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu ) (Ast.Expr.constZ height)))))
+  (h₁: Env.lookupTy Γ x = (Ast.Ty.unit.refin
+      (Ast.Predicate.ind
+        ((Ast.Expr.var i).binRel Ast.RelOp.lt
+          ((Ast.Expr.var n).integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ d))))))
+  (h₂: Env.lookupTy Γ i = (Ast.Ty.int.refin φ))
+  (h₃: i ≠ Ast.nu ):
+  @Ty.TypeJudgment Δ Γ Η ((Ast.Expr.var i).integerExpr Ast.IntegerOp.add (Ast.Expr.constZ d))
+    (Ast.Ty.int.refin (Ast.Predicate.dep Ast.nu  ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constZ height)))) := by {
+    apply Ty.TypeJudgment.TE_SUB
+    apply Ty.TypeJudgment.TE_BinOpInteger
+    apply Ty.TypeJudgment.TE_VarEnv
+    exact h₂
+    apply Ty.TypeJudgment.TE_ConstZ
+    apply Ty.SubtypeJudgment.TSub_Refine
+    apply Ty.SubtypeJudgment.TSub_Refl
+    intro σ T v ha hb
+    unfold PropSemantics.tyenvToProp at ha
+    have h₀' := ha n (Ty.int.refin (Predicate.dep Ast.nu (exprEq (Expr.var Ast.nu) (Expr.constZ height)))) h₀
+    have h₁' := ha x (Ty.unit.refin
+      (Predicate.ind ((Expr.var i).binRel RelOp.lt ((Expr.var n).integerExpr IntegerOp.sub (Expr.constZ d))))) h₁
+    simp at h₀' h₁'
+    rw[h₀] at h₀'
+    simp at h₀'
+    rw[h₁] at h₁'
+    simp at h₁'
+    cases h₀'
+    rename_i ihf iha idx
+    cases ihf
+    cases iha
+    cases idx
+    rename_i ih₁ ih₂ r
+    cases ih₂
+    cases ih₁
+    rename_i a
+    unfold Env.lookupVal Env.updateVal at a
+    simp at a
+    cases h₁'
+    rename_i ih₁ ih₂ r
+    cases ih₁
+    cases ih₂
+    rename_i ih₁ ih₂ r
+    cases ih₂
+    cases ih₁
+    simp at r
+    rename_i hn' _ r' i_val _ r hi n_val hn
+    rw[hn] at hn'
+    rw[← hn'] at a
+    rw[← a] at r'
+    simp at r'
+    rename_i r''
+    rw[← r] at r''
+    simp at hb
+    cases hb
+    rename_i ihf iha ihb
+    cases ihf
+    cases ihb
+    rename_i ih₁ ih₂ r
+    cases ih₁
+    rename_i a
+    unfold Env.lookupVal Env.updateVal at a
+    simp at a
+    cases ih₂
+    rename_i ih₁ ih₂ r
+    cases ih₁
+    cases ih₂
+    simp at r
+    cases i_val with
+    | vZ i_val' => {
+      simp at r''
+      simp[PropSemantics.predToProp]
+      apply Eval.EvalProp.App
+      apply Eval.EvalProp.Lam
+      exact iha
+      apply Eval.EvalProp.Rel
+      apply Eval.EvalProp.Var
+      unfold Env.lookupVal Env.updateVal
+      simp
+      rfl
+      apply Eval.EvalProp.ConstZ
+      rename_i ih₂ _ u₁ _ ih₁ _ _
+      rw[← r] at ih₁
+      cases u₁ with
+      | vZ uv₁ => {
+        simp at ih₁
+        rw[a]
+        rw[ih₁]
+        rename_i a'
+        rename_i va' v2₂' i'
+        have : Env.lookupVal (Env.updateVal σ Ast.nu va') i = Env.lookupVal σ i := by {
+          apply lookup_val_update_ne
+          exact h₃
+        }
+        rw[this] at a'
+        rw[hi] at a'
+        rw[r'] at r''
+        simp at a'
+        rw[a'] at r''
+        simp [Eval.evalRelOp]
+        omega
+      }
+      | _ => {
+        simp at ih₁
+      }
+    }
+    | _ => {
+      simp at r''
+    }
+  }

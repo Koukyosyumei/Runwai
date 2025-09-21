@@ -169,7 +169,21 @@ theorem evalprop_deterministic
              h_asserts' h_body'
     apply h_body_ih h_body'
   }
+  | Len => {
+    cases h₂
+    rename_i h h_ih vs h'
+    have h := h_ih h'
+    simp at h ⊢
+    rw[h]
+  }
   | toZ => {
+    cases h₂
+    rename_i v₁ ih₀ ih₁ fv₂ ih₃
+    have h := ih₁ ih₃
+    have h' : v₁ = fv₂ := by simp_all
+    simp_all
+  }
+  | toF => {
     cases h₂
     rename_i v₁ ih₀ ih₁ fv₂ ih₃
     have h := ih₁ ih₃
@@ -495,7 +509,7 @@ lemma eval_lt_val {σ T Δ x t} (h: Eval.EvalProp σ T Δ ((Ast.Expr.var x).toZ.
 
 lemma eval_lt_lam_val {σ T Δ x t}
   (h: Eval.EvalProp σ T Δ
-  ((Expr.lam Ast.mu Ty.field ((Expr.var Ast.mu).toZ.binRel RelOp.lt (Expr.constZ t))).app (Expr.var x))
+  ((Expr.lam Ast.nu Ty.field ((Expr.var Ast.nu).toZ.binRel RelOp.lt (Expr.constZ t))).app (Expr.var x))
   (Value.vBool true)):
   ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h
@@ -521,3 +535,91 @@ lemma eval_lt_lam_val {σ T Δ x t}
     exact r₃
     exact r₁
   }
+
+/-
+Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ k)) (Ast.Value.vBool true)
+-/
+lemma eval_var_eq_int (h: Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constZ k)) (Ast.Value.vBool true)):
+  Env.lookupVal σ x = (Ast.Value.vZ k) := by {
+      cases h
+      rename_i ih₁ ih₂ r
+      cases ih₂
+      cases ih₁
+      rename_i v' i_is_k
+      cases v' with
+      | vZ i_val => {
+        simp[Eval.evalRelOp] at r
+        rw[r] at i_is_k
+        exact i_is_k
+      }
+      | _ => {
+        simp at r
+      }
+  }
+
+/-
+Eval.EvalProp σ T Δ
+  ((Ast.Expr.lam Ast.nu Ast.Ty.int (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ height))).app (Ast.Expr.var "n"))
+  (Ast.Value.vBool true)
+-/
+lemma eval_app_lam_eq_int (h: Eval.EvalProp σ T Δ
+  ((Ast.Expr.lam x Ast.Ty.int (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constZ v))).app (Ast.Expr.var y))
+  (Ast.Value.vBool true)):
+  Env.lookupVal σ y = (Ast.Value.vZ v) := by {
+    cases h
+    rename_i ih_f ih_a ih_b
+    cases ih_f
+    cases ih_a
+    rename_i va' a
+    cases ih_b
+    rename_i ih₁ ih₂ r
+    cases ih₂
+    cases ih₁
+    rename_i v₁' a
+    unfold Env.lookupVal Env.updateVal at a
+    simp at a
+    cases v₁' with
+    | vZ x => {
+      simp[Eval.evalRelOp] at r
+      rw[r] at a
+      rename_i n_is_height
+      rw[a] at n_is_height
+      exact n_is_height
+    }
+    |_ => {
+      simp at r
+    }
+  }
+
+lemma eval_height_check (h: Eval.EvalProp σ T Δ
+  ((Ast.Expr.lam Ast.nu
+        ((((Ast.Ty.field.refin (Ast.Predicate.ind (Ast.Expr.constBool true))).arr 1).refin
+              (Ast.Predicate.ind (Ast.Expr.constBool true))).arr
+          height)
+        (Ast.exprEq (Ast.Expr.var Ast.nu).len (Ast.Expr.constZ height))).app
+    (Ast.Expr.var trace))
+  (Ast.Value.vBool true)):
+  ∃ trace_array: List Ast.Value, Env.lookupVal σ trace = some (Ast.Value.vArr trace_array) ∧
+  trace_array.length = height := by {
+  cases h
+  rename_i ihf iha ihb
+  cases ihf
+  cases iha
+  cases ihb
+  rename_i ih₁ ih₂ trace_arr_length
+  cases ih₂
+  cases ih₁
+  rename_i h
+  cases h
+  rename_i a
+  unfold Env.lookupVal Env.updateVal at a
+  simp at a
+  rename_i h_trace trace_arr
+  rw[a] at h_trace
+  simp[Eval.evalRelOp] at trace_arr_length
+  use trace_arr
+  apply And.intro
+  simp
+  exact h_trace
+  simp_all
+}
