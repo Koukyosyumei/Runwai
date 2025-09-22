@@ -21,6 +21,11 @@ import Runwai.PropSemantics
 
 namespace Ty
 
+abbrev branchLabel      : String := "@branch"
+abbrev indBaseLabel     : String := "@ind_base"
+abbrev indStepPrevLabel : String := "@ind_step_prev"
+abbrev indStepEqKLabel  : String := "@ind_step_eq_k"
+
 /--
   Subtyping judgment between two optional types `τ₁ → τ₂`
   under valuation `σ`, Chips `Δ`, type env `Γ`, and fuel.
@@ -41,6 +46,23 @@ inductive SubtypeJudgment :
   | TSub_Refine {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} :
       SubtypeJudgment Δ Γ T₁ T₂ →
       (∀ σ: Env.ValEnv, ∀ T: Env.TraceEnv, ∀ v: Ast.Expr, PropSemantics.tyenvToProp σ T Δ Γ → (PropSemantics.predToProp σ T Δ T₁ φ₁ v → PropSemantics.predToProp σ T Δ T₂ φ₂ v)) →
+      SubtypeJudgment Δ Γ (Ast.Ty.refin T₁ φ₁) (Ast.Ty.refin T₂ φ₂)
+
+  /-- TODO: Convert this rule to a theorem/lemma via other rules-/
+  | TSub_RefineInduction {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} {b: ℕ} (i: String):
+      Env.lookupTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ b)))) →
+      SubtypeJudgment Δ Γ T₁ T₂ →
+      (∀ σ: Env.ValEnv, ∀ T: Env.TraceEnv, ∀ v: Ast.Expr,
+        PropSemantics.tyenvToProp σ T Δ (Env.updateTy Γ indBaseLabel (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ 0))))) →
+        PropSemantics.predToProp σ T Δ T₁ φ₁ v →
+        PropSemantics.predToProp σ T Δ T₂ (Ast.renameVarinPred φ₂ i (Ast.Expr.constZ 0)) v) →
+      (∀ k: ℕ, ∀ σ: Env.ValEnv, ∀ T: Env.TraceEnv, ∀ v: Ast.Expr, k < b - 1 →
+        PropSemantics.tyenvToProp σ T Δ
+        (Env.updateTy (Env.updateTy Γ
+          indStepPrevLabel (Ast.Ty.refin Ast.Ty.unit (Ast.renameVarinPred φ₂ i (Ast.Expr.constZ k))))
+          indStepEqKLabel  (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ k))))) →
+        PropSemantics.predToProp σ T Δ T₁ φ₁ v →
+        PropSemantics.predToProp σ T Δ T₂ (Ast.renameVarinPred φ₂ i (Ast.Expr.constZ (k + 1))) v) →
       SubtypeJudgment Δ Γ (Ast.Ty.refin T₁ φ₁) (Ast.Ty.refin T₂ φ₂)
 
   /-- TSUB-FUN: Function subtyping -/
@@ -71,11 +93,6 @@ instance identifiers during a `lookup`.
 -/
 def update_UsedNames (c: Ast.Chip) (Η: Env.UsedNames) : Env.UsedNames :=
   [Env.freshName Η c.ident_i, Env.freshName Η c.ident_t] ++ Η
-
-abbrev branchLabel      : String := "@branch"
-abbrev indBaseLabel     : String := "@ind_base"
-abbrev indStepPrevLabel : String := "@ind_step_prev"
-abbrev indStepEqKLabel  : String := "@ind_step_eq_k"
 
 /--
   Typing judgment `Γ ⊢ e : τ`: expression `e` has type `τ`
@@ -184,6 +201,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     (h₂: @TypeJudgment Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
     TypeJudgment Γ Η (Ast.Expr.lookup vname cname args e) τ
 
+  /-
   -- TE-INDUCTIVE (TODO: convert this rule to a theorem via TSUB-REFINE)
   | TE_Inductive {Γ: Env.TyEnv} {Η: Env.UsedNames} {φ: Ast.Predicate} {e: Ast.Expr} {τ: Ast.Ty} {b: ℕ} (i: String)
     (h₀: Env.lookupTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ b)))))
@@ -196,6 +214,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
         (Env.freshName Η indStepEqKLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ k)))))
       ([(Env.freshName Η indStepEqKLabel), (Env.freshName Η indStepPrevLabel), (Env.freshName Η indBaseLabel)] ++ Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constZ (k + 1)))))
     : TypeJudgment Γ Η e (Ast.Ty.refin τ φ)
+  -/
 
 /--
 Creates the initial value (`σ`) and type (`Γ`) environments for verifying a chip's body.
