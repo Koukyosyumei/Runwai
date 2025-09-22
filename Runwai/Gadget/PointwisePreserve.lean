@@ -92,6 +92,34 @@ theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁
         intro Γ₂ h
         apply Ty.SubtypeJudgment.TSub_Arr; apply ih; assumption
       }
+      | TSub_RefineInduction i hi h₁ h₂ ih₁ ih₂ => {
+        intro Γ₂ h
+        apply Ty.SubtypeJudgment.TSub_RefineInduction
+        have := h i
+        rw[hi] at this
+        rw[← this]
+        apply ih₂; exact h
+        intro σ T v h₃ h₄
+        apply h₂
+        apply tyenvToProp_pointwise_preserve σ T Δ (Env.updateTy Γ₂ Ty.indBaseLabel (Ty.unit.refin (Predicate.ind (exprEq (Expr.var i) (Expr.constZ 0)))))
+        apply update_preserve_pointwise
+        intro y
+        symm
+        apply h
+        exact h₃
+        exact h₄
+        intro k σ T v hkb h₄ h₅
+        apply ih₁
+        exact hkb
+        apply tyenvToProp_pointwise_preserve σ T Δ
+        apply update_preserve_pointwise
+        apply update_preserve_pointwise
+        intro y
+        symm
+        apply h
+        exact h₄
+        exact h₅
+      }
     }
 
 /--
@@ -181,22 +209,5 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       rw[h₆]
       have hu := @update_preserve_pointwise Γ' Γ₂ vname (Ty.unit.refin (Ty.lookup_pred args c φ Η')) h₉
       exact hu
-    }
-    | TE_Inductive i h₁ h₂ h₃ => {
-      rename_i ih₁ ih₂
-      intro Γ₂ ih
-      apply Ty.TypeJudgment.TE_Inductive i
-      have := ih i
-      rw[← this]
-      exact h₁
-      apply ih₁
-      apply update_preserve_pointwise
-      exact ih
-      intro k hb
-      apply ih₂
-      exact hb
-      apply update_preserve_pointwise
-      apply update_preserve_pointwise
-      exact ih
     }
   }
