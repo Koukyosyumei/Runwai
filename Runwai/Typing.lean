@@ -50,19 +50,19 @@ inductive SubtypeJudgment :
 
   /-- TODO: Convert this rule to a theorem/lemma via other rules-/
   | TSub_RefineInduction {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} {b: ℕ} (i: String):
-      Env.getTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ b)))) →
+      Env.getTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN b)))) →
       SubtypeJudgment Δ Γ T₁ T₂ →
       (∀ σ: Env.ValEnv, ∀ T: Env.TraceEnv, ∀ v: Ast.Expr,
-        PropSemantics.tyenvToProp σ T Δ (Env.updateTy Γ indBaseLabel (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ 0))))) →
+        PropSemantics.tyenvToProp σ T Δ (Env.updateTy Γ indBaseLabel (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constN 0))))) →
         PropSemantics.predToProp σ T Δ T₁ φ₁ v →
-        PropSemantics.predToProp σ T Δ T₂ (Ast.renameVarinPred φ₂ i (Ast.Expr.constZ 0)) v) →
+        PropSemantics.predToProp σ T Δ T₂ (Ast.renameVarinPred φ₂ i (Ast.Expr.constN 0)) v) →
       (∀ k: ℕ, ∀ σ: Env.ValEnv, ∀ T: Env.TraceEnv, ∀ v: Ast.Expr, k < b - 1 →
         PropSemantics.tyenvToProp σ T Δ
         (Env.updateTy (Env.updateTy Γ
-          indStepPrevLabel (Ast.Ty.refin Ast.Ty.unit (Ast.renameVarinPred φ₂ i (Ast.Expr.constZ k))))
-          indStepEqKLabel  (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ k))))) →
+          indStepPrevLabel (Ast.Ty.refin Ast.Ty.unit (Ast.renameVarinPred φ₂ i (Ast.Expr.constN k))))
+          indStepEqKLabel  (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constN k))))) →
         PropSemantics.predToProp σ T Δ T₁ φ₁ v →
-        PropSemantics.predToProp σ T Δ T₂ (Ast.renameVarinPred φ₂ i (Ast.Expr.constZ (k + 1))) v) →
+        PropSemantics.predToProp σ T Δ T₂ (Ast.renameVarinPred φ₂ i (Ast.Expr.constN (k + 1))) v) →
       SubtypeJudgment Δ Γ (Ast.Ty.refin T₁ φ₁) (Ast.Ty.refin T₂ φ₂)
 
   /-- TSUB-FUN: Function subtyping -/
@@ -117,7 +117,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   -- TE-ARRY-INDEX
   | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n: ℕ} {φ: Ast.Predicate}:
     TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
-    TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ n)))) →
+    TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN n)))) →
     TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
@@ -135,8 +135,8 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η (Ast.Expr.constF f) (Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constF f))))
 
   -- TE-CONSTZ
-  | TE_ConstZ {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: ℕ} :
-    TypeJudgment Γ Η (Ast.Expr.constZ f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ f))))
+  | TE_ConstN {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: ℕ} :
+    TypeJudgment Γ Η (Ast.Expr.constN f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN f))))
 
   -- TE-BOOL
   | TE_ConstBool {Γ: Env.TyEnv} {Η: Env.UsedNames} {b: Bool} :
@@ -204,15 +204,15 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   /-
   -- TE-INDUCTIVE (TODO: convert this rule to a theorem via TSUB-REFINE)
   | TE_Inductive {Γ: Env.TyEnv} {Η: Env.UsedNames} {φ: Ast.Predicate} {e: Ast.Expr} {τ: Ast.Ty} {b: ℕ} (i: String)
-    (h₀: Env.getTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ b)))))
+    (h₀: Env.getTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN b)))))
     (h₁: @TypeJudgment Δ
-      (Env.updateTy Γ (Env.freshName Η indBaseLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ 0)))))
-      ((Env.freshName Η indBaseLabel)::Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constZ 0))))
+      (Env.updateTy Γ (Env.freshName Η indBaseLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constN 0)))))
+      ((Env.freshName Η indBaseLabel)::Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constN 0))))
     (h₂: ∀ k: ℕ, k < b - 1 → @TypeJudgment Δ
       (Env.updateTy (Env.updateTy Γ
-        (Env.freshName Η indStepPrevLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.renameVarinPred φ i (Ast.Expr.constZ k))))
-        (Env.freshName Η indStepEqKLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ k)))))
-      ([(Env.freshName Η indStepEqKLabel), (Env.freshName Η indStepPrevLabel), (Env.freshName Η indBaseLabel)] ++ Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constZ (k + 1)))))
+        (Env.freshName Η indStepPrevLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.renameVarinPred φ i (Ast.Expr.constN k))))
+        (Env.freshName Η indStepEqKLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constN k)))))
+      ([(Env.freshName Η indStepEqKLabel), (Env.freshName Η indStepPrevLabel), (Env.freshName Η indBaseLabel)] ++ Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constN (k + 1)))))
     : TypeJudgment Γ Η e (Ast.Ty.refin τ φ)
   -/
 
@@ -223,9 +223,9 @@ It binds the chip's trace and instance identifiers to their expected types.
 def makeEnvs (c : Ast.Chip) (height: ℕ): Env.TyEnv :=
   Env.updateTy (Env.updateTy (Env.updateTy []
     c.ident_t (.refin (.arr (.refin (.arr (.refin .field
-      (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constZ height)))))
-    c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ height)))))
-    "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ height))))
+      (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constN height)))))
+    c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN height)))))
+    "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
 
 /--
 Check of the structure of a trace. It ensures the trace is a 2D array

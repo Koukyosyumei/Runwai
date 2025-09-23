@@ -237,10 +237,10 @@ lemma koalabear_word_range_checker_subtype_soundness {Γ Δ}
       (Ty.unit.refin (Predicate.ind (exprEq (Expr.constF 0) ((Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr FieldOp.mul (Expr.var "value_2")))))
       (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind
               (.binRel (.integerExpr (.integerExpr (.integerExpr
-                (.toZ (.var "value_0")) .add (.integerExpr (.toZ (.var "value_1")) .mul (.constZ 256)))
-                                        .add (.integerExpr (.toZ (.var "value_2")) .mul (.constZ (256^2))))
-                                        .add (.integerExpr (.toZ (.var "value_3")) .mul (.constZ (256^3))))
-              .lt (.constZ 2130706433)))) := by {
+                (.toN (.var "value_0")) .add (.integerExpr (.toN (.var "value_1")) .mul (.constN 256)))
+                                        .add (.integerExpr (.toN (.var "value_2")) .mul (.constN (256^2))))
+                                        .add (.integerExpr (.toN (.var "value_3")) .mul (.constN (256^3))))
+              .lt (.constN 2130706433)))) := by {
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl
     intro σ T v h₁ h₂
@@ -476,10 +476,10 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
     (Ast.Ty.func "and_most_sig_byte_decomp_0_to_7" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
       (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind
         (.binRel (.integerExpr (.integerExpr (.integerExpr
-          (.toZ (.var "value_0")) .add (.integerExpr (.toZ (.var "value_1")) .mul (.constZ 256)))
-                                  .add (.integerExpr (.toZ (.var "value_2")) .mul (.constZ (256^2))))
-                                  .add (.integerExpr (.toZ (.var "value_3")) .mul (.constZ (256^3))))
-        .lt (.constZ 2130706433)))))))))))))))))))))) := by {
+          (.toN (.var "value_0")) .add (.integerExpr (.toN (.var "value_1")) .mul (.constN 256)))
+                                  .add (.integerExpr (.toN (.var "value_2")) .mul (.constN (256^2))))
+                                  .add (.integerExpr (.toN (.var "value_3")) .mul (.constN (256^3))))
+        .lt (.constN 2130706433)))))))))))))))))))))) := by {
   repeat
     apply Ty.TypeJudgment.TE_Abs
     apply get_update_self

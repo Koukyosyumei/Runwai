@@ -31,8 +31,8 @@ def evalFieldOp (op: FieldOp) : Value → Value → Option Value
 
 @[simp]
 def evalIntegerOp (op: IntegerOp) : Value → Value → Option Value
-  | Value.vZ x, Value.vZ y =>
-    some $ Value.vZ $
+  | Value.vN x, Value.vN y =>
+    some $ Value.vN $
       match op with
       | IntegerOp.add => x + y
       | IntegerOp.sub => x - y
@@ -46,7 +46,7 @@ def evalRelOp (op: RelOp) : Value → Value → Option Bool
     match op with
     | RelOp.eq => some (i = j)
     | _ => none
-  | Value.vZ i, Value.vZ j =>
+  | Value.vN i, Value.vN j =>
     some $ match op with
     | RelOp.eq => i = j
     | RelOp.lt => i < j
@@ -69,15 +69,15 @@ def evalBoolOp (op : BooleanOp) : Value → Value → Option Bool
 inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
   -- E‑VALUE
   | ConstF        {σ T Δ v} : EvalProp σ T Δ (Expr.constF v) (Value.vF v)
-  | ConstZ        {σ T Δ v} : EvalProp σ T Δ (Expr.constZ v) (Value.vZ v)
+  | ConstN        {σ T Δ v} : EvalProp σ T Δ (Expr.constN v) (Value.vN v)
   | ConstBool     {σ T Δ b} : EvalProp σ T Δ (Expr.constBool b) (Value.vBool b)
   | ConstArr  {σ T Δ xs es} (ilength: xs.length = es.length) (ih : ∀ xe ∈ List.zip xs es, EvalProp σ T Δ xe.fst xe.snd) :
       EvalProp σ T Δ (Expr.arr xs) (Value.vArr es)
 
-  | toZ {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vF v)) :
-      EvalProp σ T Δ (Expr.toZ e) (Ast.Value.vZ v.val)
+  | toN {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vF v)) :
+      EvalProp σ T Δ (Expr.toN e) (Ast.Value.vN v.val)
 
-  | toF {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vZ v)) :
+  | toF {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vN v)) :
       EvalProp σ T Δ (Expr.toF e) (Ast.Value.vF v)
 
   -- E‑VAR
@@ -108,9 +108,9 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
 
   -- E‑ZBINOP
   | ZBinOp   {σ T Δ e₁ e₂ op i₁ i₂ v}
-      (ih₁ : EvalProp σ T Δ e₁ (Value.vZ i₁))
-      (ih₂ : EvalProp σ T Δ e₂ (Value.vZ i₂))
-      (r   : evalIntegerOp op (Value.vZ i₁) (Value.vZ i₂) = some v) :
+      (ih₁ : EvalProp σ T Δ e₁ (Value.vN i₁))
+      (ih₂ : EvalProp σ T Δ e₂ (Value.vN i₂))
+      (r   : evalIntegerOp op (Value.vN i₁) (Value.vN i₂) = some v) :
       EvalProp σ T Δ (Expr.integerExpr e₁ op e₂) v
 
   -- E‑BOOLBINOP
@@ -147,13 +147,13 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
   -- E‑ARRIDX
   | ArrIdx {σ T Δ a i vs j v}
       (iha : EvalProp σ T Δ a (Value.vArr vs))
-      (ihi : EvalProp σ T Δ i (Value.vZ j))
+      (ihi : EvalProp σ T Δ i (Value.vN j))
       (idx : vs[j]? = some v) :
       EvalProp σ T Δ (Expr.arrIdx a i) v
 
   | Len {σ T Δ e vs}
       (h: EvalProp σ T Δ e (Ast.Value.vArr vs)) :
-      EvalProp σ T Δ (Expr.len e) (Value.vZ (vs.length))
+      EvalProp σ T Δ (Expr.len e) (Value.vN (vs.length))
 
   -- E-LOOKUP
   | LookUp {σ T Δ vname cname args e v c rows}
@@ -180,7 +180,7 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
     -- (`c.body`) holds for ALL rows `j` of its trace.
     (h_callee_validity:
       ∀ j: ℕ, (j < rows.length) →
-        let σ' := Env.updateVal (Env.updateVal σ c.ident_t (Value.vArr rows)) c.ident_i (Value.vZ j)
+        let σ' := Env.updateVal (Env.updateVal σ c.ident_t (Value.vArr rows)) c.ident_i (Value.vN j)
         EvalProp σ' T Δ c.body Value.vUnit
     )
 
@@ -201,7 +201,7 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
     -- Using the witness row `i` and the verified witness values `vs`, it checks that for each
     -- value-expression pair, the assertion holds in the callee's context at row `i`.
     (h_asserts:
-      let σ' := Env.updateVal (Env.updateVal σ c.ident_t (Value.vArr rows)) c.ident_i (Value.vZ i)
+      let σ' := Env.updateVal (Env.updateVal σ c.ident_t (Value.vArr rows)) c.ident_i (Value.vN i)
       ∀ p ∈ List.zip vs (args.map Prod.snd),
         EvalProp σ' T Δ (Expr.assertE (Expr.constF p.fst) p.snd) Value.vUnit
     )
