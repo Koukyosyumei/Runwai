@@ -101,7 +101,7 @@ theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁
         apply ih₂; exact h
         intro σ T v h₃ h₄
         apply h₂
-        apply tyenvToProp_pointwise_preserve σ T Δ (Env.updateTy Γ₂ Ty.indBaseLabel (Ty.unit.refin (Predicate.ind (exprEq (Expr.var i) (Expr.constZ 0)))))
+        apply tyenvToProp_pointwise_preserve σ T Δ (Env.updateTy Γ₂ Ty.indBaseLabel (Ty.unit.refin (Predicate.ind (exprEq (Expr.var i) (Expr.constN 0)))))
         apply update_preserve_pointwise
         intro y
         symm
@@ -161,7 +161,7 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       apply update_preserve_pointwise
       exact h
     | TE_ConstF => intros; constructor
-    | TE_ConstZ => intros; constructor
+    | TE_ConstN => intros; constructor
     | TE_ConstBool => intros; constructor
     | TE_Assert _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Assert (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_BinOpField _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpField (ih₁ Γ₂ h) (ih₂ Γ₂ h)

@@ -48,7 +48,7 @@ theorem evalprop_deterministic
   intro v₁ v₂ h₁ h₂
   induction h₁ generalizing v₂ with
   | ConstF => cases h₂; rfl
-  | ConstZ => cases h₂; rfl
+  | ConstN => cases h₂; rfl
   | ConstBool => cases h₂; rfl
   | ConstArr h_length h_forall in_det =>
     rename_i es xs
@@ -176,7 +176,7 @@ theorem evalprop_deterministic
     simp at h ⊢
     rw[h]
   }
-  | toZ => {
+  | toN => {
     cases h₂
     rename_i v₁ ih₀ ih₁ fv₂ ih₃
     have h := ih₁ ih₃
@@ -224,11 +224,11 @@ theorem evalProp_eq_trans
       }
       | _ => simp at ih₃
     }
-    | vZ => {
+    | vN => {
       cases v₂ with
-      | vZ => {
+      | vN => {
         cases v₄ with
-        | vZ => {
+        | vN => {
           simp at ih₃ ih₆
           apply Eval.EvalProp.Rel
           exact ih₂
@@ -260,13 +260,13 @@ theorem evalProp_eq_trans
   }
 
 /--
-If `e₁` is proven to be equal to `e₂`, and a less-than relation involving `e₂` holds (i.e., `toZ e₂ < e₃`),
-then the same relation must also hold for `e₁` (i.e., `toZ e₁ < e₃`).
+If `e₁` is proven to be equal to `e₂`, and a less-than relation involving `e₂` holds (i.e., `toN e₂ < e₃`),
+then the same relation must also hold for `e₁` (i.e., `toN e₁ < e₃`).
 -/
 lemma eval_eq_then_lt {σ T Δ e₁ e₂ e₃}
   (h₁: Eval.EvalProp σ T Δ (Ast.exprEq e₁ e₂) (Ast.Value.vBool true))
-  (h₂: Eval.EvalProp σ T Δ (Ast.Expr.binRel (Ast.Expr.toZ e₂) Ast.RelOp.lt e₃) (Ast.Value.vBool true))
-  : Eval.EvalProp σ T Δ (Ast.Expr.binRel (Ast.Expr.toZ e₁) Ast.RelOp.lt e₃) (Ast.Value.vBool true) := by {
+  (h₂: Eval.EvalProp σ T Δ (Ast.Expr.binRel (Ast.Expr.toN e₂) Ast.RelOp.lt e₃) (Ast.Value.vBool true))
+  : Eval.EvalProp σ T Δ (Ast.Expr.binRel (Ast.Expr.toN e₁) Ast.RelOp.lt e₃) (Ast.Value.vBool true) := by {
     cases h₂
     rename_i ih₁ ih₂ r
     cases ih₁
@@ -277,7 +277,7 @@ lemma eval_eq_then_lt {σ T Δ e₁ e₂ e₃}
     rename_i ev₃ hev₃ v₂ hlt ev₁ ev₂
     simp [Eval.evalRelOp] at hlt
     cases ev₃ with
-    | vZ v₃ => {
+    | vN v₃ => {
       simp at hlt
       rw[← hv] at r
       simp [Eval.evalRelOp] at r
@@ -285,7 +285,7 @@ lemma eval_eq_then_lt {σ T Δ e₁ e₂ e₃}
       | vF v₁ => {
         simp at r
         apply Eval.EvalProp.Rel
-        apply Eval.EvalProp.toZ
+        apply Eval.EvalProp.toN
         exact ih₁
         exact hev₃
         simp [Eval.evalRelOp]
@@ -489,11 +489,11 @@ lemma eval_bits_to_byte_expr_val {σ T Δ x₀ x₁ x₂ x₃ x₄ x₅ x₆ x�
   }
 
 /--
-If the expression `toZ x < constZ t` evaluates to true, it proves that the variable `x` is bound
+If the expression `toN x < constN t` evaluates to true, it proves that the variable `x` is bound
 to a field value `v` in the environment `σ`, and that the numeric representation of `v` is less
 than the constant `t`.
 -/
-lemma eval_lt_val {σ T Δ x t} (h: Eval.EvalProp σ T Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
+lemma eval_lt_val {σ T Δ x t} (h: Eval.EvalProp σ T Δ ((Ast.Expr.var x).toN.binRel Ast.RelOp.lt (Ast.Expr.constN t)) (Ast.Value.vBool true)):
   ∃ v : F, Env.getVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h
     rename_i ih₀ ih₁ r₁
@@ -509,7 +509,7 @@ lemma eval_lt_val {σ T Δ x t} (h: Eval.EvalProp σ T Δ ((Ast.Expr.var x).toZ.
 
 lemma eval_lt_lam_val {σ T Δ x t}
   (h: Eval.EvalProp σ T Δ
-  ((Expr.lam Ast.nu Ty.field ((Expr.var Ast.nu).toZ.binRel RelOp.lt (Expr.constZ t))).app (Expr.var x))
+  ((Expr.lam Ast.nu Ty.field ((Expr.var Ast.nu).toN.binRel RelOp.lt (Expr.constN t))).app (Expr.var x))
   (Value.vBool true)):
   ∃ v : F, Env.getVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h
@@ -537,17 +537,17 @@ lemma eval_lt_lam_val {σ T Δ x t}
   }
 
 /-
-Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ k)) (Ast.Value.vBool true)
+Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN k)) (Ast.Value.vBool true)
 -/
-lemma eval_var_eq_int (h: Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constZ k)) (Ast.Value.vBool true)):
-  Env.getVal σ x = (Ast.Value.vZ k) := by {
+lemma eval_var_eq_int (h: Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constN k)) (Ast.Value.vBool true)):
+  Env.getVal σ x = (Ast.Value.vN k) := by {
       cases h
       rename_i ih₁ ih₂ r
       cases ih₂
       cases ih₁
       rename_i v' i_is_k
       cases v' with
-      | vZ i_val => {
+      | vN i_val => {
         simp[Eval.evalRelOp] at r
         rw[r] at i_is_k
         exact i_is_k
@@ -559,13 +559,13 @@ lemma eval_var_eq_int (h: Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var x) (As
 
 /-
 Eval.EvalProp σ T Δ
-  ((Ast.Expr.lam Ast.nu Ast.Ty.int (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ height))).app (Ast.Expr.var "n"))
+  ((Ast.Expr.lam Ast.nu Ast.Ty.int (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))).app (Ast.Expr.var "n"))
   (Ast.Value.vBool true)
 -/
 lemma eval_app_lam_eq_int (h: Eval.EvalProp σ T Δ
-  ((Ast.Expr.lam x Ast.Ty.int (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constZ v))).app (Ast.Expr.var y))
+  ((Ast.Expr.lam x Ast.Ty.int (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constN v))).app (Ast.Expr.var y))
   (Ast.Value.vBool true)):
-  Env.getVal σ y = (Ast.Value.vZ v) := by {
+  Env.getVal σ y = (Ast.Value.vN v) := by {
     cases h
     rename_i ih_f ih_a ih_b
     cases ih_f
@@ -579,7 +579,7 @@ lemma eval_app_lam_eq_int (h: Eval.EvalProp σ T Δ
     unfold Env.getVal Env.updateVal at a
     simp at a
     cases v₁' with
-    | vZ x => {
+    | vN x => {
       simp[Eval.evalRelOp] at r
       rw[r] at a
       rename_i n_is_height
@@ -596,7 +596,7 @@ lemma eval_height_check (h: Eval.EvalProp σ T Δ
         ((((Ast.Ty.field.refin (Ast.Predicate.ind (Ast.Expr.constBool true))).arr 1).refin
               (Ast.Predicate.ind (Ast.Expr.constBool true))).arr
           height)
-        (Ast.exprEq (Ast.Expr.var Ast.nu).len (Ast.Expr.constZ height))).app
+        (Ast.exprEq (Ast.Expr.var Ast.nu).len (Ast.Expr.constN height))).app
     (Ast.Expr.var trace))
   (Ast.Value.vBool true)):
   ∃ trace_array: List Ast.Value, Env.getVal σ trace = some (Ast.Value.vArr trace_array) ∧

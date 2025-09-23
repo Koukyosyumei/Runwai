@@ -19,7 +19,7 @@ def unexpConstF : Unexpander
     `($f $n)
   | _ => throw ()
 
-@[app_unexpander Ast.Expr.constZ]
+@[app_unexpander Ast.Expr.constN]
 def unexpConstZ : Unexpander
   | `($_ $n) => `($n)
   | _ => throw ()
@@ -175,7 +175,7 @@ def unexpBinRel : Unexpander
 
 #check Ast.FieldOp.add
 #check Ast.Expr.constF 12
-#check Ast.Expr.constZ 12
+#check Ast.Expr.constN 12
 #check Ast.Expr.constBool true
 #check Ast.Expr.constBool false
 #check Ast.Ty.arr Ast.Ty.field 2
@@ -183,6 +183,6 @@ def unexpBinRel : Unexpander
 #check Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constBool true))
 #check Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constBool True))
 #check Ast.Expr.fieldExpr (Ast.Expr.constF 3) (Ast.FieldOp.add) (Ast.Expr.constF 4)
-#check Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constZ 2)
+#check Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.constN 2)
 #check Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")
 #check Ast.Expr.letIn "u" (Ast.Expr.constF 123) (Ast.Expr.var "u")

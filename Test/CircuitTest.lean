@@ -16,10 +16,10 @@ def assertChip : Ast.Chip := {
   width   := 2,
   goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
-      (Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
+      (Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))
                        Ast.RelOp.eq (Ast.Expr.constF 2))),
   body    := (Ast.Expr.letIn "u" (Ast.Expr.assertE
-              (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
+              (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))
               (Ast.Expr.constF 2))
             (Ast.Expr.var "u"))
 }
@@ -33,9 +33,9 @@ def iszeroChip : Ast.Chip := {
   goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
       (Ast.exprEq (.var "y") (.branch (.binRel (.var "x") (.eq) (.constF 0)) (.constF 1) (.constF 0))))
-  body    := (Ast.Expr.letIn "x" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
-              (Ast.Expr.letIn "y" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
-                (Ast.Expr.letIn "inv" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 2))
+  body    := (Ast.Expr.letIn "x" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 0))
+              (Ast.Expr.letIn "y" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))
+                (Ast.Expr.letIn "inv" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 2))
                   (Ast.Expr.letIn "u₁" (.assertE (.var "y") (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var "x")) .mul (.var "inv")) (.add) (.constF 1)))
                     (Ast.Expr.letIn "u₂" (.assertE (.fieldExpr (.var "x") .mul (.var "y")) (.constF 0)) (.var "u₂")))
                 )
@@ -52,9 +52,9 @@ def iszeroChip2: Ast.Chip := {
   goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
       (Ast.exprEq (.var "β") (.branch (.binRel (.var "α") (.eq) (.constF 0)) (.constF 1) (.constF 0))))
-  body    := (Ast.Expr.letIn "α" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 0))
-              (Ast.Expr.letIn "β" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 1))
-                (Ast.Expr.letIn "γ" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constZ 2))
+  body    := (Ast.Expr.letIn "α" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 0))
+              (Ast.Expr.letIn "β" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))
+                (Ast.Expr.letIn "γ" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 2))
                   (Ast.Expr.letIn "u₁" (.app (.app (.app iszero_func (.var "α")) (.var "β")) (.var "γ"))
                      (.var "u₁"))
                 )
@@ -68,7 +68,7 @@ def u8chip : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i"
   width := 1,
-  goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.Expr.binRel (Ast.Expr.toZ (Ast.trace_i_j "trace" "i" 0)) Ast.RelOp.lt (Ast.Expr.constZ 256))),
+  goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.Expr.binRel (Ast.Expr.toN (Ast.trace_i_j "trace" "i" 0)) Ast.RelOp.lt (Ast.Expr.constN 256))),
   body := Ast.Expr.assertE (Ast.Expr.constF 0) (Ast.Expr.constF 0)
 }
 
@@ -79,10 +79,10 @@ def clkChip : Ast.Chip := {
   ident_i := "i",
   width := 1,
   goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.Expr.branch (.binRel (.var "i") Ast.RelOp.lt (.var "n")) (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.var "i"))) (Ast.Expr.constBool true)))
-  body := (.letIn "u₀" (.branch (Ast.exprEq (.var "i") (.constZ 0))
+  body := (.letIn "u₀" (.branch (Ast.exprEq (.var "i") (.constN 0))
                           (.assertE (Ast.trace_i_j "trace" "i" 0) (.constF 0))
                           (.assertE (.constF 1) (.constF 1)))
-          (.letIn "u₁" (.branch (.binRel (.var "i") Ast.RelOp.lt (.integerExpr (.var "n") Ast.IntegerOp.sub (.constZ 1)))
+          (.letIn "u₁" (.branch (.binRel (.var "i") Ast.RelOp.lt (.integerExpr (.var "n") Ast.IntegerOp.sub (.constN 1)))
                           (.assertE (Ast.trace_ip1_j "trace" "i" 0) (.fieldExpr (Ast.trace_i_j "trace" "i" 0) .add (.constF 1)))
                           (.assertE (.constF 1) (.constF 1)))
            (.var "u₁")))
@@ -95,8 +95,8 @@ def koalabearWordRangeCheckerChip : Ast.Chip := {
   ident_i := "i",
   width := 18,
   goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind
-    (.binRel (.integerExpr (.integerExpr (.integerExpr (.toZ (.var "alpha_0")) .add ((.integerExpr (.toZ (.var "alpha_1")) .mul (.constZ 256)))) .add ((.integerExpr (.toZ (.var "alpha_2")) .mul (.constZ (256^2))))) .add (.integerExpr (.toZ (.var "alpha_3")) .mul (.constZ (256^3))))
-      .lt (.constZ 2130706433)))
+    (.binRel (.integerExpr (.integerExpr (.integerExpr (.toN (.var "alpha_0")) .add ((.integerExpr (.toN (.var "alpha_1")) .mul (.constN 256)))) .add ((.integerExpr (.toN (.var "alpha_2")) .mul (.constN (256^2))))) .add (.integerExpr (.toN (.var "alpha_3")) .mul (.constN (256^3))))
+      .lt (.constN 2130706433)))
   body := (.letIn "alpha_0" (Ast.trace_i_j "trace" "i" 0)
           (.letIn "alpha_1" (Ast.trace_i_j "trace" "i" 1)
           (.letIn "alpha_2" (Ast.trace_i_j "trace" "i" 2)
@@ -206,7 +206,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_VarEnv
   apply get_update_ne
   simp
-  apply Ty.TypeJudgment.TE_ConstZ
+  apply Ty.TypeJudgment.TE_ConstN
   apply Ty.TypeJudgment.TE_Assert
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_ArrayIndex
@@ -236,7 +236,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_Var
   apply get_update_ne
   simp
-  apply Ty.TypeJudgment.TE_ConstZ
+  apply Ty.TypeJudgment.TE_ConstN
   apply Ty.TypeJudgment.TE_Assert
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_ArrayIndex
@@ -273,21 +273,21 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   set Γ' := (Env.updateTy
     (Env.updateTy Γ "u₀"
       (Ast.Ty.unit.refin
-        (((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))).and
+        (((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN 0))).and
               (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 0)))).or
-          ((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))).not.and
+          ((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN 0))).not.and
             (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1)))))))
     "u₁"
     (Ast.Ty.unit.refin
       (((Ast.Predicate.ind
                 ((Ast.Expr.var "i").binRel Ast.RelOp.lt
-                  ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1)))).and
+                  ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constN 1)))).and
             (Ast.Predicate.ind
               (Ast.exprEq (Ast.trace_ip1_j "trace" "i" 0)
                 ((Ast.trace_i_j "trace" "i" 0).fieldExpr Ast.FieldOp.add (Ast.Expr.constF 1))))).or
         ((Ast.Predicate.ind
                 ((Ast.Expr.var "i").binRel Ast.RelOp.lt
-                  ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1)))).not.and
+                  ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constN 1)))).not.and
           (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))) with hΓ'
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
@@ -306,11 +306,11 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
     rw [hΓ', hΓ] at h₁
 
     have hu₀ := h₁ "u₀" (Ast.Ty.unit.refin
-                (((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))).and
+                (((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN 0))).and
                       (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 0)))).or
-                  ((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))).not.and
+                  ((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN 0))).not.and
                     (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))
-    have hu₄ := h₁ "@ind_base" (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ 0))))
+    have hu₄ := h₁ "@ind_base" (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN 0))))
     simp [Env.getTy, Env.updateTy, Ty.indBaseLabel] at hu₀ hu₄
     cases hu₀ with
     | inl h => {
@@ -321,7 +321,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
       cases ih₁
       rename_i v₁ a
       cases v₁ with
-      | vZ x => {
+      | vN x => {
         simp at r
         cases h₂
         rename_i ih₁ ih₂ r'
@@ -334,10 +334,10 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           rw[r] at a
           simp [Ast.renameVarinPred]
           simp [Ast.renameVar]
-          have : Eval.EvalProp σ T Δ ((Ast.Expr.constZ 0).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
+          have : Eval.EvalProp σ T Δ ((Ast.Expr.constN 0).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
             apply Eval.EvalProp.Rel
-            apply Eval.EvalProp.ConstZ
-            have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ height))))
+            apply Eval.EvalProp.ConstN
+            have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
             simp [Env.getTy, Env.updateTy, Ty.makeEnvs, Ty.indBaseLabel] at hu₀
             have n_is_height := eval_app_lam_eq_int hu₀
             apply Eval.EvalProp.Var
@@ -362,13 +362,13 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           apply Eval.EvalProp.ArrIdx
           apply Eval.EvalProp.ArrIdx
           exact iha
-          apply Eval.EvalProp.ConstZ
+          apply Eval.EvalProp.ConstN
           exact idx
-          apply Eval.EvalProp.ConstZ
+          apply Eval.EvalProp.ConstN
           rename_i idx' _ _ _ _
           exact idx'
           apply Eval.EvalProp.toF
-          apply Eval.EvalProp.ConstZ
+          apply Eval.EvalProp.ConstN
           simp[Eval.evalRelOp]
         }
         | _ => {
@@ -390,29 +390,29 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
     simp[Ast.renameVarinPred, Ast.renameVar]
     simp[Env.freshName] at h₁
     have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int
-      (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ height))))
+      (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
     have hu₁ := h₁ "i" (Ast.Ty.refin Ast.Ty.int
-      (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ height))))
+      (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN height))))
     have hu₂ := h₁ Ty.indStepPrevLabel (Ast.Ty.unit.refin
                 (Ast.renameVarinPred
                   (Ast.Predicate.ind
                     (((Ast.Expr.var "i").binRel Ast.RelOp.lt (Ast.Expr.var "n")).branch
                       (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.var "i").toF) (Ast.Expr.constBool true)))
-                  "i" (Ast.Expr.constZ k)))
-    have hu₃ := h₁ Ty.indStepEqKLabel (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ (k)))))
+                  "i" (Ast.Expr.constN k)))
+    have hu₃ := h₁ Ty.indStepEqKLabel (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN (k)))))
     have hu₄ := h₁ "u₁" (Ast.Ty.unit.refin
       (((Ast.Predicate.ind
                 ((Ast.Expr.var "i").binRel Ast.RelOp.lt
-                  ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1)))).and
+                  ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constN 1)))).and
             (Ast.Predicate.ind
               (Ast.exprEq (Ast.trace_ip1_j "trace" "i" 0)
                 ((Ast.trace_i_j "trace" "i" 0).fieldExpr Ast.FieldOp.add (Ast.Expr.constF 1))))).or
         ((Ast.Predicate.ind
                 ((Ast.Expr.var "i").binRel Ast.RelOp.lt
-                  ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1)))).not.and
+                  ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constN 1)))).not.and
           (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))
     have hu₅ := h₁ "trace" (.refin (.arr (.refin (.arr (.refin .field
-      (Ast.Predicate.ind (Ast.Expr.constBool true))) 1) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constZ height))))
+      (Ast.Predicate.ind (Ast.Expr.constBool true))) 1) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constN height))))
     simp [Env.getTy, Env.updateTy, Γ', Γ, Ty.makeEnvs, Ty.indStepPrevLabel, Ty.indStepEqKLabel] at hu₀ hu₁ hu₂ hu₃ hu₄ hu₅
     have h_n_is_height := eval_app_lam_eq_int hu₀
     have h_i_kp1 := eval_var_eq_int hu₃
@@ -531,9 +531,9 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           rw[← r] at r'
           rw[hkk] at r'
           rw[trace_arr_length] at hkp1_b
-          have : Eval.EvalProp σ T Δ ((Ast.Expr.constZ (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
+          have : Eval.EvalProp σ T Δ ((Ast.Expr.constN (k + 1)).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
             apply Eval.EvalProp.Rel
-            apply Eval.EvalProp.ConstZ
+            apply Eval.EvalProp.ConstN
             apply Eval.EvalProp.Var
             exact h_n_is_height
             simp [Eval.evalRelOp]
@@ -546,12 +546,12 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           apply Eval.EvalProp.ArrIdx
           apply Eval.EvalProp.Var
           exact h_trace
-          apply Eval.EvalProp.ConstZ
+          apply Eval.EvalProp.ConstN
           exact idx''
-          apply Eval.EvalProp.ConstZ
+          apply Eval.EvalProp.ConstN
           exact idx'''
           apply Eval.EvalProp.toF
-          apply Eval.EvalProp.ConstZ
+          apply Eval.EvalProp.ConstN
           have : (k: ℕ) + (1: F) = ((k + 1): ℕ) := by {
             simp
           }
@@ -559,14 +559,14 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           exact r'
         }
         {
-          have : Eval.EvalProp σ T Δ ((Ast.Expr.var "i").binRel Ast.RelOp.lt ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ 1))) (Ast.Value.vBool true) := by {
+          have : Eval.EvalProp σ T Δ ((Ast.Expr.var "i").binRel Ast.RelOp.lt ((Ast.Expr.var "n").integerExpr Ast.IntegerOp.sub (Ast.Expr.constN 1))) (Ast.Value.vBool true) := by {
             apply Eval.EvalProp.Rel
             apply Eval.EvalProp.Var
             exact h_i_kp1
             apply Eval.EvalProp.ZBinOp
             apply Eval.EvalProp.Var
             exact h_n_is_height
-            apply Eval.EvalProp.ConstZ
+            apply Eval.EvalProp.ConstN
             simp[Eval.evalIntegerOp]
             rfl
             simp[Eval.evalRelOp]
@@ -599,8 +599,8 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
 
 lemma eval_var_lt_of_update
   (h₀: Eval.EvalProp σ T Δ v va)
-  (h₁: Eval.EvalProp σ T Δ (v.toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
-  Eval.EvalProp (Env.updateVal σ x va) T Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t))
+  (h₁: Eval.EvalProp σ T Δ (v.toN.binRel Ast.RelOp.lt (Ast.Expr.constN t)) (Ast.Value.vBool true)):
+  Eval.EvalProp (Env.updateVal σ x va) T Δ ((Ast.Expr.var x).toN.binRel Ast.RelOp.lt (Ast.Expr.constN t))
   (Ast.Value.vBool true) := by {
     cases h₁
     rename_i ih₁ ih₂ r
@@ -613,11 +613,11 @@ lemma eval_var_lt_of_update
       rw[this] at r
       cases ih₂
       apply Eval.EvalProp.Rel
-      apply Eval.EvalProp.toZ
+      apply Eval.EvalProp.toN
       apply Eval.EvalProp.Var
       simp [Env.getVal, Env.updateVal]
       rfl
-      apply Eval.EvalProp.ConstZ
+      apply Eval.EvalProp.ConstN
       exact r
     }
     | _ => {
@@ -630,14 +630,14 @@ lemma u8_lookup_refines_lt256 (x u: String)
   (h₀: Env.getTy Γ x = Ast.Ty.refin Ast.Ty.field φ)
   (h₁: Env.getTy Γ u = some ((Ast.Ty.unit.refin
           (Ty.lookup_pred [(Ast.Expr.var x, Ast.trace_i_j "trace" "i" 0)] (Env.getChip Δ "u8")
-            (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))
+            (Ast.Predicate.ind ((Ast.trace_i_j "trace" "i" 0).toN.binRel Ast.RelOp.lt (Ast.Expr.constN 256)))
             Η))))
   (h₂: (Env.freshName Η (Env.getChip Δ "u8").ident_i) = new_ident_i)
   (h₃: (Env.freshName Η (Env.getChip Δ "u8").ident_t) = new_ident_t)
   (h₄: new_ident_t ≠ "i")
   (h₅: x ≠ Ast.nu):
   @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x)
-    (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ 256)))) := by {
+    (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).toN.binRel Ast.RelOp.lt (Ast.Expr.constN 256)))) := by {
     apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_Var
     exact h₀

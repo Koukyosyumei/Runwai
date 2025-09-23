@@ -170,7 +170,7 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
   match stx with
   | `(runwai_expr| $n:num) => do
     let v := n.getNat
-    pure (Ast.Expr.constZ v)
+    pure (Ast.Expr.constN v)
 
   -- Field literal “123”: → `constF 123`
   | `(runwai_expr| Fp $n:num) => do

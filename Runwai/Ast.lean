@@ -54,7 +54,7 @@ mutual
   /-- Core expressions syntax for Runwai. -/
   inductive Expr where
     | constF      : (x : F) → Expr                                       -- field constant
-    | constZ      : (x : ℕ) → Expr                                       -- integer constant
+    | constN      : (x : ℕ) → Expr                                       -- integer constant
     | constBool   : (b: Bool) → Expr                                     -- boolean constant
     | arr         : (elems: List Expr) → Expr                            -- [e₁, ..., eₙ]
     | var         : (name: String) → Expr                                -- variable x
@@ -71,7 +71,7 @@ mutual
     | letIn       : (name: String) → (val: Expr) → (body: Expr) → Expr   -- let x = e₁ in e₂
     | lookup      : (vname cname: String) →
                       (args: List (Expr × Expr)) → (body: Expr) → Expr   -- let x = lookup(c, (f₁:t₁, ⋯ fκ:tκ)) in e
-    | toZ         : (body: Expr) → Expr
+    | toN         : (body: Expr) → Expr
     | toF         : (body: Expr) → Expr
     deriving Lean.ToExpr
 
@@ -86,7 +86,7 @@ mutual
   /-- Runtime values in Runwai. -/
   inductive Value where
     | vF       : (x: F) → Value
-    | vZ       : (x: ℕ) -> Value
+    | vN       : (x: ℕ) -> Value
     | vUnit    : Value
     | vBool    : (b: Bool) → Value
     | vArr     : (elems: List Value) → Value
@@ -109,7 +109,7 @@ def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr
   if cnt > 0 then
     match e with
     | Expr.constF x      => Expr.constF x
-    | Expr.constZ x      => Expr.constZ x
+    | Expr.constN x      => Expr.constN x
     | Expr.constBool b   => Expr.constBool b
     | Expr.arr elems     => Expr.arr (elems.map (fun e => renameVar e oldName newExpr (cnt - 1)))
     | Expr.var n         => if n = oldName then newExpr else e
@@ -134,7 +134,7 @@ def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr
           Expr.letIn n (renameVar v oldName newExpr (cnt - 1)) (renameVar b oldName newExpr (cnt - 1))
     | Expr.lookup n c args e =>
         Expr.lookup n c (args.map (fun (a, b) => (renameVar a oldName newExpr (cnt - 1), renameVar b oldName newExpr (cnt - 1)))) (renameVar e oldName newExpr (cnt - 1))
-    | Expr.toZ body => Expr.toZ ((renameVar body oldName newExpr (cnt - 1)))
+    | Expr.toN body => Expr.toN ((renameVar body oldName newExpr (cnt - 1)))
     | Expr.toF body => Expr.toF ((renameVar body oldName newExpr (cnt - 1)))
   else e
 
@@ -156,7 +156,7 @@ def renameTy (τ: Ast.Ty) (oldName: String) (newExpr: Ast.Expr) : Ast.Ty :=
 /-- Test for equality of two `Value`s. -/
 partial def valueEq : Value → Value → Bool
   | Value.vF x, Value.vF y                     => x = y
-  | Value.vZ x, Value.vZ y                     => x = y
+  | Value.vN x, Value.vN y                     => x = y
   | Value.vBool b₁, Value.vBool b₂             => b₁ = b₂
   | Value.vArr xs, Value.vArr ys   =>
       if xs.length ≠ ys.length then false
@@ -170,8 +170,8 @@ instance : BEq Value where
 /-- Convenience -/
 abbrev exprEq (e₁ e₂: Expr): Expr := Expr.binRel e₁ RelOp.eq e₂
 abbrev constTruePred : Predicate := Predicate.ind (Ast.Expr.constBool true)
-abbrev trace_i_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.var ident_i)).arrIdx (Ast.Expr.constZ j)
-abbrev trace_ip1_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.integerExpr (Ast.Expr.var ident_i) Ast.IntegerOp.add (Ast.Expr.constZ 1))).arrIdx (Ast.Expr.constZ j)
+abbrev trace_i_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.var ident_i)).arrIdx (Ast.Expr.constN j)
+abbrev trace_ip1_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.integerExpr (Ast.Expr.var ident_i) Ast.IntegerOp.add (Ast.Expr.constN 1))).arrIdx (Ast.Expr.constN j)
 abbrev nu: String := "ν"
 
 structure Chip where
@@ -210,7 +210,7 @@ instance : Repr RelOp where
 mutual
   partial def exprToString : Expr → String
     | Expr.constF x          => s!"F {x.val}"
-    | Expr.constZ x          => toString x
+    | Expr.constN x          => toString x
     | Expr.constBool b       => toString b
     | Expr.var name          => name
     | Expr.assertE l r       => s!"assert_eq({exprToString l}, {exprToString r})"
@@ -226,7 +226,7 @@ mutual
     | Expr.app f arg         => s!"{exprToString f} {exprToString arg}"
     | Expr.letIn n v b       => s!"let {n} = {exprToString v} in {exprToString b}"
     | Expr.lookup n c args e  => s!"let {n} = #{c}(" ++ String.intercalate ", " (args.map fun xy => (exprToString xy.fst) ++ ": " ++ exprToString xy.snd) ++ s!") in {exprToString e}"
-    | Expr.toZ b             => s!"toZ({exprToString b})"
+    | Expr.toN b             => s!"toN({exprToString b})"
     | Expr.toF b             => s!"toF({exprToString b})"
 
 
@@ -261,7 +261,7 @@ instance : Repr Ty where
 /-- Pretty-print a `Value`. -/
 def valueToString : Value → String
   | Value.vF x        => s!"F {x.val}"
-  | Value.vZ x        => s!"{x}"
+  | Value.vN x        => s!"{x}"
   | Value.vUnit       => "*"
   | Value.vBool b     => toString b
   | Value.vArr vs     =>
