@@ -62,8 +62,8 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {T: Env.T
 
 lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
   (x y inv u₁ u₂: String)
-  (htx: Env.lookupTy Γ x = (Ty.refin Ast.Ty.field φ₁))
-  (hty: Env.lookupTy Γ y = (Ty.refin Ast.Ty.field φ₂))
+  (htx: Env.getTy Γ x = (Ty.refin Ast.Ty.field φ₁))
+  (hty: Env.getTy Γ y = (Ty.refin Ast.Ty.field φ₂))
   (htinv: @Ty.TypeJudgment Δ Γ Η (.var inv) (Ty.refin Ast.Ty.field φ₃))
   (hne₁: ¬ x = u₁)
   (hne₂: ¬ y = u₁)
@@ -104,7 +104,7 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
               (Expr.constF 1))))
         set φ₂ := (Ast.Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))
         have h₃ := h₂ u₁ (Ty.unit.refin φ₁)
-        have h₄: Env.lookupTy (Env.updateTy (Env.updateTy Γ u₁ (Ty.unit.refin φ₁)) u₂ (Ty.unit.refin φ₂)) u₁ = (Ty.unit.refin φ₁) := by {
+        have h₄: Env.getTy (Env.updateTy (Env.updateTy Γ u₁ (Ty.unit.refin φ₁)) u₂ (Ty.unit.refin φ₂)) u₁ = (Ty.unit.refin φ₁) := by {
           apply lookup_update_ne_of_lookup
           exact hne₃
           apply lookup_update_self
@@ -191,48 +191,48 @@ abbrev koalabear_word_range_checker_func: Ast.Expr :=
         (.var "u₁₁"))))))))))))))))))))))))))))))))))))))
 
 lemma koalabear_word_range_checker_subtype_soundness {Γ Δ}
-  (hb₁: Env.lookupTy Γ "b₀" = some (bit_value_type "most_sig_byte_decomp_0"))
-  (hb₂ : Env.lookupTy Γ "b₁" = some (bit_value_type "most_sig_byte_decomp_1"))
-  (hb₃: Env.lookupTy Γ "b₂" = some (bit_value_type "most_sig_byte_decomp_2"))
-  (hb₄ : Env.lookupTy Γ "b₃" = some (bit_value_type "most_sig_byte_decomp_3"))
-  (hb₅: Env.lookupTy Γ "b₄" = some (bit_value_type "most_sig_byte_decomp_4"))
-  (hb₆ : Env.lookupTy Γ "b₅" = some (bit_value_type "most_sig_byte_decomp_5"))
-  (hb₇: Env.lookupTy Γ "b₆" = some (bit_value_type "most_sig_byte_decomp_6"))
-  (hb₈ : Env.lookupTy Γ "b₇" = some (bit_value_type "most_sig_byte_decomp_7"))
-  (hu₁: Env.lookupTy Γ "u₁" = some (Ast.Ty.unit.refin
+  (hb₁: Env.getTy Γ "b₀" = some (bit_value_type "most_sig_byte_decomp_0"))
+  (hb₂ : Env.getTy Γ "b₁" = some (bit_value_type "most_sig_byte_decomp_1"))
+  (hb₃: Env.getTy Γ "b₂" = some (bit_value_type "most_sig_byte_decomp_2"))
+  (hb₄ : Env.getTy Γ "b₃" = some (bit_value_type "most_sig_byte_decomp_3"))
+  (hb₅: Env.getTy Γ "b₄" = some (bit_value_type "most_sig_byte_decomp_4"))
+  (hb₆ : Env.getTy Γ "b₅" = some (bit_value_type "most_sig_byte_decomp_5"))
+  (hb₇: Env.getTy Γ "b₆" = some (bit_value_type "most_sig_byte_decomp_6"))
+  (hb₈ : Env.getTy Γ "b₇" = some (bit_value_type "most_sig_byte_decomp_7"))
+  (hu₁: Env.getTy Γ "u₁" = some (Ast.Ty.unit.refin
                                   (Ast.Predicate.ind
                                     (Ast.exprEq
                                       (bits_to_byte_expr "most_sig_byte_decomp_0" "most_sig_byte_decomp_1" "most_sig_byte_decomp_2" "most_sig_byte_decomp_3"
                                                         "most_sig_byte_decomp_4" "most_sig_byte_decomp_5" "most_sig_byte_decomp_6" "most_sig_byte_decomp_7")
                                       (Ast.Expr.var "value_3")))))
-  (hu₂: Env.lookupTy Γ "u₂" = some                               (Ast.Ty.unit.refin
+  (hu₂: Env.getTy Γ "u₂" = some                               (Ast.Ty.unit.refin
                                 (Ast.Predicate.ind
                                   (Ast.exprEq (Ast.Expr.var "most_sig_byte_decomp_7") (Ast.Expr.constF 0)))))
-  (hu₃: Env.lookupTy Γ "u₃" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_0" "most_sig_byte_decomp_1"))
-  (hu₄: Env.lookupTy Γ "u₄" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_3" "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_2"))
-  (hu₅: Env.lookupTy Γ "u₅" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_4" "and_most_sig_byte_decomp_0_to_3" "most_sig_byte_decomp_3"))
-  (hu₆: Env.lookupTy Γ "u₆" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_5" "and_most_sig_byte_decomp_0_to_4" "most_sig_byte_decomp_4"))
-  (hu₇: Env.lookupTy Γ "u₇" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_6" "and_most_sig_byte_decomp_0_to_5" "most_sig_byte_decomp_5"))
-  (hu₈: Env.lookupTy Γ "u₈" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_7" "and_most_sig_byte_decomp_0_to_6" "most_sig_byte_decomp_6"))
-  (hu₉: Env.lookupTy Γ "u₉" = some                           (Ast.Ty.unit.refin
+  (hu₃: Env.getTy Γ "u₃" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_0" "most_sig_byte_decomp_1"))
+  (hu₄: Env.getTy Γ "u₄" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_3" "and_most_sig_byte_decomp_0_to_2" "most_sig_byte_decomp_2"))
+  (hu₅: Env.getTy Γ "u₅" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_4" "and_most_sig_byte_decomp_0_to_3" "most_sig_byte_decomp_3"))
+  (hu₆: Env.getTy Γ "u₆" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_5" "and_most_sig_byte_decomp_0_to_4" "most_sig_byte_decomp_4"))
+  (hu₇: Env.getTy Γ "u₇" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_6" "and_most_sig_byte_decomp_0_to_5" "most_sig_byte_decomp_5"))
+  (hu₈: Env.getTy Γ "u₈" = some (eq_mul_refinement "and_most_sig_byte_decomp_0_to_7" "and_most_sig_byte_decomp_0_to_6" "most_sig_byte_decomp_6"))
+  (hu₉: Env.getTy Γ "u₉" = some                           (Ast.Ty.unit.refin
                   (Ast.Predicate.ind
                     (Ast.exprEq (Ast.Expr.constF 0)
                       ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
                         (Ast.Expr.var "value_0"))))))
-  (hu₁₀: Env.lookupTy Γ "u₁₀" = some                           (Ast.Ty.unit.refin
+  (hu₁₀: Env.getTy Γ "u₁₀" = some                           (Ast.Ty.unit.refin
                 (Ast.Predicate.ind
                   (Ast.exprEq (Ast.Expr.constF 0)
                     ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
                       (Ast.Expr.var "value_1"))))))
-  (hu₁₁: Env.lookupTy Γ "u₁₁" = some                           (Ast.Ty.unit.refin
+  (hu₁₁: Env.getTy Γ "u₁₁" = some                           (Ast.Ty.unit.refin
                 (Ast.Predicate.ind
                   (Ast.exprEq (Ast.Expr.constF 0)
                     ((Ast.Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr Ast.FieldOp.mul
                       (Ast.Expr.var "value_2"))))))
-  ( hl₀: Env.lookupTy Γ "value_0" = some (field_lt_const 256))
-  ( hl₁: Env.lookupTy Γ "value_1" = some (field_lt_const 256))
-  ( hl₂: Env.lookupTy Γ "value_2" = some (field_lt_const 256))
-  ( hl₃: Env.lookupTy Γ "value_3" = some (field_lt_const 256))
+  ( hl₀: Env.getTy Γ "value_0" = some (field_lt_const 256))
+  ( hl₁: Env.getTy Γ "value_1" = some (field_lt_const 256))
+  ( hl₂: Env.getTy Γ "value_2" = some (field_lt_const 256))
+  ( hl₃: Env.getTy Γ "value_3" = some (field_lt_const 256))
   : @Ty.SubtypeJudgment Δ Γ
       (Ty.unit.refin (Predicate.ind (exprEq (Expr.constF 0) ((Expr.var "and_most_sig_byte_decomp_0_to_7").fieldExpr FieldOp.mul (Expr.var "value_2")))))
       (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind

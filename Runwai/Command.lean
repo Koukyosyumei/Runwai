@@ -29,7 +29,7 @@ unsafe def elabLodaChipRegister : Elab.Command.CommandElab := fun stx =>
 unsafe def elabLodaChipCheck : Elab.Command.CommandElab
   | `(command| #runwai_check $cName:ident) => do
     let Δ ← Elab.Command.liftCoreM Env.getChipEnv
-    let circ := Env.lookupChip Δ cName.getId.toString
+    let circ := Env.getChip Δ cName.getId.toString
     logInfo m!"{repr circ}"
   | _ => Elab.throwUnsupportedSyntax
 
@@ -38,7 +38,7 @@ unsafe def elabLodaProve : Elab.Command.CommandElab
   | `(command| #runwai_prove $cName:ident := by $proof:tacticSeq) => do
     -- Get the Chip from environment
     let Δ ← Elab.Command.liftCoreM Env.getChipEnv
-    let circ := Env.lookupChip Δ cName.getId.toString
+    let circ := Env.getChip Δ cName.getId.toString
 
     let circExpr := toExpr circ
     let deltaExpr := toExpr Δ

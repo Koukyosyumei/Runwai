@@ -28,7 +28,7 @@ def updateVal (σ : ValEnv) (ident : String) (val : Ast.Value) : ValEnv :=
   [(ident, val)] ++ σ
 
 @[inline]
-def lookupVal (σ : ValEnv) (ident : String) : Ast.Value :=
+def getVal (σ : ValEnv) (ident : String) : Ast.Value :=
   match σ.find? (·.1 = ident) with
   | some (_, v) => v
   | none        => Ast.Value.vUnit
@@ -38,7 +38,7 @@ abbrev ChipEnv := List (String × Ast.Chip)
 deriving instance ToExpr for ChipEnv
 
 @[inline]
-def lookupChip (Δ : ChipEnv) (ident : String) : Ast.Chip :=
+def getChip (Δ : ChipEnv) (ident : String) : Ast.Chip :=
   match Δ.find? (·.1 = ident) with
   | some (_, v) => v
   | none        => Ast.DefaultChip
@@ -65,7 +65,7 @@ def getChipEnv : Lean.CoreM ChipEnv := do
 
 def getChipFromEnv (name : String) : Lean.CoreM (Option Ast.Chip) := do
   let env ← Lean.getEnv
-  return lookupChip (ChipExt.getState env) name
+  return getChip (ChipExt.getState env) name
 
 /-- A type environment: maps variable names to Runwai `Ty`s. -/
 abbrev TyEnv := List (String × Ast.Ty)
@@ -75,7 +75,7 @@ def updateTy (Γ: TyEnv) (ident: String) (τ: Ast.Ty) : TyEnv :=
   (ident, τ) :: Γ
 
 @[inline]
-def lookupTy (Γ : TyEnv) (ident : String) : Option Ast.Ty :=
+def getTy (Γ : TyEnv) (ident : String) : Option Ast.Ty :=
   match Γ.find? (·.1 = ident) with
   | some (_, τ) => some τ
   | none        => none
@@ -84,7 +84,7 @@ def lookupTy (Γ : TyEnv) (ident : String) : Option Ast.Ty :=
 abbrev TraceEnv := List (String × Ast.Value)
 
 @[inline]
-def lookupTrace (T: TraceEnv) (c: Ast.Chip) : Option Ast.Value :=
+def getTrace (T: TraceEnv) (c: Ast.Chip) : Option Ast.Value :=
   match T.find? (·.1 = c.name) with
   | some (_, v) => v
   | none        => none

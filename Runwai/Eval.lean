@@ -81,7 +81,7 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
       EvalProp σ T Δ (Expr.toF e) (Ast.Value.vF v)
 
   -- E‑VAR
-  | Var {σ T Δ x v} : lookupVal σ x = v → EvalProp σ T Δ (Expr.var x) v
+  | Var {σ T Δ x v} : getVal σ x = v → EvalProp σ T Δ (Expr.var x) v
 
   -- E‑LAM
   | Lam {σ T Δ x τ body} : EvalProp σ T Δ (Expr.lam x τ body) (Value.vClosure x body σ)
@@ -170,9 +170,9 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
 
     -- == Context Setup ==
     -- Premise to retrieve the callee's chip definition `c` from the global chip environment `Δ`.
-    (h_chip: Env.lookupChip Δ cname = c)
+    (h_chip: Env.getChip Δ cname = c)
     -- Premise to retrieve the callee's full execution trace `rows` from the global trace environment `T`.
-    (h_trace: Env.lookupTrace T c = some (Ast.Value.vArr (rows)))
+    (h_trace: Env.getTrace T c = some (Ast.Value.vArr (rows)))
 
     -- == Verification of Callee's Trace ==
     -- Premise ensuring the internal consistency of the callee's trace. It guarantees that we
