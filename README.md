@@ -31,9 +31,9 @@ Runwai is a refinement-typed DSL for certified AIR constraints in zero-knowledge
 #runwai_prove IsZero := by {
   auto_trace_index
   apply isZero_typing_soundness
-  repeat apply lookup_update_ne; simp
+  repeat apply get_update_ne; simp
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self;
+  apply get_update_self;
   repeat decide
 }
 ```

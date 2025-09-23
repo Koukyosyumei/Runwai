@@ -139,30 +139,30 @@ theorem assertChip_correct : Ty.chipCorrect Δ assertChip 1 := by
   unfold Ty.chipCorrect
   intro height hh Γ Η
   apply Ty.TypeJudgment.TE_LetIn
-  · apply lookup_update_self
+  · apply get_update_self
   · apply Ty.TypeJudgment.TE_Assert
     · apply Ty.TypeJudgment.TE_ArrayIndex
       apply Ty.TypeJudgment.TE_ArrayIndex
       apply Ty.TypeJudgment.TE_Var
-      apply lookup_update_ne
+      apply get_update_ne
       simp
       apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
+      apply get_update_ne
       simp
       apply constZ_refine_lt
       simp
     . apply Ty.TypeJudgment.TE_ConstF
   . constructor;
-    apply lookup_update_self
+    apply get_update_self
 
 theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
   unfold Ty.chipCorrect
   intro height hh Γ Η
   auto_trace_index
   apply isZero_typing_soundness
-  repeat apply lookup_update_ne; simp
+  repeat apply get_update_ne; simp
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self;
+  apply get_update_self;
   repeat decide
 
 theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
@@ -180,42 +180,42 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   simp
   apply lookup_update_ne_of_lookup
   simp
-  apply lookup_update_self
+  apply get_update_self
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
   apply lookup_update_ne_of_lookup
   simp
-  apply lookup_update_self
+  apply get_update_self
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self
+  apply get_update_self
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self
+  apply get_update_self
 
 theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   unfold Ty.chipCorrect
   intro height hh Γ Η
   apply Ty.TypeJudgment.TE_LetIn
-  apply lookup_update_self
+  apply get_update_self
   apply Ty.TypeJudgment.TE_Branch
   apply Ty.TypeJudgment.TE_BinOpRel
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   apply Ty.TypeJudgment.TE_ConstZ
   apply Ty.TypeJudgment.TE_Assert
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   simp[Η, Env.freshName, Ty.branchLabel]
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   simp[Η, Env.freshName, Ty.branchLabel]
   apply constZ_refine_lt
@@ -226,30 +226,30 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_ConstF
 
   apply Ty.TypeJudgment.TE_LetIn
-  apply lookup_update_self
+  apply get_update_self
   apply Ty.TypeJudgment.TE_Branch
   apply Ty.TypeJudgment.TE_BinOpRel
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   apply Ty.TypeJudgment.TE_BinOpInteger
   apply Ty.TypeJudgment.TE_Var
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   apply Ty.TypeJudgment.TE_ConstZ
   apply Ty.TypeJudgment.TE_Assert
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   simp[Η, Env.freshName, Ty.branchLabel]
   apply varZ_refine_int_diff_lt "n" (Env.freshName Η Ty.branchLabel)
-  apply lookup_update_ne
+  apply get_update_ne
   simp[Η, Env.freshName, Ty.branchLabel]
   simp[Η, Env.freshName, Ty.branchLabel]
-  apply lookup_update_self
-  apply lookup_update_ne
+  apply get_update_self
+  apply get_update_ne
   simp[Η, Env.freshName, Ty.branchLabel]
   unfold Ast.nu
   simp
@@ -259,10 +259,10 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp[Η, Env.freshName, Ty.branchLabel]
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp[Η, Env.freshName, Ty.branchLabel]
   apply constZ_refine_lt
   simp
@@ -291,12 +291,12 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))) with hΓ'
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self
+  apply get_update_self
   apply Ty.SubtypeJudgment.TSub_RefineInduction "i"
   have hΓ: Γ = Ty.makeEnvs clkChip height := by{
     rfl
   }
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   apply Ty.SubtypeJudgment.TSub_Refl
   {
@@ -717,13 +717,13 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
     apply Ty.TypeJudgment.TE_LookUp
     rfl; rfl; rfl
   apply Ty.TypeJudgment.TE_LetIn
-  apply lookup_update_self
+  apply get_update_self
   repeat apply Ty.TypeJudgment.TE_App
   apply koalabear_word_range_checker_func_typing_soundness
   apply u8_lookup_refines_lt256 "alpha_0" "l₀"
-  apply lookup_update_ne
+  apply get_update_ne
   simp
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   repeat rfl
   exact u8_freshName_ne_i
@@ -731,9 +731,9 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply u8_lookup_refines_lt256 "alpha_1" "l₁"
-  apply lookup_update_ne
+  apply get_update_ne
   simp
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   repeat rfl
   exact u8_freshName_ne_i
@@ -745,9 +745,9 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
   rw[if_neg hmu₀]
   simp [Ast.renameVarinPred, Ast.renameVar]
   apply u8_lookup_refines_lt256 "alpha_2" "l₂"
-  apply lookup_update_ne
+  apply get_update_ne
   simp
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   repeat rfl
   exact u8_freshName_ne_i
@@ -766,21 +766,21 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
   rw[if_neg hmu₂]
   rw[if_neg hmu₂]
   apply u8_lookup_refines_lt256 "alpha_3" "l₃"
-  apply lookup_update_ne
+  apply get_update_ne
   simp
-  apply lookup_update_self
+  apply get_update_self
   repeat rfl
   exact u8_freshName_ne_i
   decide
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   rfl
   apply Ty.TypeJudgment.TE_VarEnv
   simp [Ast.renameVarinPred, Ast.renameVar]
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply And.intro
@@ -789,7 +789,7 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
   repeat rfl
   repeat
     apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
+    apply get_update_ne
     simp
     simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
     apply And.intro
@@ -798,9 +798,9 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
     rfl
     rfl
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   rfl
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self
+  apply get_update_self

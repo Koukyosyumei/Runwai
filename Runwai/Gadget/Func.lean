@@ -72,15 +72,15 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
-    apply Ty.TypeJudgment.TE_LetIn; apply lookup_update_self;
+    apply Ty.TypeJudgment.TE_LetIn; apply get_update_self;
     apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_VarEnv; exact hty
     repeat apply Ty.TypeJudgment.TE_BinOpField
     apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_VarEnv; exact htx; exact htinv
-    apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_LetIn; apply lookup_update_self
+    apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_LetIn; apply get_update_self
     apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_BinOpField; apply Ty.TypeJudgment.TE_VarEnv
-    rw[← htx]; apply lookup_update_ne; exact hne₁
+    rw[← htx]; apply get_update_ne; exact hne₁
     apply Ty.TypeJudgment.TE_VarEnv
-    rw[← hty]; apply lookup_update_ne; exact hne₂
+    rw[← hty]; apply get_update_ne; exact hne₂
     apply Ty.TypeJudgment.TE_ConstF
     have h_sub : @Ty.SubtypeJudgment Δ (Env.updateTy
       (Env.updateTy Γ u₁
@@ -107,7 +107,7 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
         have h₄: Env.getTy (Env.updateTy (Env.updateTy Γ u₁ (Ty.unit.refin φ₁)) u₂ (Ty.unit.refin φ₂)) u₁ = (Ty.unit.refin φ₁) := by {
           apply lookup_update_ne_of_lookup
           exact hne₃
-          apply lookup_update_self
+          apply get_update_self
         }
         have h₅ := h₃ h₄
         rw[h₄] at h₅
@@ -119,7 +119,7 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
       }
     apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_self
+    apply get_update_self
     exact h_sub
 }
 
@@ -131,18 +131,18 @@ lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: En
       (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var "y") (.branch (.binRel (.var "x") (.eq) (.constF 0)) (.constF 1) (.constF 0)))))))) := by {
       repeat
         apply Ty.TypeJudgment.TE_Abs
-        apply lookup_update_self
+        apply get_update_self
       apply isZero_typing_soundness
       apply lookup_update_ne_of_lookup
       simp
       apply lookup_update_ne_of_lookup
       simp
-      apply lookup_update_self
+      apply get_update_self
       apply lookup_update_ne_of_lookup
       simp
-      apply lookup_update_self
+      apply get_update_self
       apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_self
+      apply get_update_self
       repeat simp
     }
 
@@ -482,79 +482,79 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
         .lt (.constZ 2130706433)))))))))))))))))))))) := by {
   repeat
     apply Ty.TypeJudgment.TE_Abs
-    apply lookup_update_self
+    apply get_update_self
   repeat
     apply Ty.TypeJudgment.TE_LetIn;
-    apply lookup_update_self;
+    apply get_update_self;
     apply Ty.TypeJudgment.TE_Assert
     apply Ty.TypeJudgment.TE_BinOpField
     apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
+    apply get_update_ne
     simp
     apply Ty.TypeJudgment.TE_BinOpField
     apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
+    apply get_update_ne
     simp
     repeat apply Ty.TypeJudgment.TE_ConstF
 
   apply Ty.TypeJudgment.TE_LetIn;
-  apply lookup_update_self;
+  apply get_update_self;
   apply Ty.TypeJudgment.TE_Assert
   repeat apply Ty.TypeJudgment.TE_BinOpField
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   repeat
     apply Ty.TypeJudgment.TE_BinOpField
     apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
+    apply get_update_ne
     simp
     repeat apply Ty.TypeJudgment.TE_ConstF
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp
 
   apply Ty.TypeJudgment.TE_LetIn;
-  apply lookup_update_self;
+  apply get_update_self;
   apply Ty.TypeJudgment.TE_Assert
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne
+  apply get_update_ne
   simp
   apply Ty.TypeJudgment.TE_ConstF
 
   repeat
     apply Ty.TypeJudgment.TE_LetIn;
-    apply lookup_update_self;
+    apply get_update_self;
     apply Ty.TypeJudgment.TE_Assert
     apply Ty.TypeJudgment.TE_VarEnv
-    apply lookup_update_ne
+    apply get_update_ne
     simp
     apply Ty.TypeJudgment.TE_BinOpField
     repeat
       apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
+      apply get_update_ne
       simp
 
   repeat
     apply Ty.TypeJudgment.TE_LetIn;
-    apply lookup_update_self;
+    apply get_update_self;
     apply Ty.TypeJudgment.TE_Assert
     apply Ty.TypeJudgment.TE_ConstF
     apply Ty.TypeJudgment.TE_BinOpField
     repeat
       apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
+      apply get_update_ne
       simp
 
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self
+  apply get_update_self
   apply koalabear_word_range_checker_subtype_soundness
   repeat
-    apply lookup_update_ne
+    apply get_update_ne
     simp
-  apply lookup_update_self
+  apply get_update_self
   repeat
-    apply lookup_update_ne
+    apply get_update_ne
     simp
 }

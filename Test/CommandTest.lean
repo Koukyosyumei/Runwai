@@ -20,29 +20,29 @@ import Runwai.Tactic
 
 #runwai_prove Assert1 := by {
   apply Ty.TypeJudgment.TE_LetIn
-  · apply lookup_update_self
+  · apply get_update_self
   · apply Ty.TypeJudgment.TE_Assert
     · apply Ty.TypeJudgment.TE_ArrayIndex
       apply Ty.TypeJudgment.TE_ArrayIndex
       apply Ty.TypeJudgment.TE_Var
-      apply lookup_update_ne
+      apply get_update_ne
       simp
       apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
+      apply get_update_ne
       simp
       apply constZ_refine_lt
       simp
     . apply Ty.TypeJudgment.TE_ConstF
   . constructor;
-    apply lookup_update_self
+    apply get_update_self
 }
 
 #runwai_prove IsZero := by {
   auto_trace_index
   apply isZero_typing_soundness
-  repeat apply lookup_update_ne; simp
+  repeat apply get_update_ne; simp
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self;
+  apply get_update_self;
   repeat decide
 }
 

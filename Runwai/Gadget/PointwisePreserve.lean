@@ -17,8 +17,8 @@ lemma update_preserve_pointwise
   intro y
   by_cases hy : y = x
   · subst hy
-    simp [lookup_update_self]
-  · simp [lookup_update_ne _ _ _ _ hy, h y]
+    simp [get_update_self]
+  · simp [get_update_ne _ _ _ _ hy, h y]
 
 /-- Pointwise equality of type environments is a symmetric relation. -/
 lemma lookupTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)

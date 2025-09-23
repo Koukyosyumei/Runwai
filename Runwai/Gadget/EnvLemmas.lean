@@ -8,7 +8,7 @@ If a variable `x` exists in a type environment `Γ`, it will also exist in an en
 formed by updating `Γ` with another binding `(y, τ)`. This holds regardless of whether `x` and
 `y` are the same.
 -/
-lemma lookup_ext (Γ :Env.TyEnv) (x y : String) (τ : Ty)
+lemma get_ext (Γ :Env.TyEnv) (x y : String) (τ : Ty)
   (h: (Env.getTy Γ x).isSome = true):
   (Env.getTy (Env.updateTy Γ y τ) x).isSome = true := by
   simp [Env.getTy, Env.updateTy]
@@ -21,7 +21,7 @@ Looking up a variable `y` in an environment updated with a *different* variable 
 equivalent to looking up `y` in the original environment. The update at `x` has no effect
 on the lookup of `y`.
 -/
-lemma lookup_update_ne
+lemma get_update_ne
   (Γ : Env.TyEnv) (x y : String) (τ : Ast.Ty) (hxy : y ≠ x) :
   Env.getTy (Env.updateTy Γ x τ) y = Env.getTy Γ y := by
   unfold Env.updateTy
@@ -39,7 +39,7 @@ lemma lookup_val_update_ne
   | false => simp [dec]
 
 /--
-A more specific version of `lookup_update_ne`. If looking up `y` in `Γ` yields `τ₂`,
+A more specific version of `get_update_ne`. If looking up `y` in `Γ` yields `τ₂`,
 then looking up `y` in an environment updated at a different variable `x` will still yield `τ₂`.
 -/
 lemma lookup_update_ne_of_lookup
@@ -56,7 +56,7 @@ Looking up a variable `x` in an environment that has just been updated with a bi
 for `x` will return the new type `τ`. This is the "read-your-write" property for the
 type environment.
 -/
-lemma lookup_update_self
+lemma get_update_self
   (Γ : Env.TyEnv) (x : String) (τ : Ast.Ty) :
   Env.getTy (Env.updateTy Γ x τ) x = τ := by
   unfold Env.updateTy Env.getTy
