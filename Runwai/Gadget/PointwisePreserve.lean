@@ -21,7 +21,7 @@ lemma update_preserve_pointwise
   · simp [get_update_ne _ _ _ _ hy, h y]
 
 /-- Pointwise equality of type environments is a symmetric relation. -/
-lemma lookupTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)
+lemma getTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)
   (h₁: ∀ x, Env.getTy Γ₁ x = Env.getTy Γ₂ x):
   ∀ x, Env.getTy Γ₂ x = Env.getTy Γ₁ x := by {
     intro x
@@ -79,7 +79,7 @@ theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁
         apply ih₂; exact h
         intro σ T e h₂
         apply ih₁
-        exact tyenvToProp_pointwise_preserve σ T Δ Γ₂ Γ₁ (lookupTy_pointwise_symm Γ₁ Γ₂ h) h₂
+        exact tyenvToProp_pointwise_preserve σ T Δ Γ₂ Γ₁ (getTy_pointwise_symm Γ₁ Γ₂ h) h₂
       }
       | TSub_Fun h₁ h₂ ih₁ ih₂ => {
         intro Γ₂ h

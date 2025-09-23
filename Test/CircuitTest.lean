@@ -176,15 +176,15 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   apply Ty.TypeJudgment.TE_App
   apply iszero_func_typing_soundness
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne_of_lookup
+  apply get_update_ne_of_get
   simp
-  apply lookup_update_ne_of_lookup
+  apply get_update_ne_of_get
   simp
   apply get_update_self
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_ne_of_lookup
+  apply get_update_ne_of_get
   simp
   apply get_update_self
   rfl
@@ -676,7 +676,7 @@ lemma u8_lookup_refines_lt256 (x u: String)
       cases ih₂
       rename_i ih₂
       have : Env.getVal (Env.updateVal σ Ast.nu va) x = Env.getVal σ x := by {
-        apply lookup_val_update_ne
+        apply get_val_update_ne
         exact h₅
       }
       rw[this] at ih₂

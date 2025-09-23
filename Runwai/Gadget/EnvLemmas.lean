@@ -30,7 +30,7 @@ lemma get_update_ne
   | true => simp_all
   | false => simp [dec]
 
-lemma lookup_val_update_ne
+lemma get_val_update_ne
   (σ : Env.ValEnv) (x y : String) (v : Ast.Value) (hxy : y ≠ x) :
   Env.getVal (Env.updateVal σ x v) y = Env.getVal σ y := by
   simp [Env.updateVal, Env.getVal]
@@ -42,7 +42,7 @@ lemma lookup_val_update_ne
 A more specific version of `get_update_ne`. If looking up `y` in `Γ` yields `τ₂`,
 then looking up `y` in an environment updated at a different variable `x` will still yield `τ₂`.
 -/
-lemma lookup_update_ne_of_lookup
+lemma get_update_ne_of_get
   (Γ : Env.TyEnv) (x y : String) (τ₁ τ₂ : Ast.Ty) (hxy : y ≠ x) (hy: Env.getTy Γ y = τ₂):
   Env.getTy (Env.updateTy Γ x τ₁) y = τ₂ := by
   unfold Env.updateTy
@@ -69,7 +69,7 @@ theorem eq_none_of_isSome_eq_false {α : Type _}
   cases o <;> simp_all
 
 /-- Looking up any variable `x` in an empty type environment results in `none`. -/
-lemma lookup_empty_none (x: String):
+lemma get_empty_none (x: String):
   Env.getTy [] x = none := by {
     unfold Env.getTy
     simp

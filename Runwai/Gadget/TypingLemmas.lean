@@ -222,7 +222,7 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
         rename_i a'
         rename_i va' v2₂' i'
         have : Env.getVal (Env.updateVal σ Ast.nu va') i = Env.getVal σ i := by {
-          apply lookup_val_update_ne
+          apply get_val_update_ne
           exact h₃
         }
         rw[this] at a'

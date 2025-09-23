@@ -105,7 +105,7 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
         set φ₂ := (Ast.Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))
         have h₃ := h₂ u₁ (Ty.unit.refin φ₁)
         have h₄: Env.getTy (Env.updateTy (Env.updateTy Γ u₁ (Ty.unit.refin φ₁)) u₂ (Ty.unit.refin φ₂)) u₁ = (Ty.unit.refin φ₁) := by {
-          apply lookup_update_ne_of_lookup
+          apply get_update_ne_of_get
           exact hne₃
           apply get_update_self
         }
@@ -133,12 +133,12 @@ lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: En
         apply Ty.TypeJudgment.TE_Abs
         apply get_update_self
       apply isZero_typing_soundness
-      apply lookup_update_ne_of_lookup
+      apply get_update_ne_of_get
       simp
-      apply lookup_update_ne_of_lookup
+      apply get_update_ne_of_get
       simp
       apply get_update_self
-      apply lookup_update_ne_of_lookup
+      apply get_update_ne_of_get
       simp
       apply get_update_self
       apply Ty.TypeJudgment.TE_VarEnv
