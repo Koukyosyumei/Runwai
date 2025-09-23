@@ -42,7 +42,7 @@ def σ₁ := Env.updateVal σ₀ "y" (Ast.Value.vF 99)
 example: Eval.EvalProp σ₁ T₀ Δ₀ (.var "y") (.vF 99) := by
   apply Eval.EvalProp.Var
   simp [σ₁, σ₀]
-  unfold Env.updateVal Env.lookupVal
+  unfold Env.updateVal Env.getVal
   simp_all
 
 example: Eval.EvalProp σ₀ T₀ Δ₀
@@ -51,7 +51,7 @@ example: Eval.EvalProp σ₀ T₀ Δ₀
   apply Eval.EvalProp.ConstF
   apply Eval.EvalProp.FBinOp
   apply Eval.EvalProp.Var
-  unfold Env.updateVal Env.lookupVal
+  unfold Env.updateVal Env.getVal
   simp_all
   rfl
   apply Eval.EvalProp.ConstF

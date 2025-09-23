@@ -12,18 +12,18 @@ pointwise equality.
 -/
 lemma update_preserve_pointwise
   (Γ₁ Γ₂ : Env.TyEnv) (x : String) (τ : Ast.Ty)
-  (h : ∀ y, Env.lookupTy Γ₁ y = Env.lookupTy Γ₂ y) :
-  ∀ y, Env.lookupTy (Env.updateTy Γ₁ x τ) y = Env.lookupTy (Env.updateTy Γ₂ x τ) y := by
+  (h : ∀ y, Env.getTy Γ₁ y = Env.getTy Γ₂ y) :
+  ∀ y, Env.getTy (Env.updateTy Γ₁ x τ) y = Env.getTy (Env.updateTy Γ₂ x τ) y := by
   intro y
   by_cases hy : y = x
   · subst hy
-    simp [lookup_update_self]
-  · simp [lookup_update_ne _ _ _ _ hy, h y]
+    simp [get_update_self]
+  · simp [get_update_ne _ _ _ _ hy, h y]
 
 /-- Pointwise equality of type environments is a symmetric relation. -/
-lemma lookupTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)
-  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x):
-  ∀ x, Env.lookupTy Γ₂ x = Env.lookupTy Γ₁ x := by {
+lemma getTy_pointwise_symm (Γ₁ Γ₂: Env.TyEnv)
+  (h₁: ∀ x, Env.getTy Γ₁ x = Env.getTy Γ₂ x):
+  ∀ x, Env.getTy Γ₂ x = Env.getTy Γ₁ x := by {
     intro x
     have h₂ := h₁ x
     exact Eq.symm h₂
@@ -34,7 +34,7 @@ If the property `varToProp` holds for a variable `ident` under a type environmen
 also hold under a different environment `Γ₂`, provided that `Γ₁` and `Γ₂` are pointwise equal.
 -/
 theorem varToProp_pointwise_preserve (σ: Env.ValEnv) (T: Env.TraceEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv) (ident: String)
-  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.varToProp σ T Δ Γ₁ ident):
+  (h₁: ∀ x, Env.getTy Γ₁ x = Env.getTy Γ₂ x) (h₂: PropSemantics.varToProp σ T Δ Γ₁ ident):
   PropSemantics.varToProp σ T Δ Γ₂ ident := by {
     simp [PropSemantics.varToProp] at h₂ ⊢
     have h₁' := h₁ ident
@@ -47,7 +47,7 @@ If the property `tyenvToProp` holds for an entire type environment `Γ₁` that 
 for `Γ₂`.
 -/
 theorem tyenvToProp_pointwise_preserve (σ: Env.ValEnv) (T: Env.TraceEnv) (Δ: Env.ChipEnv) (Γ₁ Γ₂: Env.TyEnv)
-  (h₁: ∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) (h₂: PropSemantics.tyenvToProp σ T Δ Γ₁):
+  (h₁: ∀ x, Env.getTy Γ₁ x = Env.getTy Γ₂ x) (h₂: PropSemantics.tyenvToProp σ T Δ Γ₁):
   PropSemantics.tyenvToProp σ T Δ Γ₂ := by {
     unfold PropSemantics.tyenvToProp at h₂ ⊢
     intro x τ h₃
@@ -63,7 +63,7 @@ is replaced by any other environment `Γ₂` that is pointwise equal to it.
 -/
 theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁ τ₂: Ast.Ty)
   (h₂: Ty.SubtypeJudgment Δ Γ₁ τ₁ τ₂) :
-  ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
+  ∀ Γ₂: Env.TyEnv, (∀ x, Env.getTy Γ₁ x = Env.getTy Γ₂ x) →
     Ty.SubtypeJudgment Δ Γ₂ τ₁ τ₂ := by {
       induction h₂ with
       | TSub_Refl => intros; constructor
@@ -79,7 +79,7 @@ theorem subtyping_pointwise_preserve (Δ: Env.ChipEnv) (Γ₁: Env.TyEnv) (τ₁
         apply ih₂; exact h
         intro σ T e h₂
         apply ih₁
-        exact tyenvToProp_pointwise_preserve σ T Δ Γ₂ Γ₁ (lookupTy_pointwise_symm Γ₁ Γ₂ h) h₂
+        exact tyenvToProp_pointwise_preserve σ T Δ Γ₂ Γ₁ (getTy_pointwise_symm Γ₁ Γ₂ h) h₂
       }
       | TSub_Fun h₁ h₂ ih₁ ih₂ => {
         intro Γ₂ h
@@ -128,7 +128,7 @@ replaced by any other environment `Γ₂` that is pointwise equal to it.
 -/
 theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: Env.TyEnv) (e: Ast.Expr) (τ: Ast.Ty)
   (h₂: @Ty.TypeJudgment Δ Γ₁ Η e τ) :
-  ∀ Γ₂: Env.TyEnv, (∀ x, Env.lookupTy Γ₁ x = Env.lookupTy Γ₂ x) →
+  ∀ Γ₂: Env.TyEnv, (∀ x, Env.getTy Γ₁ x = Env.getTy Γ₂ x) →
         @Ty.TypeJudgment Δ Γ₂ Η e τ := by {
     induction h₂ with
     | TE_Var ha => intro Γ₂ h; apply Ty.TypeJudgment.TE_Var; rwa [← h]

@@ -54,7 +54,7 @@ of that type:
 -/
 @[simp]
 def varToProp (σ : Env.ValEnv) (T: Env.TraceEnv) (Δ : Env.ChipEnv) (Γ : Env.TyEnv) (ident : String): Prop :=
-match Env.lookupTy Γ ident with
+match Env.getTy Γ ident with
 | Ast.Ty.refin τ pred =>
   predToProp σ T Δ τ pred (Ast.Expr.var ident)
 | Ast.Ty.field        => True
@@ -70,6 +70,6 @@ satisfies its own type constraints, as checked by `varToProp`. It serves as the 
 semantic judgment for a well-formed context, ensuring all declared properties are met.
 -/
 def tyenvToProp (σ: Env.ValEnv) (T: Env.TraceEnv) (Δ: Env.ChipEnv) (Γ: Env.TyEnv): Prop :=
-  ∀ (x: String) (τ: Ast.Ty), Env.lookupTy Γ x = some τ → varToProp σ T Δ Γ x
+  ∀ (x: String) (τ: Ast.Ty), Env.getTy Γ x = some τ → varToProp σ T Δ Γ x
 
 end PropSemantics

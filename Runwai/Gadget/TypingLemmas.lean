@@ -8,7 +8,7 @@ open Ast
 If a variable `x` is typed with a refinement `{_ : unit | e}` in a semantically valid
 environment, this lemma provides a proof that the expression `e` will evaluate to `true`.
 -/
-lemma tyenv_to_eval_expr {σ T Δ Γ x τ e} (h₁: PropSemantics.tyenvToProp σ T Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin τ (Ast.Predicate.ind e))):
+lemma tyenv_to_eval_expr {σ T Δ Γ x τ e} (h₁: PropSemantics.tyenvToProp σ T Δ Γ) (h₂: Env.getTy Γ x = some (Ast.Ty.refin τ (Ast.Predicate.ind e))):
   (Eval.EvalProp σ T Δ e (Ast.Value.vBool true)) := by {
     unfold PropSemantics.tyenvToProp at h₁
     simp [PropSemantics.varToProp] at h₁
@@ -19,7 +19,7 @@ lemma tyenv_to_eval_expr {σ T Δ Γ x τ e} (h₁: PropSemantics.tyenvToProp σ
   }
 
 --  | Ast.Predicate.dep ident body => fun v => exprToProp σ Δ (Ast.Expr.app (Ast.Expr.lam ident τ body) v)
-lemma tyenv_dep_to_eval_expr {σ T Δ Γ x τ body} (h₁: PropSemantics.tyenvToProp σ T Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin τ (Ast.Predicate.dep v body))):
+lemma tyenv_dep_to_eval_expr {σ T Δ Γ x τ body} (h₁: PropSemantics.tyenvToProp σ T Δ Γ) (h₂: Env.getTy Γ x = some (Ast.Ty.refin τ (Ast.Predicate.dep v body))):
   (Eval.EvalProp σ T Δ (Ast.Expr.app (Ast.Expr.lam v τ body) (Ast.Expr.var x)) (Ast.Value.vBool true)) := by {
     unfold PropSemantics.tyenvToProp at h₁
     simp [PropSemantics.varToProp] at h₁
@@ -35,7 +35,7 @@ Deconstructs a **conjunctive type guarantee** into individual runtime proofs.
 If a variable's type guarantees that `e₁ ∧ e₂` holds, this lemma allows us to derive
 separate evaluation proofs for both `e₁` and `e₂`.
 -/
-lemma tyenv_and_to_eval_exprs {σ T Δ Γ x e₁ e₂} (h₁: PropSemantics.tyenvToProp σ T Δ Γ) (h₂: Env.lookupTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.and (Ast.Predicate.ind e₁) (Ast.Predicate.ind e₂)))):
+lemma tyenv_and_to_eval_exprs {σ T Δ Γ x e₁ e₂} (h₁: PropSemantics.tyenvToProp σ T Δ Γ) (h₂: Env.getTy Γ x = some (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.and (Ast.Predicate.ind e₁) (Ast.Predicate.ind e₂)))):
   (Eval.EvalProp σ T Δ e₁ (Ast.Value.vBool true)) ∧ (Eval.EvalProp σ T Δ e₂ (Ast.Value.vBool true)) := by {
     unfold PropSemantics.tyenvToProp at h₁
     simp [PropSemantics.varToProp] at h₁
@@ -48,7 +48,7 @@ lemma tyenv_and_to_eval_exprs {σ T Δ Γ x e₁ e₂} (h₁: PropSemantics.tyen
 lemma tyenvToProp_implies_varToProp
   (σ : Env.ValEnv) (T: Env.TraceEnv) (Δ : Env.ChipEnv) (Γ : Env.TyEnv)
   (x : String) (τ : Ast.Ty) (φ : Ast.Predicate)
-  (hΓx : Env.lookupTy Γ x = Ast.Ty.refin τ φ)
+  (hΓx : Env.getTy Γ x = Ast.Ty.refin τ φ)
   (hmt : PropSemantics.tyenvToProp σ T Δ Γ) :
   PropSemantics.varToProp σ T Δ Γ x := by
   dsimp [PropSemantics.tyenvToProp] at hmt
@@ -82,7 +82,7 @@ lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
   exact h
 }
 
-lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ v₁))))} {h₁: v₁ < v₂} :
+lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.getTy Γ x = (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constZ v₁))))} {h₁: v₁ < v₂} :
   @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.int.refin (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constZ v₂)))) := by {
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
@@ -103,7 +103,7 @@ lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.r
   rename_i ih₁ ih₂ r
   cases ih₁
   rename_i a
-  unfold Env.lookupVal Env.updateVal at a
+  unfold Env.getVal Env.updateVal at a
   simp at a
   rw[← a] at r
   cases ih₂
@@ -117,7 +117,7 @@ lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.r
     exact ih_a
     apply Eval.EvalProp.Rel
     apply Eval.EvalProp.Var
-    unfold Env.lookupVal Env.updateVal
+    unfold Env.getVal Env.updateVal
     simp
     rfl
     apply Eval.EvalProp.ConstZ
@@ -131,13 +131,13 @@ lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.lookupTy Γ x = (Ast.Ty.r
 }
 
 lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
-  (h₀: Env.lookupTy Γ n = (Ast.Ty.refin Ast.Ty.int
+  (h₀: Env.getTy Γ n = (Ast.Ty.refin Ast.Ty.int
       (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu ) (Ast.Expr.constZ height)))))
-  (h₁: Env.lookupTy Γ x = (Ast.Ty.unit.refin
+  (h₁: Env.getTy Γ x = (Ast.Ty.unit.refin
       (Ast.Predicate.ind
         ((Ast.Expr.var i).binRel Ast.RelOp.lt
           ((Ast.Expr.var n).integerExpr Ast.IntegerOp.sub (Ast.Expr.constZ d))))))
-  (h₂: Env.lookupTy Γ i = (Ast.Ty.int.refin φ))
+  (h₂: Env.getTy Γ i = (Ast.Ty.int.refin φ))
   (h₃: i ≠ Ast.nu ):
   @Ty.TypeJudgment Δ Γ Η ((Ast.Expr.var i).integerExpr Ast.IntegerOp.add (Ast.Expr.constZ d))
     (Ast.Ty.int.refin (Ast.Predicate.dep Ast.nu  ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constZ height)))) := by {
@@ -167,7 +167,7 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
     cases ih₂
     cases ih₁
     rename_i a
-    unfold Env.lookupVal Env.updateVal at a
+    unfold Env.getVal Env.updateVal at a
     simp at a
     cases h₁'
     rename_i ih₁ ih₂ r
@@ -192,7 +192,7 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
     rename_i ih₁ ih₂ r
     cases ih₁
     rename_i a
-    unfold Env.lookupVal Env.updateVal at a
+    unfold Env.getVal Env.updateVal at a
     simp at a
     cases ih₂
     rename_i ih₁ ih₂ r
@@ -208,7 +208,7 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
       exact iha
       apply Eval.EvalProp.Rel
       apply Eval.EvalProp.Var
-      unfold Env.lookupVal Env.updateVal
+      unfold Env.getVal Env.updateVal
       simp
       rfl
       apply Eval.EvalProp.ConstZ
@@ -221,8 +221,8 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
         rw[ih₁]
         rename_i a'
         rename_i va' v2₂' i'
-        have : Env.lookupVal (Env.updateVal σ Ast.nu va') i = Env.lookupVal σ i := by {
-          apply lookup_val_update_ne
+        have : Env.getVal (Env.updateVal σ Ast.nu va') i = Env.getVal σ i := by {
+          apply get_val_update_ne
           exact h₃
         }
         rw[this] at a'

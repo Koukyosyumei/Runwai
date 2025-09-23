@@ -50,7 +50,7 @@ inductive SubtypeJudgment :
 
   /-- TODO: Convert this rule to a theorem/lemma via other rules-/
   | TSub_RefineInduction {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} {b: ℕ} (i: String):
-      Env.lookupTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ b)))) →
+      Env.getTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ b)))) →
       SubtypeJudgment Δ Γ T₁ T₂ →
       (∀ σ: Env.ValEnv, ∀ T: Env.TraceEnv, ∀ v: Ast.Expr,
         PropSemantics.tyenvToProp σ T Δ (Env.updateTy Γ indBaseLabel (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ 0))))) →
@@ -102,16 +102,16 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   Env.TyEnv → Env.UsedNames → Ast.Expr → Ast.Ty → Prop where
   -- TE-VAR
   | TE_Var {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty} {φ: Ast.Predicate}:
-    Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
+    Env.getTy Γ x = (Ast.Ty.refin T φ) →
     TypeJudgment Γ Η (Ast.Expr.var x) (Ast.Ty.refin T (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.var x))))
 
   | TE_VarEnv {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty} {φ: Ast.Predicate}:
-    Env.lookupTy Γ x = (Ast.Ty.refin T φ) →
+    Env.getTy Γ x = (Ast.Ty.refin T φ) →
     TypeJudgment Γ Η (Ast.Expr.var x) (Ast.Ty.refin T φ)
 
   -- TE-VAR-FUNC
   | TE_VarFunc {Γ: Env.TyEnv} {Η: Env.UsedNames} {f x : String} {τ₁ τ₂: Ast.Ty}:
-    Env.lookupTy Γ f = (Ast.Ty.func x τ₁ τ₂) →
+    Env.getTy Γ f = (Ast.Ty.func x τ₁ τ₂) →
     TypeJudgment Γ Η (Ast.Expr.var f) (Ast.Ty.func x τ₁ τ₂)
 
   -- TE-ARRY-INDEX
@@ -168,7 +168,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
 
   -- TE-ABS (function abstraction)
   | TE_Abs {Γ: Env.TyEnv} {Η: Env.UsedNames} {x: String} {τ₁ τ₂: Ast.Ty} {e: Ast.Expr}:
-    Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁ →
+    Env.getTy (Env.updateTy Γ x τ₁) x = τ₁ →
     TypeJudgment (Env.updateTy Γ x τ₁) Η e (τ₂) →
     TypeJudgment Γ Η (Ast.Expr.lam x τ₁ e) ((Ast.Ty.func x τ₁ τ₂))
 
@@ -187,7 +187,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
 
   -- TE-LETIN
   | TE_LetIn {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ : Ast.Ty}
-    (h₀: Env.lookupTy (Env.updateTy Γ x τ₁) x = τ₁)
+    (h₀: Env.getTy (Env.updateTy Γ x τ₁) x = τ₁)
     (h₁: @TypeJudgment Δ Γ Η e₁ τ₁)
     (h₂: @TypeJudgment Δ (Env.updateTy Γ x τ₁) Η e₂ τ₂):
     TypeJudgment Γ Η (Ast.Expr.letIn x e₁ e₂) τ₂
@@ -195,7 +195,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   -- TE-LOOKUP
   | TE_LookUp {Γ: Env.TyEnv} {Η: Env.UsedNames} {vname cname : String} {args: List (Ast.Expr × Ast.Expr)}
               {c: Ast.Chip} {φ φ': Ast.Predicate} {e: Ast.Expr} {τ: Ast.Ty}
-    (hc: c = Env.lookupChip Δ cname)
+    (hc: c = Env.getChip Δ cname)
     (hτ: c.goal = Ast.Ty.refin Ast.Ty.unit φ)
     (hn: φ' = lookup_pred args c φ Η)
     (h₂: @TypeJudgment Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
@@ -204,7 +204,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   /-
   -- TE-INDUCTIVE (TODO: convert this rule to a theorem via TSUB-REFINE)
   | TE_Inductive {Γ: Env.TyEnv} {Η: Env.UsedNames} {φ: Ast.Predicate} {e: Ast.Expr} {τ: Ast.Ty} {b: ℕ} (i: String)
-    (h₀: Env.lookupTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ b)))))
+    (h₀: Env.getTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constZ b)))))
     (h₁: @TypeJudgment Δ
       (Env.updateTy Γ (Env.freshName Η indBaseLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constZ 0)))))
       ((Env.freshName Η indBaseLabel)::Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constZ 0))))

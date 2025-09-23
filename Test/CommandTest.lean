@@ -20,29 +20,29 @@ import Runwai.Tactic
 
 #runwai_prove Assert1 := by {
   apply Ty.TypeJudgment.TE_LetIn
-  · apply lookup_update_self
+  · apply get_update_self
   · apply Ty.TypeJudgment.TE_Assert
     · apply Ty.TypeJudgment.TE_ArrayIndex
       apply Ty.TypeJudgment.TE_ArrayIndex
       apply Ty.TypeJudgment.TE_Var
-      apply lookup_update_ne
+      apply get_update_ne
       simp
       apply Ty.TypeJudgment.TE_VarEnv
-      apply lookup_update_ne
+      apply get_update_ne
       simp
       apply constZ_refine_lt
       simp
     . apply Ty.TypeJudgment.TE_ConstF
   . constructor;
-    apply lookup_update_self
+    apply get_update_self
 }
 
 #runwai_prove IsZero := by {
   auto_trace_index
   apply isZero_typing_soundness
-  repeat apply lookup_update_ne; simp
+  repeat apply get_update_ne; simp
   apply Ty.TypeJudgment.TE_VarEnv
-  apply lookup_update_self;
+  apply get_update_self;
   repeat decide
 }
 
@@ -53,7 +53,7 @@ import Runwai.Tactic
   simp
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
-  unfold Env.lookupTy Env.updateTy
+  unfold Env.getTy Env.updateTy
   simp
   apply And.intro
   rfl
@@ -63,15 +63,15 @@ import Runwai.Tactic
   intro σ T v h₁ h₂
   unfold PropSemantics.tyenvToProp at h₁
   have h₃ := h₁ "u"
-  unfold Env.lookupTy Env.updateTy PropSemantics.varToProp Env.lookupTy at h₃
+  unfold Env.getTy Env.updateTy PropSemantics.varToProp Env.getTy at h₃
   simp at h₃
   unfold Ty.lookup_pred at h₃
-  have hat : (Env.lookupChip Δ "Assert1").ident_t = "trace" := by {
+  have hat : (Env.getChip Δ "Assert1").ident_t = "trace" := by {
     rw[h_delta]
-    unfold Env.lookupChip; simp }
-  have hai : (Env.lookupChip Δ "Assert1").ident_i = "i" := by {
+    unfold Env.getChip; simp }
+  have hai : (Env.getChip Δ "Assert1").ident_i = "i" := by {
     rw[h_delta]
-    unfold Env.lookupChip; simp }
+    unfold Env.getChip; simp }
   rw[hat, hai] at h₃
   simp [Env.freshName] at h₃
   simp [Ast.renameVarinPred] at h₃

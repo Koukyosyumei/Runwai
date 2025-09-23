@@ -307,9 +307,9 @@ lemma eval_mul_expr_val {σ T x y z Δ} (h: Eval.EvalProp σ T Δ
   (Ast.exprEq (Ast.Expr.var x)
     ((Ast.Expr.var y).fieldExpr Ast.FieldOp.mul (Ast.Expr.var z)))
   (Ast.Value.vBool true)) :
-  ∃ v₁ v₂ v₃: F, Env.lookupVal σ x = some (Ast.Value.vF v₁) ∧
-                 Env.lookupVal σ y = some (Ast.Value.vF v₂) ∧
-                 Env.lookupVal σ z = some (Ast.Value.vF v₃) ∧
+  ∃ v₁ v₂ v₃: F, Env.getVal σ x = some (Ast.Value.vF v₁) ∧
+                 Env.getVal σ y = some (Ast.Value.vF v₂) ∧
+                 Env.getVal σ z = some (Ast.Value.vF v₃) ∧
                  (v₁ = v₂ * v₃) := by {
     cases h
     rename_i v₁ v₂ ih₁ ih₂ r₂
@@ -346,7 +346,7 @@ lemma eval_bit_expr_val {σ T Δ x} (h: Eval.EvalProp σ T Δ
     ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul
       ((Ast.Expr.var x).fieldExpr Ast.FieldOp.sub (Ast.Expr.constF 1)))
     (Ast.Expr.constF 0))
-  (Ast.Value.vBool true)) : ∃ v: F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ (v = 0 ∨ v - 1 = 0) := by {
+  (Ast.Value.vBool true)) : ∃ v: F, Env.getVal σ x = some (Ast.Value.vF v) ∧ (v = 0 ∨ v - 1 = 0) := by {
     cases h
     rename_i ih₁ ih₂ r₁;
     cases ih₁;
@@ -383,7 +383,7 @@ lemma eval_eq_const_mul_val {σ T Δ x y v} (h: Eval.EvalProp σ T Δ
     ((Ast.Expr.var x).fieldExpr Ast.FieldOp.mul (Ast.Expr.var y)))
   (Ast.Value.vBool true)):
   ∃ v₀ v₁: F,
-  Env.lookupVal σ x = some (Ast.Value.vF v₀) ∧ Env.lookupVal σ y = some (Ast.Value.vF v₁) ∧
+  Env.getVal σ x = some (Ast.Value.vF v₀) ∧ Env.getVal σ y = some (Ast.Value.vF v₁) ∧
   v = v₀ * v₁ := by {
     cases h
     rename_i v₈ u₈ ih₁ ih₂ r₈
@@ -405,11 +405,11 @@ lemma eval_bits_to_byte_expr_val {σ T Δ x₀ x₁ x₂ x₃ x₄ x₅ x₆ x�
     (bits_to_byte_expr x₀ x₁ x₂ x₃ x₄ x₅ x₆ x₇)
     (Ast.Expr.var x₈))
   (Ast.Value.vBool true)) : ∃ v₀ v₁ v₂ v₃ v₄ v₅ v₆ v₇ v₈: F,
-    Env.lookupVal σ x₀ = some (Ast.Value.vF v₀) ∧ Env.lookupVal σ x₁ = some (Ast.Value.vF v₁) ∧
-    Env.lookupVal σ x₂ = some (Ast.Value.vF v₂) ∧ Env.lookupVal σ x₃ = some (Ast.Value.vF v₃) ∧
-    Env.lookupVal σ x₄ = some (Ast.Value.vF v₄) ∧ Env.lookupVal σ x₅ = some (Ast.Value.vF v₅) ∧
-    Env.lookupVal σ x₆ = some (Ast.Value.vF v₆) ∧ Env.lookupVal σ x₇ = some (Ast.Value.vF v₇) ∧
-    Env.lookupVal σ x₈ = some (Ast.Value.vF v₈) ∧
+    Env.getVal σ x₀ = some (Ast.Value.vF v₀) ∧ Env.getVal σ x₁ = some (Ast.Value.vF v₁) ∧
+    Env.getVal σ x₂ = some (Ast.Value.vF v₂) ∧ Env.getVal σ x₃ = some (Ast.Value.vF v₃) ∧
+    Env.getVal σ x₄ = some (Ast.Value.vF v₄) ∧ Env.getVal σ x₅ = some (Ast.Value.vF v₅) ∧
+    Env.getVal σ x₆ = some (Ast.Value.vF v₆) ∧ Env.getVal σ x₇ = some (Ast.Value.vF v₇) ∧
+    Env.getVal σ x₈ = some (Ast.Value.vF v₈) ∧
     v₀ + v₁ * 2 + v₂ * 4 + v₃ * 8 + v₄ * 16 + v₅ * 32 + v₆ * 64 + v₇ * 128 = v₈ := by {
     cases h
     rename_i ih₁ ih₂ r₁
@@ -494,7 +494,7 @@ to a field value `v` in the environment `σ`, and that the numeric representatio
 than the constant `t`.
 -/
 lemma eval_lt_val {σ T Δ x t} (h: Eval.EvalProp σ T Δ ((Ast.Expr.var x).toZ.binRel Ast.RelOp.lt (Ast.Expr.constZ t)) (Ast.Value.vBool true)):
-  ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
+  ∃ v : F, Env.getVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h
     rename_i ih₀ ih₁ r₁
     cases ih₀
@@ -511,7 +511,7 @@ lemma eval_lt_lam_val {σ T Δ x t}
   (h: Eval.EvalProp σ T Δ
   ((Expr.lam Ast.nu Ty.field ((Expr.var Ast.nu).toZ.binRel RelOp.lt (Expr.constZ t))).app (Expr.var x))
   (Value.vBool true)):
-  ∃ v : F, Env.lookupVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
+  ∃ v : F, Env.getVal σ x = some (Ast.Value.vF v) ∧ v.val < t := by {
     cases h
     rename_i ih₀ ih₁ r₁
     cases ih₀
@@ -529,9 +529,9 @@ lemma eval_lt_lam_val {σ T Δ x t}
     rename_i v
     use v
     apply And.intro
-    unfold Env.lookupVal Env.updateVal at r₃
+    unfold Env.getVal Env.updateVal at r₃
     simp at r₃
-    simp [Env.lookupVal]
+    simp [Env.getVal]
     exact r₃
     exact r₁
   }
@@ -540,7 +540,7 @@ lemma eval_lt_lam_val {σ T Δ x t}
 Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constZ k)) (Ast.Value.vBool true)
 -/
 lemma eval_var_eq_int (h: Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constZ k)) (Ast.Value.vBool true)):
-  Env.lookupVal σ x = (Ast.Value.vZ k) := by {
+  Env.getVal σ x = (Ast.Value.vZ k) := by {
       cases h
       rename_i ih₁ ih₂ r
       cases ih₂
@@ -565,7 +565,7 @@ Eval.EvalProp σ T Δ
 lemma eval_app_lam_eq_int (h: Eval.EvalProp σ T Δ
   ((Ast.Expr.lam x Ast.Ty.int (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constZ v))).app (Ast.Expr.var y))
   (Ast.Value.vBool true)):
-  Env.lookupVal σ y = (Ast.Value.vZ v) := by {
+  Env.getVal σ y = (Ast.Value.vZ v) := by {
     cases h
     rename_i ih_f ih_a ih_b
     cases ih_f
@@ -576,7 +576,7 @@ lemma eval_app_lam_eq_int (h: Eval.EvalProp σ T Δ
     cases ih₂
     cases ih₁
     rename_i v₁' a
-    unfold Env.lookupVal Env.updateVal at a
+    unfold Env.getVal Env.updateVal at a
     simp at a
     cases v₁' with
     | vZ x => {
@@ -599,7 +599,7 @@ lemma eval_height_check (h: Eval.EvalProp σ T Δ
         (Ast.exprEq (Ast.Expr.var Ast.nu).len (Ast.Expr.constZ height))).app
     (Ast.Expr.var trace))
   (Ast.Value.vBool true)):
-  ∃ trace_array: List Ast.Value, Env.lookupVal σ trace = some (Ast.Value.vArr trace_array) ∧
+  ∃ trace_array: List Ast.Value, Env.getVal σ trace = some (Ast.Value.vArr trace_array) ∧
   trace_array.length = height := by {
   cases h
   rename_i ihf iha ihb
@@ -612,7 +612,7 @@ lemma eval_height_check (h: Eval.EvalProp σ T Δ
   rename_i h
   cases h
   rename_i a
-  unfold Env.lookupVal Env.updateVal at a
+  unfold Env.getVal Env.updateVal at a
   simp at a
   rename_i h_trace trace_arr
   rw[a] at h_trace
