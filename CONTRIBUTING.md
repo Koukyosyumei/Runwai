@@ -56,6 +56,14 @@ The evaluator, implemented in [`Runwai/Eval.lean`](Runwai/Eval.lean), is a small
   * **`EvalProp`:** The core of the evaluator is the `EvalProp` inductive proposition, which defines the evaluation rules for each type of expression in the AST. For example, the `Let` constructor specifies how to evaluate a `let-in` binding by first evaluating the bound expression and then substituting the result into the body.
   * **`evalFieldOp`, `evalIntegerOp`, `evalRelOp`, `evalBoolOp`:** These helper functions define how to evaluate the primitive operations in Runwai, such as addition, multiplication, and comparison.
 
+- Examples
+
+```haskell
+example : Eval.evalRelOp Ast.RelOp.eq (Ast.Value.vF 2) (Ast.Value.vF 2) = some true := rfl
+example: Eval.EvalProp σ₀ T₀ Δ₀ (.constF 42) (.vF 42) := Eval.EvalProp.ConstF
+example: Eval.EvalProp σ₀ T₀ Δ₀ (.constBool false) (.vBool false) := Eval.EvalProp.ConstBool
+```
+
 ### 2.4. Type System and Verification
 
 The type system, defined in [`Runwai/Typing.lean`](Runwai/Typing.lean), is a crucial component for ensuring the correctness of Runwai programs. It uses a set of typing rules to assign a type to each expression and to verify that the program adheres to the specified refinement types.
@@ -108,4 +116,5 @@ In this example:
 1.  `#runwai_register` defines a chip named `IsZero` that takes a 3-column trace as input. The refinement type on the output specifies that the value `y` should be `1` if `x` is `0`, and `0` otherwise.
 2.  The body of the chip defines the constraints that enforce this logic.
 3.  `#runwai_prove` starts a proof of the `IsZero` chip's correctness. The proof script then uses a combination of custom tactics (like `auto_trace_index`) and standard Lean tactics to complete the proof
+
 
