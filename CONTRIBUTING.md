@@ -56,7 +56,7 @@ The evaluator, implemented in [`Runwai/Eval.lean`](Runwai/Eval.lean), is a small
   * **`EvalProp`:** The core of the evaluator is the `EvalProp` inductive proposition, which defines the evaluation rules for each type of expression in the AST. For example, the `Let` constructor specifies how to evaluate a `let-in` binding by first evaluating the bound expression and then substituting the result into the body.
   * **`evalFieldOp`, `evalIntegerOp`, `evalRelOp`, `evalBoolOp`:** These helper functions define how to evaluate the primitive operations in Runwai, such as addition, multiplication, and comparison.
 
-- Examples
+**Examples**
 
 ```haskell
 example: Eval.evalRelOp Ast.RelOp.eq (Ast.Value.vF 2) (Ast.Value.vF 2) = some true := rfl
@@ -84,7 +84,11 @@ The [`Runwai/Command.lean`](Runwai/Command.lean) file defines the user-facing co
   * **`#runwai_check`:** This command allows you to check the elaborated AST of a registered chip, which can be useful for debugging.
   * **`#runwai_prove`:** This is the most important command, as it allows you to formally prove the correctness of a registered chip. You provide the name of the chip and a proof script written in Lean's tactic language. The command then generates a theorem stating the correctness of the chip and enters an interactive proof mode where you can use tactics to complete the proof.
 
-### 2.6. Example Usage
+### 2.6. Gadgets
+
+TBD
+
+### 2.7. Example Usage
 
 The [`Test/CommandTest.lean`](Test/CommandTest.lean) and [`Test/CircuitTest.lean`](Test/CircuitTest.lean) files provide several examples of how to use Runwai to define and prove the correctness of simple ZK circuits.
 
@@ -116,6 +120,7 @@ In this example:
 1.  `#runwai_register` defines a chip named `IsZero` that takes a 3-column trace as input. The refinement type on the output specifies that the value `y` should be `1` if `x` is `0`, and `0` otherwise.
 2.  The body of the chip defines the constraints that enforce this logic.
 3.  `#runwai_prove` starts a proof of the `IsZero` chip's correctness. The proof script then uses a combination of custom tactics (like `auto_trace_index`) and standard Lean tactics to complete the proof
+
 
 
 
