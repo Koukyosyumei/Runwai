@@ -59,7 +59,7 @@ The evaluator, implemented in [`Runwai/Eval.lean`](Runwai/Eval.lean), is a small
 - Examples
 
 ```haskell
-example : Eval.evalRelOp Ast.RelOp.eq (Ast.Value.vF 2) (Ast.Value.vF 2) = some true := rfl
+example: Eval.evalRelOp Ast.RelOp.eq (Ast.Value.vF 2) (Ast.Value.vF 2) = some true := rfl
 example: Eval.EvalProp σ₀ T₀ Δ₀ (.constF 42) (.vF 42) := Eval.EvalProp.ConstF
 example: Eval.EvalProp σ₀ T₀ Δ₀ (.constBool false) (.vBool false) := Eval.EvalProp.ConstBool
 ```
@@ -116,5 +116,6 @@ In this example:
 1.  `#runwai_register` defines a chip named `IsZero` that takes a 3-column trace as input. The refinement type on the output specifies that the value `y` should be `1` if `x` is `0`, and `0` otherwise.
 2.  The body of the chip defines the constraints that enforce this logic.
 3.  `#runwai_prove` starts a proof of the `IsZero` chip's correctness. The proof script then uses a combination of custom tactics (like `auto_trace_index`) and standard Lean tactics to complete the proof
+
 
 
