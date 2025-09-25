@@ -50,7 +50,7 @@ inductive SubtypeJudgment :
 
   /-- TODO: Convert this rule to a theorem/lemma via other rules-/
   | TSub_RefineInduction {Δ: Env.ChipEnv} {Γ: Env.TyEnv} {T₁ T₂ : Ast.Ty} {φ₁ φ₂ : Ast.Predicate} {b: ℕ} (i: String):
-      Env.getTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN b)))) →
+      Env.getTy Γ i = some (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN b)))) →
       SubtypeJudgment Δ Γ T₁ T₂ →
       (∀ σ: Env.ValEnv, ∀ T: Env.TraceEnv, ∀ v: Ast.Expr,
         PropSemantics.tyenvToProp σ T Δ (Env.updateTy Γ indBaseLabel (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constN 0))))) →
@@ -117,7 +117,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   -- TE-ARRY-INDEX
   | TE_ArrayIndex {Γ: Env.TyEnv} {Η: Env.UsedNames} {e idx: Ast.Expr} {τ: Ast.Ty} {n: ℕ} {φ: Ast.Predicate}:
     TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.arr τ n) φ) →
-    TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN n)))) →
+    TypeJudgment Γ Η idx (Ast.Ty.refin (Ast.Ty.uint) (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN n)))) →
     TypeJudgment Γ Η (Ast.Expr.arrIdx e idx) τ
 
   -- TE-BRANCH
@@ -136,7 +136,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
 
   -- TE-CONSTZ
   | TE_ConstN {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: ℕ} :
-    TypeJudgment Γ Η (Ast.Expr.constN f) (Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN f))))
+    TypeJudgment Γ Η (Ast.Expr.constN f) (Ast.Ty.refin (Ast.Ty.uint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN f))))
 
   -- TE-BOOL
   | TE_ConstBool {Γ: Env.TyEnv} {Η: Env.UsedNames} {b: Bool} :
@@ -155,10 +155,10 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   TypeJudgment Γ Η (Ast.Expr.fieldExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.fieldExpr e₁ op e₂)))))
 
   -- TE-BINOPINT
-  | TE_BinOpInteger {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.IntegerOp}:
-    TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.int) φ₁) →
-    TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.int) φ₂) →
-  TypeJudgment Γ Η (Ast.Expr.integerExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.int) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.integerExpr e₁ op e₂)))))
+  | TE_BinOpUInt {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.IntOp}:
+    TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.uint) φ₁) →
+    TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.uint) φ₂) →
+  TypeJudgment Γ Η (Ast.Expr.uintExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.uint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.uintExpr e₁ op e₂)))))
 
   -- TE-BINOPREL
   | TE_BinOpRel {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₁ φ₂: Ast.Predicate} {op: Ast.RelOp}:
@@ -204,7 +204,7 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   /-
   -- TE-INDUCTIVE (TODO: convert this rule to a theorem via TSUB-REFINE)
   | TE_Inductive {Γ: Env.TyEnv} {Η: Env.UsedNames} {φ: Ast.Predicate} {e: Ast.Expr} {τ: Ast.Ty} {b: ℕ} (i: String)
-    (h₀: Env.getTy Γ i = some (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN b)))))
+    (h₀: Env.getTy Γ i = some (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN b)))))
     (h₁: @TypeJudgment Δ
       (Env.updateTy Γ (Env.freshName Η indBaseLabel) (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (.var i) (.constN 0)))))
       ((Env.freshName Η indBaseLabel)::Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constN 0))))
@@ -224,8 +224,8 @@ def makeEnvs (c : Ast.Chip) (height: ℕ): Env.TyEnv :=
   Env.updateTy (Env.updateTy (Env.updateTy []
     c.ident_t (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constN height)))))
-    c.ident_i (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN height)))))
-    "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
+    c.ident_i (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN height)))))
+    "n" (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
 
 /--
 Check of the structure of a trace. It ensures the trace is a 2D array

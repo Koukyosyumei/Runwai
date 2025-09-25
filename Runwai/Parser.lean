@@ -136,7 +136,7 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
   -- Refinement: “{ x : T | φ }”
   | `(runwai_ty| { $T:runwai_ty | $φ:runwai_expr } ) => do
       let T' ← match T with
-      --| `(runwai_ty| Int) => pure Ast.Ty.int
+      --| `(runwai_ty| Int) => pure Ast.Ty.uint
       | `(runwai_ty| Field) => pure Ast.Ty.field
       | `(runwai_ty| Bool) => pure Ast.Ty.bool
       | `(runwai_ty| Unit) => pure Ast.Ty.unit
@@ -202,23 +202,23 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
   | `(runwai_expr| $e₁ && $e₂) => do
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
-    pure (Ast.Expr.boolExpr e₁' Ast.BooleanOp.and e₂')
+    pure (Ast.Expr.boolExpr e₁' Ast.BoolOp.and e₂')
 
   | `(runwai_expr| $e₁ and $e₂) => do
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
-    pure (Ast.Expr.boolExpr e₁' Ast.BooleanOp.and e₂')
+    pure (Ast.Expr.boolExpr e₁' Ast.BoolOp.and e₂')
 
   -- Boolean “e₁ || e₂”
   | `(runwai_expr| $e₁ || $e₂) => do
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
-    pure (Ast.Expr.boolExpr e₁' Ast.BooleanOp.or e₂')
+    pure (Ast.Expr.boolExpr e₁' Ast.BoolOp.or e₂')
 
   | `(runwai_expr| $e₁ or $e₂) => do
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
-    pure (Ast.Expr.boolExpr e₁' Ast.BooleanOp.or e₂')
+    pure (Ast.Expr.boolExpr e₁' Ast.BoolOp.or e₂')
 
   -- Field arithmetic: “e₁ + e₂”  “e₁ - e₂”  “e₁ * e₂”
   | `(runwai_expr| $e₁ + $e₂) => do

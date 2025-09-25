@@ -108,9 +108,9 @@ theorem evalprop_deterministic
     have h₂_eq := ih₂_ih ih₂'
     simp_all
   }
-  | ZBinOp ih₁ ih₂ r ih₁_ih ih₂_ih => {
+  | NBinOp ih₁ ih₂ r ih₁_ih ih₂_ih => {
     cases h₂
-    case ZBinOp i₁' i₂' ih₁' ih₂' ih₃' =>
+    case NBinOp i₁' i₂' ih₁' ih₂' ih₃' =>
     have h₁_eq := ih₁_ih ih₁'
     have h₂_eq := ih₂_ih ih₂'
     simp_all
@@ -559,11 +559,11 @@ lemma eval_var_eq_int (h: Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var x) (As
 
 /-
 Eval.EvalProp σ T Δ
-  ((Ast.Expr.lam Ast.nu Ast.Ty.int (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))).app (Ast.Expr.var "n"))
+  ((Ast.Expr.lam Ast.nu Ast.Ty.uint (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))).app (Ast.Expr.var "n"))
   (Ast.Value.vBool true)
 -/
 lemma eval_app_lam_eq_int (h: Eval.EvalProp σ T Δ
-  ((Ast.Expr.lam x Ast.Ty.int (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constN v))).app (Ast.Expr.var y))
+  ((Ast.Expr.lam x Ast.Ty.uint (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constN v))).app (Ast.Expr.var y))
   (Ast.Value.vBool true)):
   Env.getVal σ y = (Ast.Value.vN v) := by {
     cases h

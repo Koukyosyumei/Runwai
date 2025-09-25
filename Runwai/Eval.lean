@@ -30,13 +30,13 @@ def evalFieldOp (op: FieldOp) : Value → Value → Option Value
   | _, _ => none
 
 @[simp]
-def evalIntegerOp (op: IntegerOp) : Value → Value → Option Value
+def evalUIntOp (op: IntOp) : Value → Value → Option Value
   | Value.vN x, Value.vN y =>
     some $ Value.vN $
       match op with
-      | IntegerOp.add => x + y
-      | IntegerOp.sub => x - y
-      | IntegerOp.mul => x * y
+      | IntOp.add => x + y
+      | IntOp.sub => x - y
+      | IntOp.mul => x * y
   | _, _ => none
 
 /-- Evaluate a relational operator `op` on two `Value` arguments. -/
@@ -59,11 +59,11 @@ def evalRelOp (op: RelOp) : Value → Value → Option Bool
 
 /-- Evaluate a boolean operator `op` on two `Value.bool` arguments. -/
 @[simp]
-def evalBoolOp (op : BooleanOp) : Value → Value → Option Bool
+def evalBoolOp (op : BoolOp) : Value → Value → Option Bool
   | Value.vBool x, Value.vBool y =>
     some $ match op with
-    | BooleanOp.and => x && y
-    | BooleanOp.or  => x || y
+    | BoolOp.and => x && y
+    | BoolOp.or  => x || y
   | _, _ => none
 
 inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
@@ -107,11 +107,11 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
       EvalProp σ T Δ (Expr.fieldExpr e₁ op e₂) v
 
   -- E‑ZBINOP
-  | ZBinOp   {σ T Δ e₁ e₂ op i₁ i₂ v}
+  | NBinOp   {σ T Δ e₁ e₂ op i₁ i₂ v}
       (ih₁ : EvalProp σ T Δ e₁ (Value.vN i₁))
       (ih₂ : EvalProp σ T Δ e₂ (Value.vN i₂))
-      (r   : evalIntegerOp op (Value.vN i₁) (Value.vN i₂) = some v) :
-      EvalProp σ T Δ (Expr.integerExpr e₁ op e₂) v
+      (r   : evalUIntOp op (Value.vN i₁) (Value.vN i₂) = some v) :
+      EvalProp σ T Δ (Expr.uintExpr e₁ op e₂) v
 
   -- E‑BOOLBINOP
   | BoolOp   {σ T Δ e₁ e₂ op b₁ b₂ b}
