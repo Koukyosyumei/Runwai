@@ -61,7 +61,7 @@ mutual
     | assertE     : (lhs: Expr) → (rhs: Expr) → Expr                     -- assert e₁ = e₂
     | boolExpr    : (lhs: Expr) → (op: BoolOp) → (rhs: Expr) → Expr
     | fieldExpr   : (lhs: Expr) → (op: FieldOp) → (rhs: Expr) → Expr
-    | uintExpr : (lhs: Expr) → (op: IntOp) → (rhs: Expr) → Expr
+    | uintExpr    : (lhs: Expr) → (op: IntOp) → (rhs: Expr) → Expr
     | binRel      : (lhs: Expr) → (op: RelOp) → (rhs: Expr) → Expr       -- e₁ ⊘ e₂
     | arrIdx      : (arr: Expr) → (idx: Expr) → Expr                     -- e₁[e₂]
     | len         : (arr: Expr) → Expr
