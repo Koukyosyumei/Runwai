@@ -202,23 +202,23 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
   | `(runwai_expr| $e₁ && $e₂) => do
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
-    pure (Ast.Expr.boolExpr e₁' Ast.BooleanOp.and e₂')
+    pure (Ast.Expr.boolExpr e₁' Ast.BoolOp.and e₂')
 
   | `(runwai_expr| $e₁ and $e₂) => do
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
-    pure (Ast.Expr.boolExpr e₁' Ast.BooleanOp.and e₂')
+    pure (Ast.Expr.boolExpr e₁' Ast.BoolOp.and e₂')
 
   -- Boolean “e₁ || e₂”
   | `(runwai_expr| $e₁ || $e₂) => do
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
-    pure (Ast.Expr.boolExpr e₁' Ast.BooleanOp.or e₂')
+    pure (Ast.Expr.boolExpr e₁' Ast.BoolOp.or e₂')
 
   | `(runwai_expr| $e₁ or $e₂) => do
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
-    pure (Ast.Expr.boolExpr e₁' Ast.BooleanOp.or e₂')
+    pure (Ast.Expr.boolExpr e₁' Ast.BoolOp.or e₂')
 
   -- Field arithmetic: “e₁ + e₂”  “e₁ - e₂”  “e₁ * e₂”
   | `(runwai_expr| $e₁ + $e₂) => do

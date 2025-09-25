@@ -58,8 +58,8 @@ def unexpBoolExpr : Unexpander
   | `($_ $lhs $op $rhs) =>
     match op.raw with
     | Syntax.ident _ _ n _ =>
-        if n == ``Ast.BooleanOp.and then `($lhs ∧ $rhs)
-        else if n == ``Ast.BooleanOp.or  then `($lhs ∨ $rhs)
+        if n == ``Ast.BoolOp.and then `($lhs ∧ $rhs)
+        else if n == ``Ast.BoolOp.or  then `($lhs ∨ $rhs)
         else throw ()
     | _ => throw ()
   | _ => throw ()

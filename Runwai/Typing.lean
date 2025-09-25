@@ -155,10 +155,10 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   TypeJudgment Γ Η (Ast.Expr.fieldExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.field) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.fieldExpr e₁ op e₂)))))
 
   -- TE-BINOPINT
-  | TE_BinOpInteger {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.IntegerOp}:
+  | TE_BinOpUInt {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.IntOp}:
     TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.uint) φ₁) →
     TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.uint) φ₂) →
-  TypeJudgment Γ Η (Ast.Expr.integerExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.uint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.integerExpr e₁ op e₂)))))
+  TypeJudgment Γ Η (Ast.Expr.uintExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.uint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.uintExpr e₁ op e₂)))))
 
   -- TE-BINOPREL
   | TE_BinOpRel {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₁ φ₂: Ast.Predicate} {op: Ast.RelOp}:

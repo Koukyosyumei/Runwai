@@ -136,13 +136,13 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
   (h₁: Env.getTy Γ x = (Ast.Ty.unit.refin
       (Ast.Predicate.ind
         ((Ast.Expr.var i).binRel Ast.RelOp.lt
-          ((Ast.Expr.var n).integerExpr Ast.IntegerOp.sub (Ast.Expr.constN d))))))
+          ((Ast.Expr.var n).uintExpr Ast.IntOp.sub (Ast.Expr.constN d))))))
   (h₂: Env.getTy Γ i = (Ast.Ty.uint.refin φ))
   (h₃: i ≠ Ast.nu ):
-  @Ty.TypeJudgment Δ Γ Η ((Ast.Expr.var i).integerExpr Ast.IntegerOp.add (Ast.Expr.constN d))
+  @Ty.TypeJudgment Δ Γ Η ((Ast.Expr.var i).uintExpr Ast.IntOp.add (Ast.Expr.constN d))
     (Ast.Ty.uint.refin (Ast.Predicate.dep Ast.nu  ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constN height)))) := by {
     apply Ty.TypeJudgment.TE_SUB
-    apply Ty.TypeJudgment.TE_BinOpInteger
+    apply Ty.TypeJudgment.TE_BinOpUInt
     apply Ty.TypeJudgment.TE_VarEnv
     exact h₂
     apply Ty.TypeJudgment.TE_ConstN
@@ -152,7 +152,7 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
     unfold PropSemantics.tyenvToProp at ha
     have h₀' := ha n (Ty.uint.refin (Predicate.dep Ast.nu (exprEq (Expr.var Ast.nu) (Expr.constN height)))) h₀
     have h₁' := ha x (Ty.unit.refin
-      (Predicate.ind ((Expr.var i).binRel RelOp.lt ((Expr.var n).integerExpr IntegerOp.sub (Expr.constN d))))) h₁
+      (Predicate.ind ((Expr.var i).binRel RelOp.lt ((Expr.var n).uintExpr IntOp.sub (Expr.constN d))))) h₁
     simp at h₀' h₁'
     rw[h₀] at h₀'
     simp at h₀'

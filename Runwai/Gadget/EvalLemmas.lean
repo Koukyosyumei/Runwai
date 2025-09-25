@@ -108,9 +108,9 @@ theorem evalprop_deterministic
     have h₂_eq := ih₂_ih ih₂'
     simp_all
   }
-  | ZBinOp ih₁ ih₂ r ih₁_ih ih₂_ih => {
+  | NBinOp ih₁ ih₂ r ih₁_ih ih₂_ih => {
     cases h₂
-    case ZBinOp i₁' i₂' ih₁' ih₂' ih₃' =>
+    case NBinOp i₁' i₂' ih₁' ih₂' ih₃' =>
     have h₁_eq := ih₁_ih ih₁'
     have h₂_eq := ih₂_ih ih₂'
     simp_all

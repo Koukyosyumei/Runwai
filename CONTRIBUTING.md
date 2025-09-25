@@ -54,7 +54,7 @@ The evaluator, implemented in [`Runwai/Eval.lean`](Runwai/Eval.lean), is a small
 **Evaluation Logic:**
 
   * **`EvalProp`:** The core of the evaluator is the `EvalProp` inductive proposition, which defines the evaluation rules for each type of expression in the AST. For example, the `Let` constructor specifies how to evaluate a `let-in` binding by first evaluating the bound expression and then substituting the result into the body.
-  * **`evalFieldOp`, `evalIntegerOp`, `evalRelOp`, `evalBoolOp`:** These helper functions define how to evaluate the primitive operations in Runwai, such as addition, multiplication, and comparison.
+  * **`evalFieldOp`, `evalUIntOp`, `evalRelOp`, `evalBoolOp`:** These helper functions define how to evaluate the primitive operations in Runwai, such as addition, multiplication, and comparison.
 
 **Examples**
 

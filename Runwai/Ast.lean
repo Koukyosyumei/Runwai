@@ -23,13 +23,13 @@ open Std (Format)
 namespace Ast
 
 /-- Boolean binary operators. -/
-inductive BooleanOp where
+inductive BoolOp where
   | and   -- ∧
   | or    -- ∨
   deriving DecidableEq, Repr, Lean.ToExpr
 
 /-- Integer binary operators. -/
-inductive IntegerOp where
+inductive IntOp where
   | add   -- +
   | sub   -- -
   | mul   -- *
@@ -59,9 +59,9 @@ mutual
     | arr         : (elems: List Expr) → Expr                            -- [e₁, ..., eₙ]
     | var         : (name: String) → Expr                                -- variable x
     | assertE     : (lhs: Expr) → (rhs: Expr) → Expr                     -- assert e₁ = e₂
-    | boolExpr    : (lhs: Expr) → (op: BooleanOp) → (rhs: Expr) → Expr
+    | boolExpr    : (lhs: Expr) → (op: BoolOp) → (rhs: Expr) → Expr
     | fieldExpr   : (lhs: Expr) → (op: FieldOp) → (rhs: Expr) → Expr
-    | integerExpr : (lhs: Expr) → (op: IntegerOp) → (rhs: Expr) → Expr
+    | uintExpr : (lhs: Expr) → (op: IntOp) → (rhs: Expr) → Expr
     | binRel      : (lhs: Expr) → (op: RelOp) → (rhs: Expr) → Expr       -- e₁ ⊘ e₂
     | arrIdx      : (arr: Expr) → (idx: Expr) → Expr                     -- e₁[e₂]
     | len         : (arr: Expr) → Expr
@@ -116,7 +116,7 @@ def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr
     | Expr.assertE l r   => Expr.assertE (renameVar l oldName newExpr (cnt - 1)) (renameVar r oldName newExpr (cnt - 1))
     | Expr.boolExpr l o r => Expr.boolExpr (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
     | Expr.fieldExpr l o r => Expr.fieldExpr (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
-    | Expr.integerExpr l o r => Expr.integerExpr (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
+    | Expr.uintExpr l o r => Expr.uintExpr (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
     | Expr.binRel l o r  => Expr.binRel (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
     | Expr.arrIdx a i    => Expr.arrIdx (renameVar a oldName newExpr (cnt - 1)) (renameVar i oldName newExpr (cnt - 1))
     | Expr.len arr       => Expr.len (renameVar arr oldName newExpr (cnt - 1))
@@ -171,7 +171,7 @@ instance : BEq Value where
 abbrev exprEq (e₁ e₂: Expr): Expr := Expr.binRel e₁ RelOp.eq e₂
 abbrev constTruePred : Predicate := Predicate.ind (Ast.Expr.constBool true)
 abbrev trace_i_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.var ident_i)).arrIdx (Ast.Expr.constN j)
-abbrev trace_ip1_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.integerExpr (Ast.Expr.var ident_i) Ast.IntegerOp.add (Ast.Expr.constN 1))).arrIdx (Ast.Expr.constN j)
+abbrev trace_ip1_j (ident_t ident_i: String) (j: ℕ) := ((Ast.Expr.var ident_t).arrIdx (Ast.Expr.uintExpr (Ast.Expr.var ident_i) Ast.IntOp.add (Ast.Expr.constN 1))).arrIdx (Ast.Expr.constN j)
 abbrev nu: String := "ν"
 
 structure Chip where
@@ -183,16 +183,16 @@ structure Chip where
   body    : Ast.Expr
 deriving Lean.ToExpr
 
-instance : Repr BooleanOp where
+instance : Repr BoolOp where
   reprPrec
-    | BooleanOp.and, _ => Format.text "∧"
-    | BooleanOp.or, _  => Format.text "∨"
+    | BoolOp.and, _ => Format.text "∧"
+    | BoolOp.or, _  => Format.text "∨"
 
-instance : Repr IntegerOp where
+instance : Repr IntOp where
   reprPrec
-    | IntegerOp.add, _ => Format.text "+"
-    | IntegerOp.sub, _ => Format.text "-"
-    | IntegerOp.mul, _ => Format.text "*"
+    | IntOp.add, _ => Format.text "+"
+    | IntOp.sub, _ => Format.text "-"
+    | IntOp.mul, _ => Format.text "*"
 
 instance : Repr FieldOp where
   reprPrec
@@ -216,7 +216,7 @@ mutual
     | Expr.assertE l r       => s!"assert_eq({exprToString l}, {exprToString r})"
     | Expr.boolExpr l op r   => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.fieldExpr l op r  => s!"({exprToString l} {repr op} {exprToString r})"
-    | Expr.integerExpr l op r  => s!"({exprToString l} {repr op} {exprToString r})"
+    | Expr.uintExpr l op r  => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.binRel l op r     => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.arr elems         => "[" ++ String.intercalate ", " (elems.map exprToString) ++ "]"
     | Expr.len arr           => s!"len({exprToString arr})"
