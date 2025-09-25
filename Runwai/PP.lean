@@ -129,7 +129,7 @@ def unexpTyField : Unexpander
     let id := mkIdent (Name.mkSimple "F")
     `($id)
 
-@[app_unexpander Ast.Ty.int]
+@[app_unexpander Ast.Ty.uint]
 def unexpTyInt : Unexpander
   | `($_) =>
     let id := mkIdent (Name.mkSimple "int")

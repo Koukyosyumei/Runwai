@@ -59,7 +59,7 @@ match Env.getTy Γ ident with
   predToProp σ T Δ τ pred (Ast.Expr.var ident)
 | Ast.Ty.field        => True
 | Ast.Ty.bool         => True
-| Ast.Ty.int          => True
+| Ast.Ty.uint          => True
 | _ => False
 
 /--

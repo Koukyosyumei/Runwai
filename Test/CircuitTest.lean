@@ -337,7 +337,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           have : Eval.EvalProp σ T Δ ((Ast.Expr.constN 0).binRel Ast.RelOp.lt (Ast.Expr.var "n")) (Ast.Value.vBool true) := by {
             apply Eval.EvalProp.Rel
             apply Eval.EvalProp.ConstN
-            have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
+            have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
             simp [Env.getTy, Env.updateTy, Ty.makeEnvs, Ty.indBaseLabel] at hu₀
             have n_is_height := eval_app_lam_eq_int hu₀
             apply Eval.EvalProp.Var
@@ -389,9 +389,9 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
     unfold PropSemantics.tyenvToProp at h₁
     simp[Ast.renameVarinPred, Ast.renameVar]
     simp[Env.freshName] at h₁
-    have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.int
+    have hu₀ := h₁ "n" (Ast.Ty.refin Ast.Ty.uint
       (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
-    have hu₁ := h₁ "i" (Ast.Ty.refin Ast.Ty.int
+    have hu₁ := h₁ "i" (Ast.Ty.refin Ast.Ty.uint
       (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN height))))
     have hu₂ := h₁ Ty.indStepPrevLabel (Ast.Ty.unit.refin
                 (Ast.renameVarinPred

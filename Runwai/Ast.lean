@@ -97,7 +97,7 @@ mutual
   inductive Ty where
     | unit     : Ty
     | field    : Ty                                               -- F p
-    | int      : Ty
+    | uint     : Ty
     | bool     : Ty                                               -- Bool
     | arr      : (ty: Ty) → ℕ → Ty                              -- [T; n]
     | refin    : (ty: Ty) → (pred: Predicate) → Ty                -- {ν : T | ϕ}
@@ -240,7 +240,7 @@ mutual
   partial def tyToString : Ty → String
     | Ty.unit           => "unit"
     | Ty.field          => "F"
-    | Ty.int            => "int"
+    | Ty.uint            => "int"
     | Ty.bool           => "Bool"
     | Ty.arr t n        => s!"[{tyToString t}; {n}]"
     | Ty.refin t p      => "{" ++ s!"{tyToString t} | {predicateToString p}" ++ "}"
