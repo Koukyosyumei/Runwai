@@ -109,6 +109,35 @@ import Runwai.Tactic
   repeat decide
 }
 
+lemma eval_var_lt_of_update
+  (h₀: Eval.EvalProp σ T Δ v va)
+  (h₁: Eval.EvalProp σ T Δ (v.toN.binRel Ast.RelOp.lt (Ast.Expr.constN t)) (Ast.Value.vBool True)):
+  Eval.EvalProp (Env.updateVal σ x va) T Δ ((Ast.Expr.var x).toN.binRel Ast.RelOp.lt (Ast.Expr.constN t))
+  (Ast.Value.vBool True) := by {
+    cases h₁
+    rename_i ih₁ ih₂ r
+    cases ih₁
+    rename_i h
+    cases va with
+    | vF x => {
+      have := evalprop_deterministic h h₀
+      simp at this
+      rw[this] at r
+      cases ih₂
+      apply Eval.EvalProp.Rel
+      apply Eval.EvalProp.toN
+      apply Eval.EvalProp.Var
+      simp [Env.getVal, Env.updateVal]
+      rfl
+      apply Eval.EvalProp.ConstN
+      exact r
+    }
+    | _ => {
+      have := evalprop_deterministic h h₀
+      simp at this
+    }
+  }
+
 #runwai_prove Lookup := by {
   rename_i Δ h_delta height hh Γ Η
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
