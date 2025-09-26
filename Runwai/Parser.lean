@@ -20,15 +20,17 @@ declare_syntax_cat runwai_ty
 declare_syntax_cat runwai_expr
 
 -- Basic types
-syntax "Field"                                 : runwai_ty
-syntax "Bool"                                  : runwai_ty
-syntax "Unit"                                  : runwai_ty
+syntax "Field"                                     : runwai_ty
+syntax "UInt"                                      : runwai_ty
+syntax "Bool"                                      : runwai_ty
+syntax "Unit"                                      : runwai_ty
 
 -- Array types: “[T: n]”
-syntax "[" runwai_ty ":" num "]"                         : runwai_ty
+syntax "[" runwai_ty ":" num "]"                   : runwai_ty
 
 -- Refinement types: “{ x : T | φ }”
-syntax "{" runwai_ty "|" runwai_expr "}"      : runwai_ty
+syntax "{" runwai_ty "|" runwai_expr "}"           : runwai_ty
+syntax "{" ident ":" runwai_ty "|" runwai_expr "}" : runwai_ty
 
 -- Function‐type arrow: “(x : T1) → T2”
 syntax "(" ident ":" runwai_ty ")" "→" runwai_ty   : runwai_ty
@@ -122,6 +124,13 @@ syntax "chip" ident "(" ident "," ident "," num ")" "->" runwai_ty "{" runwai_ex
 declare_syntax_cat runwai_file
 syntax (runwai_chip)+ : runwai_file
 
+---------------------------------------------------
+--------------- Builtin Abbrevs--------------------
+---------------------------------------------------
+
+syntax "field_lt_const" num : runwai_ty
+syntax "bits_to_byte_expr" ident ident ident ident ident ident ident ident : runwai_expr
+
 namespace Frontend
 
 mutual
@@ -131,7 +140,7 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
 
   -- Field and Bool
   | `(runwai_ty| Field)      => pure (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constBool True)))
-  | `(runwai_ty| Bool)       => pure Ast.Ty.bool
+  | `(runwai_ty| Bool)       => pure (Ast.Ty.refin Ast.Ty.bool  (Ast.Predicate.ind (Ast.Expr.constBool True)))
   | `(runwai_ty| Unit)       => pure Ast.Ty.unit
 
   -- Array type: “[T]”
@@ -142,20 +151,35 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
   -- Refinement: “{ x : T | φ }”
   | `(runwai_ty| { $T:runwai_ty | $φ:runwai_expr } ) => do
       let T' ← match T with
-      --| `(runwai_ty| Int) => pure Ast.Ty.uint
+      | `(runwai_ty| UInt) => pure Ast.Ty.uint
       | `(runwai_ty| Field) => pure Ast.Ty.field
       | `(runwai_ty| Bool) => pure Ast.Ty.bool
       | `(runwai_ty| Unit) => pure Ast.Ty.unit
       | _ => throwError "unsupported type syntax: {stx}"
-      -- We want to turn `φ` (a Lean `term`) into an `Ast.Expr` (of Boolean sort).
       let φ' ← elaborateExpr φ
       pure (Ast.Ty.refin T' (Ast.Predicate.ind φ'))
+
+  -- Refinement: “{ x : T || φ }”
+  | `(runwai_ty| { $x:ident : $T:runwai_ty | $φ:runwai_expr } ) => do
+      let T' ← match T with
+      | `(runwai_ty| UInt) => pure Ast.Ty.uint
+      | `(runwai_ty| Field) => pure Ast.Ty.field
+      | `(runwai_ty| Bool) => pure Ast.Ty.bool
+      | `(runwai_ty| Unit) => pure Ast.Ty.unit
+      | _ => throwError "unsupported type syntax: {stx}"
+      let φ' ← elaborateExpr φ
+      pure (Ast.Ty.refin T' (Ast.Predicate.dep x.getId.toString φ'))
 
   -- Function type: “(x : T1) → T2”
   | `(runwai_ty| ( $x:ident : $Tdom:runwai_ty ) → $Tcod:runwai_ty ) => do
       let dom ← elaborateType Tdom
       let cod ← elaborateType Tcod
       pure (Ast.Ty.func x.getId.toString dom cod)
+
+  | `(runwai_ty| field_lt_const $n:num) => do
+      pure ((Ast.Ty.field.refin
+            (Ast.Predicate.dep Ast.nu
+              ((Ast.Expr.var Ast.nu).toN.binRel Ast.RelOp.lt (Ast.Expr.constN n.getNat)))))
 
   | _ => throwError "unsupported type syntax: {stx}"
 
