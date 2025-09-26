@@ -111,12 +111,6 @@ def unexpPredDep : Unexpander
   | `($_ $e) => `($e)
   | _        => throw ()
 
-@[app_unexpander Ast.Ty.unknown]
-def unexpTyUnknown : Unexpander
-  | `($_) =>
-    let id := mkIdent (Name.mkSimple "unknown")
-    `($id)
-
 @[app_unexpander Ast.Ty.unit]
 def unexpTyUnit : Unexpander
   | `($_) =>

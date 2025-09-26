@@ -275,14 +275,7 @@ instance : Repr Value where
 instance : Repr Chip where
   reprPrec c _ :=
     Format.text s!
-"Chip \{
-  name    := \"{c.name}\",
-  ident_t := {c.ident_t},
-  ident_i := {c.ident_i},
-  width   := {c.width},
-  goal    := {repr c.goal},
-  body    := {repr c.body}
-}"
+"Chip \{ name    := \"{c.name}\"}"
 
 def DefaultChip : Chip := {
     name    := "dummy"

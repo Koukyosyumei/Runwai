@@ -22,6 +22,7 @@ import Runwai.Tactic
   assert_eq(trace [i][0], trace [i][0])
 }
 
+/-
 #runwai_register chip koalabearWordRangeCheckerChip(trace, i, 18)
   -> {Unit| (toN(alpha_0) <+> (toN(alpha_1) <*> 256) <+> (toN(alpha_1) <*> 65536) <+> (toN(alpha_1) <*> 16777216)) < 2130706433 }
 {
@@ -29,57 +30,71 @@ import Runwai.Tactic
   let alpha_1 = trace [i][1] in
   let alpha_2 = trace [i][2] in
   let alpha_3 = trace [i][3] in
+  let most_sig_byte_decomp_0 = trace [i][4] in
+  let most_sig_byte_decomp_1 = trace [i][5] in
+  let most_sig_byte_decomp_2 = trace [i][6] in
+  let most_sig_byte_decomp_3 = trace [i][7] in
+  let most_sig_byte_decomp_4 = trace [i][8] in
+  let most_sig_byte_decomp_5 = trace [i][8] in
+  let most_sig_byte_decomp_6 = trace [i][10] in
+  let most_sig_byte_decomp_7 = trace [i][11] in
+  let and_most_sig_byte_decomp_0_to_2 = trace [i][12] in
+  let and_most_sig_byte_decomp_0_to_3 = trace [i][13] in
+  let and_most_sig_byte_decomp_0_to_4 = trace [i][14] in
+  let and_most_sig_byte_decomp_0_to_5 = trace [i][15] in
+  let and_most_sig_byte_decomp_0_to_6 = trace [i][16] in
+  let and_most_sig_byte_decomp_0_to_7 = trace [i][17] in
   let l₀ = lookup u8(alpha_0 : trace [i][0]) in
   let l₁ = lookup u8(alpha_1 : trace [i][0]) in
   let l₂ = lookup u8(alpha_2 : trace [i][0]) in
   let l₃ = lookup u8(alpha_3 : trace [i][0]) in
-  let koalabear_word_range_checker_func =
-    lam alpha_0 : field_lt_const 256 =>
-    lam alpha_1 : field_lt_const 256 =>
-    lam alpha_2 : field_lt_const 256 =>
-    lam alpha_3 : field_lt_const 256 =>
-    lam most_sig_byte_decomp_0 : {Unit| true} =>
-    lam most_sig_byte_decomp_1 : {Unit| true} =>
-    lam most_sig_byte_decomp_2 : {Unit| true} =>
-    lam most_sig_byte_decomp_3 : {Unit| true} =>
-    lam most_sig_byte_decomp_4 : {Unit| true} =>
-    lam most_sig_byte_decomp_5 : {Unit| true} =>
-    lam most_sig_byte_decomp_6 : {Unit| true} =>
-    lam most_sig_byte_decomp_7 : {Unit| true} =>
-    lam and_most_sig_byte_decomp_0_to_2 : {Unit| true} =>
-    lam and_most_sig_byte_decomp_0_to_3 : {Unit| true} =>
-    lam and_most_sig_byte_decomp_0_to_4 : {Unit| true} =>
-    lam and_most_sig_byte_decomp_0_to_5 : {Unit| true} =>
-    lam and_most_sig_byte_decomp_0_to_6 : {Unit| true} =>
-    lam and_most_sig_byte_decomp_0_to_7 : {Unit| true} =>
-    let b₁ = assert_eq(most_sig_byte_decomp_0 * (most_sig_byte_decomp_0 - Fp 1), Fp 0) in
-    let b₂ = assert_eq(most_sig_byte_decomp_1 * (most_sig_byte_decomp_1 - Fp 1), Fp 0) in
-    let b₃ = assert_eq(most_sig_byte_decomp_2 * (most_sig_byte_decomp_2 - Fp 1), Fp 0) in
-    let b₄ = assert_eq(most_sig_byte_decomp_3 * (most_sig_byte_decomp_3 - Fp 1), Fp 0) in
-    let b₅ = assert_eq(most_sig_byte_decomp_4 * (most_sig_byte_decomp_4 - Fp 1), Fp 0) in
-    let b₆ = assert_eq(most_sig_byte_decomp_5 * (most_sig_byte_decomp_5 - Fp 1), Fp 0) in
-    let b₇ = assert_eq(most_sig_byte_decomp_6 * (most_sig_byte_decomp_6 - Fp 1), Fp 0) in
-    let b₈ = assert_eq(most_sig_byte_decomp_7 * (most_sig_byte_decomp_7 - Fp 1), Fp 0) in
-    let u₁ = assert_eq((((((((most_sig_byte_decomp_0 + (most_sig_byte_decomp_1 * 2)) + (most_sig_byte_decomp_2 * 4)) +
-                      (most_sig_byte_decomp_3 * 8)) + (most_sig_byte_decomp_4 * 16)) + (most_sig_byte_decomp_5 * 32)) +
-                      (most_sig_byte_decomp_6 * 64)) + (most_sig_byte_decomp_7 * 128)), value_3) in
-    let u₂ = assert_eq(most_sig_byte_decomp_7, Fp 0) in
-    let u₃ = assert_eq(and_most_sig_byte_decomp_0_to_2, most_sig_byte_decomp_0 * most_sig_byte_decomp_1) in
-    let u₄ = assert_eq(and_most_sig_byte_decomp_0_to_3, and_most_sig_byte_decomp_0_to_2 * most_sig_byte_decomp_2) in
-    let u₅ = assert_eq(and_most_sig_byte_decomp_0_to_4, and_most_sig_byte_decomp_0_to_3 * most_sig_byte_decomp_3) in
-    let u₆ = assert_eq(and_most_sig_byte_decomp_0_to_5, and_most_sig_byte_decomp_0_to_4 * most_sig_byte_decomp_4) in
-    let u₇ = assert_eq(and_most_sig_byte_decomp_0_to_6, and_most_sig_byte_decomp_0_to_5 * most_sig_byte_decomp_5) in
-    let u₈ = assert_eq(and_most_sig_byte_decomp_0_to_7, and_most_sig_byte_decomp_0_to_6 * most_sig_byte_decomp_6) in
-    let u₉ = assert_eq(Fp 0, and_most_sig_byte_decomp_0_to_7 * value_0) in
-    let u₁₀ = assert_eq(Fp 0, and_most_sig_byte_decomp_0_to_7 * value_1) in
-    let u₁₁ = assert_eq(Fp 0, and_most_sig_byte_decomp_0_to_7 * value_2) in u₁₁ in
-  let u₁ = ((((((((((((((((((koalabear_word_range_checker_func (alpha_0)) (alpha_1)) (alpha_2)) (alpha_3))
+  let u₁ = ((((((((((((((((((
+            lam alpha_0 : field_lt_const 256 =>
+            lam alpha_1 : field_lt_const 256 =>
+            lam alpha_2 : field_lt_const 256 =>
+            lam alpha_3 : field_lt_const 256 =>
+            lam most_sig_byte_decomp_0 : {Unit| true} =>
+            lam most_sig_byte_decomp_1 : {Unit| true} =>
+            lam most_sig_byte_decomp_2 : {Unit| true} =>
+            lam most_sig_byte_decomp_3 : {Unit| true} =>
+            lam most_sig_byte_decomp_4 : {Unit| true} =>
+            lam most_sig_byte_decomp_5 : {Unit| true} =>
+            lam most_sig_byte_decomp_6 : {Unit| true} =>
+            lam most_sig_byte_decomp_7 : {Unit| true} =>
+            lam and_most_sig_byte_decomp_0_to_2 : {Unit| true} =>
+            lam and_most_sig_byte_decomp_0_to_3 : {Unit| true} =>
+            lam and_most_sig_byte_decomp_0_to_4 : {Unit| true} =>
+            lam and_most_sig_byte_decomp_0_to_5 : {Unit| true} =>
+            lam and_most_sig_byte_decomp_0_to_6 : {Unit| true} =>
+            lam and_most_sig_byte_decomp_0_to_7 : {Unit| true} =>
+            let b₁ = assert_eq(most_sig_byte_decomp_0 * (most_sig_byte_decomp_0 - Fp 1), Fp 0) in
+            let b₂ = assert_eq(most_sig_byte_decomp_1 * (most_sig_byte_decomp_1 - Fp 1), Fp 0) in
+            let b₃ = assert_eq(most_sig_byte_decomp_2 * (most_sig_byte_decomp_2 - Fp 1), Fp 0) in
+            let b₄ = assert_eq(most_sig_byte_decomp_3 * (most_sig_byte_decomp_3 - Fp 1), Fp 0) in
+            let b₅ = assert_eq(most_sig_byte_decomp_4 * (most_sig_byte_decomp_4 - Fp 1), Fp 0) in
+            let b₆ = assert_eq(most_sig_byte_decomp_5 * (most_sig_byte_decomp_5 - Fp 1), Fp 0) in
+            let b₇ = assert_eq(most_sig_byte_decomp_6 * (most_sig_byte_decomp_6 - Fp 1), Fp 0) in
+            let b₈ = assert_eq(most_sig_byte_decomp_7 * (most_sig_byte_decomp_7 - Fp 1), Fp 0) in
+            let u₁ = assert_eq((((((((most_sig_byte_decomp_0 + (most_sig_byte_decomp_1 * 2)) + (most_sig_byte_decomp_2 * 4)) +
+                              (most_sig_byte_decomp_3 * 8)) + (most_sig_byte_decomp_4 * 16)) + (most_sig_byte_decomp_5 * 32)) +
+                              (most_sig_byte_decomp_6 * 64)) + (most_sig_byte_decomp_7 * 128)), value_3) in
+            let u₂ = assert_eq(most_sig_byte_decomp_7, Fp 0) in
+            let u₃ = assert_eq(and_most_sig_byte_decomp_0_to_2, most_sig_byte_decomp_0 * most_sig_byte_decomp_1) in
+            let u₄ = assert_eq(and_most_sig_byte_decomp_0_to_3, and_most_sig_byte_decomp_0_to_2 * most_sig_byte_decomp_2) in
+            let u₅ = assert_eq(and_most_sig_byte_decomp_0_to_4, and_most_sig_byte_decomp_0_to_3 * most_sig_byte_decomp_3) in
+            let u₆ = assert_eq(and_most_sig_byte_decomp_0_to_5, and_most_sig_byte_decomp_0_to_4 * most_sig_byte_decomp_4) in
+            let u₇ = assert_eq(and_most_sig_byte_decomp_0_to_6, and_most_sig_byte_decomp_0_to_5 * most_sig_byte_decomp_5) in
+            let u₈ = assert_eq(and_most_sig_byte_decomp_0_to_7, and_most_sig_byte_decomp_0_to_6 * most_sig_byte_decomp_6) in
+            let u₉ = assert_eq(Fp 0, and_most_sig_byte_decomp_0_to_7 * value_0) in
+            let u₁₀ = assert_eq(Fp 0, and_most_sig_byte_decomp_0_to_7 * value_1) in
+            let u₁₁ = assert_eq(Fp 0, and_most_sig_byte_decomp_0_to_7 * value_2) in u₁₁ (alpha_0)) (alpha_1)) (alpha_2)) (alpha_3))
           (most_sig_byte_decomp_0)) (most_sig_byte_decomp_1)) (most_sig_byte_decomp_2)) (most_sig_byte_decomp_3))
           (most_sig_byte_decomp_4)) (most_sig_byte_decomp_5)) (most_sig_byte_decomp_6)) (most_sig_byte_decomp_7))
           (and_most_sig_byte_decomp_0_to_2)) (and_most_sig_byte_decomp_0_to_3)) (and_most_sig_byte_decomp_0_to_4))
           (and_most_sig_byte_decomp_0_to_5)) (and_most_sig_byte_decomp_0_to_6)) (and_most_sig_byte_decomp_0_to_7)) in
   u₁
 }
+-/
 
 #runwai_prove Assert1 := by {
   apply Ty.TypeJudgment.TE_LetIn
@@ -108,35 +123,6 @@ import Runwai.Tactic
   apply get_update_self;
   repeat decide
 }
-
-lemma eval_var_lt_of_update
-  (h₀: Eval.EvalProp σ T Δ v va)
-  (h₁: Eval.EvalProp σ T Δ (v.toN.binRel Ast.RelOp.lt (Ast.Expr.constN t)) (Ast.Value.vBool True)):
-  Eval.EvalProp (Env.updateVal σ x va) T Δ ((Ast.Expr.var x).toN.binRel Ast.RelOp.lt (Ast.Expr.constN t))
-  (Ast.Value.vBool True) := by {
-    cases h₁
-    rename_i ih₁ ih₂ r
-    cases ih₁
-    rename_i h
-    cases va with
-    | vF x => {
-      have := evalprop_deterministic h h₀
-      simp at this
-      rw[this] at r
-      cases ih₂
-      apply Eval.EvalProp.Rel
-      apply Eval.EvalProp.toN
-      apply Eval.EvalProp.Var
-      simp [Env.getVal, Env.updateVal]
-      rfl
-      apply Eval.EvalProp.ConstN
-      exact r
-    }
-    | _ => {
-      have := evalprop_deterministic h h₀
-      simp at this
-    }
-  }
 
 #runwai_prove Lookup := by {
   rename_i Δ h_delta height hh Γ Η
