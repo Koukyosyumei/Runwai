@@ -97,8 +97,8 @@ syntax "let" ident "=" runwai_expr "in" runwai_expr  : runwai_expr
 
 syntax pair := runwai_expr ":" runwai_expr
 
--- Lookup: “let x = #Name (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
-syntax "let" ident "=" "#" ident "(" sepBy1(pair, ",") ")" "in" runwai_expr  : runwai_expr
+-- Lookup: “let x = lookupName (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
+syntax "let" ident "=" "lookup" ident "(" sepBy1(pair, ",") ")" "in" runwai_expr  : runwai_expr
 
 syntax "(" runwai_expr ")" : runwai_expr
 
@@ -336,8 +336,8 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let b' ← elaborateExpr body
     pure (Ast.Expr.letIn x.getId.toString v' b')
 
-  -- Lookup: “let x = #Name (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
-  | `(runwai_expr| let $vname:ident = # $cname:ident ($args:pair,*) in $body) => do
+  -- Lookup: “let x = lookupName (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
+  | `(runwai_expr| let $vname:ident = lookup $cname:ident ($args:pair,*) in $body) => do
     let args' ← args.getElems.toList.mapM elaborateExprPair
     let b' ← elaborateExpr body
     pure (Ast.Expr.lookup vname.getId.toString cname.getId.toString args' b')

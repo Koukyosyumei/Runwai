@@ -15,7 +15,7 @@ import Runwai.Tactic
 }
 
 #runwai_register chip Lookup(trace, i, 2) -> {Unit| trace [i][0] == Fp 2} {
-  let u = #Assert1(trace [i][0] : trace [i][1]) in u
+  let u = lookup Assert1(trace [i][0] : trace [i][1]) in u
 }
 
 #runwai_register chip u8(trace, i, 1) -> {Unit | toN(trace [i][0]) < 256} {
@@ -29,10 +29,10 @@ import Runwai.Tactic
   let alpha_1 = trace [i][1] in
   let alpha_2 = trace [i][2] in
   let alpha_3 = trace [i][3] in
-  let l₀ = #u8(alpha_0 : trace [i][0]) in
-  let l₁ = #u8(alpha_1 : trace [i][0]) in
-  let l₂ = #u8(alpha_2 : trace [i][0]) in
-  let l₃ = #u8(alpha_3 : trace [i][0]) in
+  let l₀ = lookup u8(alpha_0 : trace [i][0]) in
+  let l₁ = lookup u8(alpha_1 : trace [i][0]) in
+  let l₂ = lookup u8(alpha_2 : trace [i][0]) in
+  let l₃ = lookup u8(alpha_3 : trace [i][0]) in
   let koalabear_word_range_checker_func =
     lam alpha_0 : field_lt_const 256 =>
     lam alpha_1 : field_lt_const 256 =>
