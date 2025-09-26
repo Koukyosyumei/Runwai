@@ -110,7 +110,7 @@ import Runwai.Tactic
 }
 
 #runwai_prove Lookup := by {
-  rename_i Δ h_delta i hi Γ Η
+  rename_i Δ h_delta height hh Γ Η
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   rw[← h_delta]
   simp
