@@ -18,6 +18,8 @@ import Runwai.Tactic
   let u = #Assert1(trace [i][0] : trace [i][1]) in u
 }
 
+--#runwai_register chip koalabearWordRangeCheckerChip(trace, i, 18) -> {Unit }
+
 #runwai_prove Assert1 := by {
   apply Ty.TypeJudgment.TE_LetIn
   · apply get_update_self

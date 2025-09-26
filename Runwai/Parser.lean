@@ -75,6 +75,12 @@ syntax "if" runwai_expr "then" "{" runwai_expr "}" "else" "{" runwai_expr "}" : 
 -- Assert: “assert e₁ = e₂”
 syntax "assert_eq" "(" runwai_expr "," runwai_expr ")"         : runwai_expr
 
+-- "toN"
+syntax "toN" "(" runwai_expr ")"                     : runwai_expr
+
+-- "toF"
+syntax "toF" "(" runwai_expr ")"                     : runwai_expr
+
 -- Array indexing: “a[e]”
 syntax runwai_expr "[" runwai_expr "]"               : runwai_expr
 
@@ -241,6 +247,22 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let e₂' ← elaborateExpr e₂
     pure (Ast.Expr.fieldExpr e₁' Ast.FieldOp.div e₂')
 
+  -- UInt arithmetic
+  | `(runwai_expr| $e₁ <+> $e₂) => do
+    let e₁' ← elaborateExpr e₁
+    let e₂' ← elaborateExpr e₂
+    pure (Ast.Expr.uintExpr e₁' Ast.IntOp.add e₂')
+
+  | `(runwai_expr| $e₁ <-> $e₂) => do
+    let e₁' ← elaborateExpr e₁
+    let e₂' ← elaborateExpr e₂
+    pure (Ast.Expr.uintExpr e₁' Ast.IntOp.sub e₂')
+
+  | `(runwai_expr| $e₁ <*> $e₂) => do
+    let e₁' ← elaborateExpr e₁
+    let e₂' ← elaborateExpr e₂
+    pure (Ast.Expr.uintExpr e₁' Ast.IntOp.mul e₂')
+
   -- Relational: “e₁ == e₂”, “e₁ < e₂”, “e₁ <= e₂”
   | `(runwai_expr| $e₁ == $e₂) => do
     let e₁' ← elaborateExpr e₁
@@ -262,6 +284,15 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let a' ← elaborateExpr a
     let i' ← elaborateExpr i
     pure (Ast.Expr.arrIdx a' i')
+
+  -- Conversion
+  | `(runwai_expr| toN ($e)) => do
+    let e' ← elaborateExpr e
+    pure (Ast.Expr.toN e')
+
+  | `(runwai_expr| toF ($e)) => do
+    let e' ← elaborateExpr e
+    pure (Ast.Expr.toF e')
 
   -- Lambda:  “lam x : T => body”
   | `(runwai_expr| lam $x:ident : $T:runwai_ty => $body) => do
