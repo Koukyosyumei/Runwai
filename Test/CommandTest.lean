@@ -47,7 +47,6 @@ import Runwai.Tactic
 }
 
 #runwai_prove Δ₂ Lookup := by {
-  rename_i height hh Γ Η
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   simp
   apply Ty.TypeJudgment.TE_SUB

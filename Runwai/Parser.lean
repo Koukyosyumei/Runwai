@@ -152,6 +152,16 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
       let φ' ← elaborateExpr φ
       pure (Ast.Ty.refin T' (Ast.Predicate.ind φ'))
 
+  | `(runwai_ty| { $x:ident : $T:runwai_ty | $φ:runwai_expr } ) => do
+      let T' ← match T with
+      | `(runwai_ty| UInt) => pure Ast.Ty.uint
+      | `(runwai_ty| Field) => pure Ast.Ty.field
+      | `(runwai_ty| Bool) => pure Ast.Ty.bool
+      | `(runwai_ty| Unit) => pure Ast.Ty.unit
+      | _ => throwError "unsupported type syntax: {stx}"
+      let φ' ← elaborateExpr φ
+      pure (Ast.Ty.refin T' (Ast.Predicate.dep x.getId.toString φ'))
+
   -- Function type: “(x : T1) → T2”
   | `(runwai_ty| ( $x:ident : $Tdom:runwai_ty ) → $Tcod:runwai_ty ) => do
       let dom ← elaborateType Tdom
