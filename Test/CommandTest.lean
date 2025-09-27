@@ -15,10 +15,10 @@ import Runwai.Tactic
 }
 
 #runwai_register chip Lookup(trace, i, 2) -> {Unit| trace [i][0] == Fp 2} {
-  let u = #Assert1(trace [i][0] : trace [i][1]) in u
+  let u = lookup Assert1(trace [i][0] : trace [i][1]) in u
 }
 
-#runwai_prove Assert1 := by {
+#runwai_prove Δ₀ Assert1 := by {
   apply Ty.TypeJudgment.TE_LetIn
   · apply get_update_self
   · apply Ty.TypeJudgment.TE_Assert
@@ -37,7 +37,7 @@ import Runwai.Tactic
     apply get_update_self
 }
 
-#runwai_prove IsZero := by {
+#runwai_prove Δ₁ IsZero := by {
   auto_trace_index
   apply isZero_typing_soundness
   repeat apply get_update_ne; simp
@@ -46,10 +46,8 @@ import Runwai.Tactic
   repeat decide
 }
 
-#runwai_prove Lookup := by {
-  rename_i Δ h_delta i hi Γ Η
+#runwai_prove Δ₂ Lookup := by {
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
-  rw[← h_delta]
   simp
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
@@ -66,16 +64,10 @@ import Runwai.Tactic
   unfold Env.getTy Env.updateTy PropSemantics.varToProp Env.getTy at h₃
   simp at h₃
   unfold Ty.lookup_pred at h₃
-  have hat : (Env.getChip Δ "Assert1").ident_t = "trace" := by {
-    rw[h_delta]
-    unfold Env.getChip; simp }
-  have hai : (Env.getChip Δ "Assert1").ident_i = "i" := by {
-    rw[h_delta]
-    unfold Env.getChip; simp }
+  have hat : (Env.getChip Δ₂ "Assert1").ident_t = "trace" := by unfold Δ₂ Env.getChip; simp
+  have hai : (Env.getChip Δ₂ "Assert1").ident_i = "i" := by unfold Δ₂ Env.getChip; simp
   rw[hat, hai] at h₃
-  simp [Env.freshName] at h₃
-  simp [Ast.renameVarinPred] at h₃
-  simp [Ast.renameVar] at h₃
+  simp [Env.freshName, Ast.renameVarinPred, Ast.renameVar] at h₃
   obtain ⟨h₄,h₅⟩ := h₃
   unfold PropSemantics.predToProp PropSemantics.exprToProp at ⊢
   apply evalProp_eq_symm at h₅

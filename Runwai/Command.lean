@@ -10,7 +10,7 @@ open Lean Meta
 
 syntax (name := runwai_register) "#runwai_register" runwai_chip : command
 syntax (name := runwai_check) "#runwai_check" ident : command
-syntax (name := runwai_prove) "#runwai_prove" ident ":=" "by" tacticSeq: command
+syntax (name := runwai_prove) "#runwai_prove" ident ident ":=" "by" tacticSeq: command
 
 builtin_initialize tempChipRef : IO.Ref (Option Ast.Chip) ← IO.mkRef none
 
@@ -35,7 +35,7 @@ unsafe def elabLodaChipCheck : Elab.Command.CommandElab
 
 @[command_elab runwai_prove]
 unsafe def elabLodaProve : Elab.Command.CommandElab
-  | `(command| #runwai_prove $cName:ident := by $proof:tacticSeq) => do
+  | `(command| #runwai_prove $eName:ident $cName:ident := by $proof:tacticSeq) => do
     -- Get the Chip from environment
     let Δ ← Elab.Command.liftCoreM Env.getChipEnv
     let circ := Env.getChip Δ cName.getId.toString
@@ -50,13 +50,28 @@ unsafe def elabLodaProve : Elab.Command.CommandElab
     let theoremName := cName.getId.toString ++ "_correct"
     let theoremIdent := mkIdent (Name.mkSimple theoremName)
 
+    let cIdent   := mkIdent (Name.mkSimple cName.getId.toString)
+    let envIdent := mkIdent (Name.mkSimple eName.getId.toString)
+
+    -- Generate the utility syntax
+    let cStx ← `(command|
+      @[simp]
+      def $cIdent : Ast.Chip := $circTerm
+    )
+    Elab.Command.elabCommand cStx
+    let envStx ← `(command|
+      def $envIdent : Env.ChipEnv := $deltaTerm
+    )
+    Elab.Command.elabCommand envStx
+
     -- Generate the theorem syntax
     let theoremStx ← `(command|
-      theorem $theoremIdent (Δ: Env.ChipEnv) (h_delta: Δ = $deltaTerm) : (Ty.chipCorrect $deltaTerm $circTerm 1) := by
-        (unfold Ty.chipCorrect; intro i hi Γ Η;);
+      theorem $theoremIdent : (Ty.chipCorrect $envIdent $cIdent 1) := by
+        (unfold Ty.chipCorrect; intro height hh Γ Η;);
         ($proof);
     )
     logInfo m!"Proof state opened for '{theoremName}' - continue with tactics!"
+
     -- Elaborate the generated theorem command
     Elab.Command.elabCommand theoremStx
   | _ => Elab.throwUnsupportedSyntax
