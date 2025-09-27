@@ -20,15 +20,17 @@ declare_syntax_cat runwai_ty
 declare_syntax_cat runwai_expr
 
 -- Basic types
-syntax "Field"                                 : runwai_ty
-syntax "Bool"                                  : runwai_ty
-syntax "Unit"                                  : runwai_ty
+syntax "Field"                                     : runwai_ty
+syntax "UInt"                                      : runwai_ty
+syntax "Bool"                                      : runwai_ty
+syntax "Unit"                                      : runwai_ty
 
 -- Array types: “[T: n]”
-syntax "[" runwai_ty ":" num "]"                         : runwai_ty
+syntax "[" runwai_ty ":" num "]"                   : runwai_ty
 
 -- Refinement types: “{ x : T | φ }”
-syntax "{" runwai_ty "|" runwai_expr "}"      : runwai_ty
+syntax "{" runwai_ty "|" runwai_expr "}"           : runwai_ty
+syntax "{" ident ":" runwai_ty "|" runwai_expr "}" : runwai_ty
 
 -- Function‐type arrow: “(x : T1) → T2”
 syntax "(" ident ":" runwai_ty ")" "→" runwai_ty   : runwai_ty
@@ -63,7 +65,6 @@ syntax runwai_expr "<->" runwai_expr                 : runwai_expr
 syntax runwai_expr "<*>" runwai_expr                 : runwai_expr
 syntax runwai_expr "</>" runwai_expr                 : runwai_expr
 
-
 -- Relational:  “e₁ == e₂”  “e₁ < e₂”  “e₁ <= e₂”
 syntax runwai_expr "==" runwai_expr                  : runwai_expr
 syntax runwai_expr "<"  runwai_expr                  : runwai_expr
@@ -73,7 +74,13 @@ syntax runwai_expr "<=" runwai_expr                  : runwai_expr
 syntax "if" runwai_expr "then" "{" runwai_expr "}" "else" "{" runwai_expr "}" : runwai_expr
 
 -- Assert: “assert e₁ = e₂”
-syntax "assert_eq" "(" runwai_expr "," runwai_expr ")"         : runwai_expr
+syntax "assert_eq" "(" runwai_expr "," runwai_expr ")" : runwai_expr
+
+-- "toN"
+syntax "toN" "(" runwai_expr ")"                     : runwai_expr
+
+-- "toF"
+syntax "toF" "(" runwai_expr ")"                     : runwai_expr
 
 -- Array indexing: “a[e]”
 syntax runwai_expr "[" runwai_expr "]"               : runwai_expr
@@ -90,7 +97,7 @@ syntax "let" ident "=" runwai_expr "in" runwai_expr  : runwai_expr
 syntax pair := runwai_expr ":" runwai_expr
 
 -- Lookup: “let x = #Name (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
-syntax "let" ident "=" "#" ident "(" sepBy1(pair, ",") ")" "in" runwai_expr  : runwai_expr
+syntax "let" ident "=" "lookup" ident "(" sepBy1(pair, ",") ")" "in" runwai_expr  : runwai_expr
 
 syntax "(" runwai_expr ")" : runwai_expr
 
@@ -125,7 +132,7 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
 
   -- Field and Bool
   | `(runwai_ty| Field)      => pure (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constBool True)))
-  | `(runwai_ty| Bool)       => pure Ast.Ty.bool
+  | `(runwai_ty| Bool)       => pure (Ast.Ty.refin Ast.Ty.bool (Ast.Predicate.ind (Ast.Expr.constBool True)))
   | `(runwai_ty| Unit)       => pure Ast.Ty.unit
 
   -- Array type: “[T]”
@@ -136,8 +143,8 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
   -- Refinement: “{ x : T | φ }”
   | `(runwai_ty| { $T:runwai_ty | $φ:runwai_expr } ) => do
       let T' ← match T with
-      --| `(runwai_ty| Int) => pure Ast.Ty.uint
       | `(runwai_ty| Field) => pure Ast.Ty.field
+      | `(runwai_ty| UInt) => pure Ast.Ty.uint
       | `(runwai_ty| Bool) => pure Ast.Ty.bool
       | `(runwai_ty| Unit) => pure Ast.Ty.unit
       | _ => throwError "unsupported type syntax: {stx}"
@@ -241,6 +248,22 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let e₂' ← elaborateExpr e₂
     pure (Ast.Expr.fieldExpr e₁' Ast.FieldOp.div e₂')
 
+  -- UInt arithmetic
+  | `(runwai_expr| $e₁ <+> $e₂) => do
+    let e₁' ← elaborateExpr e₁
+    let e₂' ← elaborateExpr e₂
+    pure (Ast.Expr.uintExpr e₁' Ast.IntOp.add e₂')
+
+  | `(runwai_expr| $e₁ <-> $e₂) => do
+    let e₁' ← elaborateExpr e₁
+    let e₂' ← elaborateExpr e₂
+    pure (Ast.Expr.uintExpr e₁' Ast.IntOp.sub e₂')
+
+  | `(runwai_expr| $e₁ <*> $e₂) => do
+    let e₁' ← elaborateExpr e₁
+    let e₂' ← elaborateExpr e₂
+    pure (Ast.Expr.uintExpr e₁' Ast.IntOp.mul e₂')
+
   -- Relational: “e₁ == e₂”, “e₁ < e₂”, “e₁ <= e₂”
   | `(runwai_expr| $e₁ == $e₂) => do
     let e₁' ← elaborateExpr e₁
@@ -256,6 +279,15 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let e₁' ← elaborateExpr e₁
     let e₂' ← elaborateExpr e₂
     pure (Ast.Expr.binRel e₁' Ast.RelOp.le e₂')
+
+  -- Conversion
+  | `(runwai_expr| toN ($e)) => do
+    let e' ← elaborateExpr e
+    pure (Ast.Expr.toN e')
+
+  | `(runwai_expr| toF ($e)) => do
+    let e' ← elaborateExpr e
+    pure (Ast.Expr.toF e')
 
   -- Array indexing: “a[e]”
   | `(runwai_expr| $a [ $i ] ) => do
@@ -281,8 +313,8 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let b' ← elaborateExpr body
     pure (Ast.Expr.letIn x.getId.toString v' b')
 
-  -- Lookup: “let x = #Name (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
-  | `(runwai_expr| let $vname:ident = # $cname:ident ($args:pair,*) in $body) => do
+  -- Lookup: “let x = lookup Name (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
+  | `(runwai_expr| let $vname:ident = lookup $cname:ident ($args:pair,*) in $body) => do
     let args' ← args.getElems.toList.mapM elaborateExprPair
     let b' ← elaborateExpr body
     pure (Ast.Expr.lookup vname.getId.toString cname.getId.toString args' b')
