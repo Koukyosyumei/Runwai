@@ -5,7 +5,7 @@ Plonky3 is a Rust toolkit for building **succinct proof systems**. It gives you 
 
 ---
 
-## Design goals (in plain English)
+## Design goals
 1. **Modularity over “one-true” system**  
    Plonky3 is intentionally *less opinionated* than earlier generations: you can swap fields (BabyBear, KoalaBear, Goldilocks, Mersenne31), hashes (Poseidon2, Keccak, BLAKE3, Rescue), and commitment schemes. This lets you tune for speed, memory, or proof size.
 
@@ -27,7 +27,7 @@ Plonky3 is a Rust toolkit for building **succinct proof systems**. It gives you 
 
 Think of Plonky3 as layers you can mix & match:
 
-### 1) Foundations (math & utils)
+### 1) Foundations
 - **Fields:** BabyBear/KoalaBear (31-bit families with ~128-bit extensions), Goldilocks, Mersenne31; plus extension fields.
 - **Math/FFT/Interpolation:** barycentric interpolation; radix-2 DIF/DIT FFTs; Bowers and four-step FFTs; a “circle-group” FFT for the Mersenne prime.
 - **Matrix & utilities:** low-level performance helpers (including SIMD-aware code paths).
@@ -56,7 +56,7 @@ Think of Plonky3 as layers you can mix & match:
 
 ---
 
-## The proving pipeline (STARK flavor)
+## The proving pipeline
 
 1. **Arithmetize your program as an AIR**  
    Define trace columns and transition/boundary constraints (e.g., a Fibonacci step or a VM instruction’s semantics).
@@ -75,7 +75,7 @@ Think of Plonky3 as layers you can mix & match:
 
 ---
 
-## Why teams pick Plonky3
+## Usage
 
 - **Build zkVMs faster:** batteries-included crates for AIRs, FRI PCS, Merkle, hashers, and a recursion stack.  
 - **Tunable:** choose field/hash/PCS to meet your speed or proof-size target.  
@@ -84,29 +84,9 @@ Think of Plonky3 as layers you can mix & match:
 
 ---
 
-## Plonky3 vs. Plonky2 (quick contrast)
+## Plonky3 vs. Plonky2 
 - **Modularity:** Plonky3 is *less opinionated*—fewer fixed properties, more room to swap components.  
 - **Recursion design:** Plonky3 ships a focused, fixed recursive verifier stack for efficient aggregation.  
 - **CPU tuning:** more explicit SIMD/CPU feature pathways and updated primitives/fields.  
 - **Scope:** designed as a general **PIOP toolkit** (STARK-first but PLONK-capable) rather than a single pipeline.
 
----
-
-## Typical stacks you’ll see in the wild
-- **zkVM/zkEVM with STARKs:** BabyBear/KoalaBear field → Poseidon2/Keccak for Merkle → FRI-PCS → univariate STARK → recursive aggregation → on-chain verifier.  
-- **Hybrid designs:** PLONK-style constraints for certain gadgets + FRI commitments (SNARK-like circuit flavor with STARK-like PCS).  
-- **Specialized domains:** Mersenne31 with circle-group FFTs for very fast transforms on specific hardware.
-
----
-
-## What to watch out for (practical notes)
-- **Parameter selection matters:** field choice, hash, FFT backend, and FRI folding schedule trade off prover time, memory, and proof size.  
-- **SIMD & build flags:** enabling `-C target-cpu=native` and LTO can materially change performance; jemalloc config can help repeated proofs.  
-- **Evolving APIs:** crates are modular and still evolving; pin versions and follow the changelog when upgrading.
-
----
-
-## Learn more / get hands-on
-- Browse the `examples/` (e.g., Fibonacci AIR) to see the full STARK flow end-to-end.  
-- Explore the recursion book to understand the fixed recursive verifier and how the “policy” gating works.  
-- Compare PCS options (FRI vs. alternatives/tensor adapters) if you need different performance envelopes.  
