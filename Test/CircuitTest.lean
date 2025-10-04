@@ -101,20 +101,6 @@ def koalabearWordRangeCheckerChip : Ast.Chip := {
           (.letIn "alpha_1" (Ast.trace_i_j "trace" "i" 1)
           (.letIn "alpha_2" (Ast.trace_i_j "trace" "i" 2)
           (.letIn "alpha_3" (Ast.trace_i_j "trace" "i" 3)
-          (.letIn "most_sig_byte_decomp_0" (Ast.trace_i_j "trace" "i" 4)
-          (.letIn "most_sig_byte_decomp_1" (Ast.trace_i_j "trace" "i" 5)
-          (.letIn "most_sig_byte_decomp_2" (Ast.trace_i_j "trace" "i" 6)
-          (.letIn "most_sig_byte_decomp_3" (Ast.trace_i_j "trace" "i" 7)
-          (.letIn "most_sig_byte_decomp_4" (Ast.trace_i_j "trace" "i" 8)
-          (.letIn "most_sig_byte_decomp_5" (Ast.trace_i_j "trace" "i" 9)
-          (.letIn "most_sig_byte_decomp_6" (Ast.trace_i_j "trace" "i" 10)
-          (.letIn "most_sig_byte_decomp_7" (Ast.trace_i_j "trace" "i" 11)
-          (.letIn "and_most_sig_byte_decomp_0_to_2" (Ast.trace_i_j "trace" "i" 12)
-          (.letIn "and_most_sig_byte_decomp_0_to_3" (Ast.trace_i_j "trace" "i" 13)
-          (.letIn "and_most_sig_byte_decomp_0_to_4" (Ast.trace_i_j "trace" "i" 14)
-          (.letIn "and_most_sig_byte_decomp_0_to_5" (Ast.trace_i_j "trace" "i" 15)
-          (.letIn "and_most_sig_byte_decomp_0_to_6" (Ast.trace_i_j "trace" "i" 16)
-          (.letIn "and_most_sig_byte_decomp_0_to_7" (Ast.trace_i_j "trace" "i" 17)
           (.lookup "l₀" "u8" [(.var "alpha_0", (Ast.trace_i_j "trace" "i" 0))]
           (.lookup "l₁" "u8" [(.var "alpha_1", (Ast.trace_i_j "trace" "i" 0))]
           (.lookup "l₂" "u8" [(.var "alpha_2", (Ast.trace_i_j "trace" "i" 0))]
@@ -123,14 +109,14 @@ def koalabearWordRangeCheckerChip : Ast.Chip := {
             (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app (.app
               koalabear_word_range_checker_func
                 (.var "alpha_0")) (.var "alpha_1")) (.var "alpha_2")) (.var "alpha_3"))
-                (.var "most_sig_byte_decomp_0")) (.var "most_sig_byte_decomp_1"))
-                (.var "most_sig_byte_decomp_2")) (.var "most_sig_byte_decomp_3"))
-                (.var "most_sig_byte_decomp_4")) (.var "most_sig_byte_decomp_5"))
-                (.var "most_sig_byte_decomp_6")) (.var "most_sig_byte_decomp_7"))
-                (.var "and_most_sig_byte_decomp_0_to_2")) (.var "and_most_sig_byte_decomp_0_to_3"))
-                (.var "and_most_sig_byte_decomp_0_to_4")) (.var "and_most_sig_byte_decomp_0_to_5"))
-                (.var "and_most_sig_byte_decomp_0_to_6")) (.var "and_most_sig_byte_decomp_0_to_7"))
-            (.var "u₁"))))))))))))))))))))))))
+                (Ast.trace_i_j "trace" "i" 4)) (Ast.trace_i_j "trace" "i" 5))
+                (Ast.trace_i_j "trace" "i" 6)) (Ast.trace_i_j "trace" "i" 7))
+                (Ast.trace_i_j "trace" "i" 8)) (Ast.trace_i_j "trace" "i" 9))
+                (Ast.trace_i_j "trace" "i" 10)) (Ast.trace_i_j "trace" "i" 11))
+                (Ast.trace_i_j "trace" "i" 12)) (Ast.trace_i_j "trace" "i" 13))
+                (Ast.trace_i_j "trace" "i" 14)) (Ast.trace_i_j "trace" "i" 15))
+                (Ast.trace_i_j "trace" "i" 16)) (Ast.trace_i_j "trace" "i" 17))
+            (.var "u₁"))))))))))
 }
 
 def Δ : Env.ChipEnv := [("assert", assertChip), ("u8", u8chip)]
@@ -773,34 +759,20 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
   exact u8_freshName_ne_i
   decide
   rfl
-  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply Ty.TypeJudgment.TE_VarEnv
-  apply get_update_ne
-  simp
-  rfl
-  apply Ty.TypeJudgment.TE_VarEnv
-  simp [Ast.renameVarinPred, Ast.renameVar]
-  apply get_update_ne
-  simp
-  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply And.intro
-  rfl
-  apply And.intro
-  repeat rfl
   repeat
+    simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
+    apply Ty.TypeJudgment.TE_ArrayIndex
+    apply Ty.TypeJudgment.TE_ArrayIndex
     apply Ty.TypeJudgment.TE_VarEnv
     apply get_update_ne
-    simp
-    simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-    apply And.intro
-    rfl
-    apply And.intro
-    rfl
+    try (simp)
+    apply Ty.TypeJudgment.TE_VarEnv
+    try (apply get_update_self)
+    try (apply get_update_ne)
+    try (simp)
+    apply constZ_refine_lt
+    try (simp)
     rfl
   apply Ty.TypeJudgment.TE_VarEnv
-  apply get_update_ne
-  simp
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  rfl
-  apply Ty.TypeJudgment.TE_VarEnv
   apply get_update_self
