@@ -55,6 +55,7 @@ mutual
   inductive Expr where
     | constF      : (x : F) → Expr                                       -- field constant
     | constN      : (x : ℕ) → Expr                                       -- integer constant
+    | constInt    : (x : ℤ) → Expr                                       -- signed integer constant
     | constBool   : (b: Bool) → Expr                                     -- boolean constant
     | arr         : (elems: List Expr) → Expr                            -- [e₁, ..., eₙ]
     | var         : (name: String) → Expr                                -- variable x
@@ -62,6 +63,7 @@ mutual
     | boolExpr    : (lhs: Expr) → (op: BoolOp) → (rhs: Expr) → Expr
     | fieldExpr   : (lhs: Expr) → (op: FieldOp) → (rhs: Expr) → Expr
     | uintExpr    : (lhs: Expr) → (op: IntOp) → (rhs: Expr) → Expr
+    | sintExpr    : (lhs: Expr) → (op: IntOp) → (rhs: Expr) → Expr       -- signed int ops
     | binRel      : (lhs: Expr) → (op: RelOp) → (rhs: Expr) → Expr       -- e₁ ⊘ e₂
     | arrIdx      : (arr: Expr) → (idx: Expr) → Expr                     -- e₁[e₂]
     | len         : (arr: Expr) → Expr
@@ -73,6 +75,8 @@ mutual
                       (args: List (Expr × Expr)) → (body: Expr) → Expr   -- let x = lookup(c, (f₁:t₁, ⋯ fκ:tκ)) in e
     | toN         : (body: Expr) → Expr
     | toF         : (body: Expr) → Expr
+    | toSInt      : (body: Expr) → Expr                                  -- convert to signed int
+    | toUInt      : (body: Expr) → Expr                                  -- convert to unsigned int
     deriving Lean.ToExpr
 
   inductive Predicate where
@@ -87,6 +91,7 @@ mutual
   inductive Value where
     | vF       : (x: F) → Value
     | vN       : (x: ℕ) -> Value
+    | vInt     : (x: ℤ) -> Value                                         -- signed int value
     | vUnit    : Value
     | vBool    : (b: Bool) → Value
     | vArr     : (elems: List Value) → Value
@@ -98,6 +103,7 @@ mutual
     | unit     : Ty
     | field    : Ty                                               -- F p
     | uint     : Ty
+    | sint     : Ty                                               -- signed int
     | bool     : Ty                                               -- Bool
     | arr      : (ty: Ty) → ℕ → Ty                              -- [T; n]
     | refin    : (ty: Ty) → (pred: Predicate) → Ty                -- {ν : T | ϕ}
@@ -110,6 +116,7 @@ def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr
     match e with
     | Expr.constF x      => Expr.constF x
     | Expr.constN x      => Expr.constN x
+    | Expr.constInt x    => Expr.constInt x
     | Expr.constBool b   => Expr.constBool b
     | Expr.arr elems     => Expr.arr (elems.map (fun e => renameVar e oldName newExpr (cnt - 1)))
     | Expr.var n         => if n = oldName then newExpr else e
@@ -117,6 +124,7 @@ def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr
     | Expr.boolExpr l o r => Expr.boolExpr (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
     | Expr.fieldExpr l o r => Expr.fieldExpr (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
     | Expr.uintExpr l o r => Expr.uintExpr (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
+    | Expr.sintExpr l o r => Expr.sintExpr (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
     | Expr.binRel l o r  => Expr.binRel (renameVar l oldName newExpr (cnt - 1)) o (renameVar r oldName newExpr (cnt - 1))
     | Expr.arrIdx a i    => Expr.arrIdx (renameVar a oldName newExpr (cnt - 1)) (renameVar i oldName newExpr (cnt - 1))
     | Expr.len arr       => Expr.len (renameVar arr oldName newExpr (cnt - 1))
@@ -136,6 +144,8 @@ def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr
         Expr.lookup n c (args.map (fun (a, b) => (renameVar a oldName newExpr (cnt - 1), renameVar b oldName newExpr (cnt - 1)))) (renameVar e oldName newExpr (cnt - 1))
     | Expr.toN body => Expr.toN ((renameVar body oldName newExpr (cnt - 1)))
     | Expr.toF body => Expr.toF ((renameVar body oldName newExpr (cnt - 1)))
+    | Expr.toSInt body => Expr.toSInt ((renameVar body oldName newExpr (cnt - 1)))
+    | Expr.toUInt body => Expr.toUInt ((renameVar body oldName newExpr (cnt - 1)))
   else e
 
 def renameVarinPred (p: Predicate) (oldName : String) (newExpr: Ast.Expr) : Predicate :=
@@ -157,6 +167,7 @@ def renameTy (τ: Ast.Ty) (oldName: String) (newExpr: Ast.Expr) : Ast.Ty :=
 partial def valueEq : Value → Value → Bool
   | Value.vF x, Value.vF y                     => x = y
   | Value.vN x, Value.vN y                     => x = y
+  | Value.vInt x, Value.vInt y                 => x = y
   | Value.vBool b₁, Value.vBool b₂             => b₁ = b₂
   | Value.vArr xs, Value.vArr ys   =>
       if xs.length ≠ ys.length then false
@@ -211,12 +222,14 @@ mutual
   partial def exprToString : Expr → String
     | Expr.constF x          => s!"F {x.val}"
     | Expr.constN x          => toString x
+    | Expr.constInt x        => toString x
     | Expr.constBool b       => toString b
     | Expr.var name          => name
     | Expr.assertE l r       => s!"assert_eq({exprToString l}, {exprToString r})"
     | Expr.boolExpr l op r   => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.fieldExpr l op r  => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.uintExpr l op r  => s!"({exprToString l} {repr op} {exprToString r})"
+    | Expr.sintExpr l op r  => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.binRel l op r     => s!"({exprToString l} {repr op} {exprToString r})"
     | Expr.arr elems         => "[" ++ String.intercalate ", " (elems.map exprToString) ++ "]"
     | Expr.len arr           => s!"len({exprToString arr})"
@@ -228,6 +241,8 @@ mutual
     | Expr.lookup n c args e  => s!"let {n} = #{c}(" ++ String.intercalate ", " (args.map fun xy => (exprToString xy.fst) ++ ": " ++ exprToString xy.snd) ++ s!") in {exprToString e}"
     | Expr.toN b             => s!"toN({exprToString b})"
     | Expr.toF b             => s!"toF({exprToString b})"
+    | Expr.toSInt b          => s!"toSInt({exprToString b})"
+    | Expr.toUInt b          => s!"toUInt({exprToString b})"
 
 
   partial def predicateToString : Predicate → String
@@ -240,7 +255,8 @@ mutual
   partial def tyToString : Ty → String
     | Ty.unit           => "unit"
     | Ty.field          => "F"
-    | Ty.uint            => "int"
+    | Ty.uint           => "int"
+    | Ty.sint           => "sint"
     | Ty.bool           => "Bool"
     | Ty.arr t n        => s!"[{tyToString t}; {n}]"
     | Ty.refin t p      => "{" ++ s!"{tyToString t} | {predicateToString p}" ++ "}"
@@ -262,6 +278,7 @@ instance : Repr Ty where
 def valueToString : Value → String
   | Value.vF x        => s!"F {x.val}"
   | Value.vN x        => s!"{x}"
+  | Value.vInt x      => s!"int {x}"
   | Value.vUnit       => "*"
   | Value.vBool b     => toString b
   | Value.vArr vs     =>
