@@ -202,15 +202,15 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     (h₂: @TypeJudgment Δ (Env.updateTy Γ x τ₁) Η e₂ τ₂):
     TypeJudgment Γ Η (Ast.Expr.letIn x e₁ e₂) τ₂
 
-  -- TE-TOSINT
-  | TE_ToSInt {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {φ: Ast.Predicate}:
+  -- TE-UtoS
+  | TE_UtoS {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {φ: Ast.Predicate}:
     TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.uint) φ) →
-    TypeJudgment Γ Η (Ast.Expr.toSInt e) (Ast.Ty.refin (Ast.Ty.sint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.toSInt e))))
+    TypeJudgment Γ Η (Ast.Expr.UtoS e) (Ast.Ty.refin (Ast.Ty.sint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.UtoS e))))
 
-  -- TE-TOUINT
-  | TE_ToUInt {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {φ: Ast.Predicate}:
+  -- TE-StoU
+  | TE_StoU {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {φ: Ast.Predicate}:
     TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.sint) φ) →
-    TypeJudgment Γ Η (Ast.Expr.toUInt e) (Ast.Ty.refin (Ast.Ty.uint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.toUInt e))))
+    TypeJudgment Γ Η (Ast.Expr.StoU e) (Ast.Ty.refin (Ast.Ty.uint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.StoU e))))
 
   -- TE-LOOKUP
   | TE_LookUp {Γ: Env.TyEnv} {Η: Env.UsedNames} {vname cname : String} {args: List (Ast.Expr × Ast.Expr)}

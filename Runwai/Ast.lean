@@ -75,8 +75,8 @@ mutual
                       (args: List (Expr × Expr)) → (body: Expr) → Expr   -- let x = lookup(c, (f₁:t₁, ⋯ fκ:tκ)) in e
     | toN         : (body: Expr) → Expr
     | toF         : (body: Expr) → Expr
-    | toSInt      : (body: Expr) → Expr                                  -- convert to signed int
-    | toUInt      : (body: Expr) → Expr                                  -- convert to unsigned int
+    | UtoS        : (body: Expr) → Expr                                  -- convert unsigned to signed int
+    | StoU        : (body: Expr) → Expr                                  -- convert signed to unsigned int
     deriving Lean.ToExpr
 
   inductive Predicate where
@@ -144,8 +144,8 @@ def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr
         Expr.lookup n c (args.map (fun (a, b) => (renameVar a oldName newExpr (cnt - 1), renameVar b oldName newExpr (cnt - 1)))) (renameVar e oldName newExpr (cnt - 1))
     | Expr.toN body => Expr.toN ((renameVar body oldName newExpr (cnt - 1)))
     | Expr.toF body => Expr.toF ((renameVar body oldName newExpr (cnt - 1)))
-    | Expr.toSInt body => Expr.toSInt ((renameVar body oldName newExpr (cnt - 1)))
-    | Expr.toUInt body => Expr.toUInt ((renameVar body oldName newExpr (cnt - 1)))
+    | Expr.UtoS body => Expr.UtoS ((renameVar body oldName newExpr (cnt - 1)))
+    | Expr.StoU body => Expr.StoU ((renameVar body oldName newExpr (cnt - 1)))
   else e
 
 def renameVarinPred (p: Predicate) (oldName : String) (newExpr: Ast.Expr) : Predicate :=
@@ -241,8 +241,8 @@ mutual
     | Expr.lookup n c args e  => s!"let {n} = #{c}(" ++ String.intercalate ", " (args.map fun xy => (exprToString xy.fst) ++ ": " ++ exprToString xy.snd) ++ s!") in {exprToString e}"
     | Expr.toN b             => s!"toN({exprToString b})"
     | Expr.toF b             => s!"toF({exprToString b})"
-    | Expr.toSInt b          => s!"toSInt({exprToString b})"
-    | Expr.toUInt b          => s!"toUInt({exprToString b})"
+    | Expr.UtoS b            => s!"UtoS({exprToString b})"
+    | Expr.StoU b            => s!"StoU({exprToString b})"
 
 
   partial def predicateToString : Predicate → String

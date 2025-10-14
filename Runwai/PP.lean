@@ -106,17 +106,17 @@ def unexpLet : Unexpander
     `($f₀ $id = $v $f₁ $body)
   | _ => throw ()
 
-@[app_unexpander Ast.Expr.toSInt]
-def unexpToSInt : Unexpander
+@[app_unexpander Ast.Expr.UtoS]
+def unexpUtoS : Unexpander
   | `($_ $e) =>
-      let f := mkIdent $ Name.mkSimple "toSInt"
+      let f := mkIdent $ Name.mkSimple "UtoS"
       `($f $e)
   | _ => throw ()
 
-@[app_unexpander Ast.Expr.toUInt]
-def unexpToUInt : Unexpander
+@[app_unexpander Ast.Expr.StoU]
+def unexpStoU : Unexpander
   | `($_ $e) =>
-      let f := mkIdent $ Name.mkSimple "toUInt"
+      let f := mkIdent $ Name.mkSimple "StoU"
       `($f $e)
   | _ => throw ()
 

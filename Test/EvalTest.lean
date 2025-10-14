@@ -83,7 +83,7 @@ example: Eval.EvalProp σ₀ T₀ Δ'₀
   unfold Eval.evalSIntOp
   simp_all
 
--- Conversion test: toSInt
-example: Eval.EvalProp σ₀ T₀ Δ'₀ (.toSInt (.constN 42)) (.vInt 42) := by
-  apply Eval.EvalProp.toSInt
+-- Conversion test: UtoS (Unsigned to Signed)
+example: Eval.EvalProp σ₀ T₀ Δ'₀ (.UtoS (.constN 42)) (.vInt 42) := by
+  apply Eval.EvalProp.UtoS
   apply Eval.EvalProp.ConstN

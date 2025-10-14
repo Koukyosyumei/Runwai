@@ -96,11 +96,11 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
   | toF {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vN v)) :
       EvalProp σ T Δ (Expr.toF e) (Ast.Value.vF v)
 
-  | toSInt {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vN v)) :
-      EvalProp σ T Δ (Expr.toSInt e) (Ast.Value.vInt v)
+  | UtoS {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vN v)) :
+      EvalProp σ T Δ (Expr.UtoS e) (Ast.Value.vInt v)
 
-  | toUInt {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vInt v)) :
-      EvalProp σ T Δ (Expr.toUInt e) (Ast.Value.vN (Int.natAbs v))
+  | StoU {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vInt v)) :
+      EvalProp σ T Δ (Expr.StoU e) (Ast.Value.vN (Int.natAbs v))
 
   -- E‑VAR
   | Var {σ T Δ x v} : getVal σ x = v → EvalProp σ T Δ (Expr.var x) v

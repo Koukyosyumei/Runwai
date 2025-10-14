@@ -89,11 +89,11 @@ syntax "toN" "(" runwai_expr ")"                     : runwai_expr
 -- "toF"
 syntax "toF" "(" runwai_expr ")"                     : runwai_expr
 
--- "toSInt"
-syntax "toSInt" "(" runwai_expr ")"                  : runwai_expr
+-- "UtoS" (Unsigned to Signed)
+syntax "UtoS" "(" runwai_expr ")"                    : runwai_expr
 
--- "toUInt"
-syntax "toUInt" "(" runwai_expr ")"                  : runwai_expr
+-- "StoU" (Signed to Unsigned)
+syntax "StoU" "(" runwai_expr ")"                    : runwai_expr
 
 -- Array indexing: “a[e]”
 syntax runwai_expr "[" runwai_expr "]"               : runwai_expr
@@ -344,13 +344,13 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let e' ← elaborateExpr e
     pure (Ast.Expr.toF e')
 
-  | `(runwai_expr| toSInt ($e)) => do
+  | `(runwai_expr| UtoS ($e)) => do
     let e' ← elaborateExpr e
-    pure (Ast.Expr.toSInt e')
+    pure (Ast.Expr.UtoS e')
 
-  | `(runwai_expr| toUInt ($e)) => do
+  | `(runwai_expr| StoU ($e)) => do
     let e' ← elaborateExpr e
-    pure (Ast.Expr.toUInt e')
+    pure (Ast.Expr.StoU e')
 
   -- Array indexing: “a[e]”
   | `(runwai_expr| $a [ $i ] ) => do
