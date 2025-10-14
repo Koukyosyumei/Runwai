@@ -138,6 +138,10 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
   | TE_ConstN {Γ: Env.TyEnv} {Η: Env.UsedNames} {f: ℕ} :
     TypeJudgment Γ Η (Ast.Expr.constN f) (Ast.Ty.refin (Ast.Ty.uint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN f))))
 
+  -- TE-CONSTINT
+  | TE_ConstInt {Γ: Env.TyEnv} {Η: Env.UsedNames} {i: ℤ} :
+    TypeJudgment Γ Η (Ast.Expr.constInt i) (Ast.Ty.refin (Ast.Ty.sint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constInt i))))
+
   -- TE-BOOL
   | TE_ConstBool {Γ: Env.TyEnv} {Η: Env.UsedNames} {b: Bool} :
     TypeJudgment Γ Η (Ast.Expr.constBool b) (Ast.Ty.refin (Ast.Ty.bool) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constBool b))))
@@ -159,6 +163,12 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.uint) φ₁) →
     TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.uint) φ₂) →
   TypeJudgment Γ Η (Ast.Expr.uintExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.uint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.uintExpr e₁ op e₂)))))
+
+  -- TE-BINOPSINT
+  | TE_BinOpSInt {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {φ₁ φ₂: Ast.Predicate} {op: Ast.IntOp}:
+    TypeJudgment Γ Η e₁ (Ast.Ty.refin (Ast.Ty.sint) φ₁) →
+    TypeJudgment Γ Η e₂ (Ast.Ty.refin (Ast.Ty.sint) φ₂) →
+  TypeJudgment Γ Η (Ast.Expr.sintExpr e₁ op e₂) ((Ast.Ty.refin (Ast.Ty.sint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.sintExpr e₁ op e₂)))))
 
   -- TE-BINOPREL
   | TE_BinOpRel {Γ: Env.TyEnv} {Η: Env.UsedNames} {e₁ e₂: Ast.Expr} {τ: Ast.Ty} {φ₁ φ₂: Ast.Predicate} {op: Ast.RelOp}:
@@ -191,6 +201,16 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     (h₁: @TypeJudgment Δ Γ Η e₁ τ₁)
     (h₂: @TypeJudgment Δ (Env.updateTy Γ x τ₁) Η e₂ τ₂):
     TypeJudgment Γ Η (Ast.Expr.letIn x e₁ e₂) τ₂
+
+  -- TE-TOSINT
+  | TE_ToSInt {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {φ: Ast.Predicate}:
+    TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.uint) φ) →
+    TypeJudgment Γ Η (Ast.Expr.toSInt e) (Ast.Ty.refin (Ast.Ty.sint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.toSInt e))))
+
+  -- TE-TOUINT
+  | TE_ToUInt {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {φ: Ast.Predicate}:
+    TypeJudgment Γ Η e (Ast.Ty.refin (Ast.Ty.sint) φ) →
+    TypeJudgment Γ Η (Ast.Expr.toUInt e) (Ast.Ty.refin (Ast.Ty.uint) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.toUInt e))))
 
   -- TE-LOOKUP
   | TE_LookUp {Γ: Env.TyEnv} {Η: Env.UsedNames} {vname cname : String} {args: List (Ast.Expr × Ast.Expr)}
