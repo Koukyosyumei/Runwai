@@ -39,6 +39,16 @@ def evalUIntOp (op: IntOp) : Value → Value → Option Value
       | IntOp.mul => x * y
   | _, _ => none
 
+@[simp]
+def evalSIntOp (op: IntOp) : Value → Value → Option Value
+  | Value.vInt x, Value.vInt y =>
+    some $ Value.vInt $
+      match op with
+      | IntOp.add => x + y
+      | IntOp.sub => x - y
+      | IntOp.mul => x * y
+  | _, _ => none
+
 /-- Evaluate a relational operator `op` on two `Value` arguments. -/
 @[simp]
 def evalRelOp (op: RelOp) : Value → Value → Option Bool
@@ -47,6 +57,11 @@ def evalRelOp (op: RelOp) : Value → Value → Option Bool
     | RelOp.eq => some (i = j)
     | _ => none
   | Value.vN i, Value.vN j =>
+    some $ match op with
+    | RelOp.eq => i = j
+    | RelOp.lt => i < j
+    | RelOp.le => i ≤ j
+  | Value.vInt i, Value.vInt j =>
     some $ match op with
     | RelOp.eq => i = j
     | RelOp.lt => i < j
@@ -70,6 +85,7 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
   -- E‑VALUE
   | ConstF        {σ T Δ v} : EvalProp σ T Δ (Expr.constF v) (Value.vF v)
   | ConstN        {σ T Δ v} : EvalProp σ T Δ (Expr.constN v) (Value.vN v)
+  | ConstInt      {σ T Δ v} : EvalProp σ T Δ (Expr.constInt v) (Value.vInt v)
   | ConstBool     {σ T Δ b} : EvalProp σ T Δ (Expr.constBool b) (Value.vBool b)
   | ConstArr  {σ T Δ xs es} (ilength: xs.length = es.length) (ih : ∀ xe ∈ List.zip xs es, EvalProp σ T Δ xe.fst xe.snd) :
       EvalProp σ T Δ (Expr.arr xs) (Value.vArr es)
@@ -79,6 +95,12 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
 
   | toF {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vN v)) :
       EvalProp σ T Δ (Expr.toF e) (Ast.Value.vF v)
+
+  | UtoS {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vN v)) :
+      EvalProp σ T Δ (Expr.UtoS e) (Ast.Value.vInt v)
+
+  | StoU {σ T Δ e v} (h: EvalProp σ T Δ e (Ast.Value.vInt v)) :
+      EvalProp σ T Δ (Expr.StoU e) (Ast.Value.vN (Int.natAbs v))
 
   -- E‑VAR
   | Var {σ T Δ x v} : getVal σ x = v → EvalProp σ T Δ (Expr.var x) v
@@ -112,6 +134,13 @@ inductive EvalProp : ValEnv → TraceEnv → ChipEnv → Expr → Value → Prop
       (ih₂ : EvalProp σ T Δ e₂ (Value.vN i₂))
       (r   : evalUIntOp op (Value.vN i₁) (Value.vN i₂) = some v) :
       EvalProp σ T Δ (Expr.uintExpr e₁ op e₂) v
+
+  -- E‑SINTBINOP
+  | SIntBinOp   {σ T Δ e₁ e₂ op i₁ i₂ v}
+      (ih₁ : EvalProp σ T Δ e₁ (Value.vInt i₁))
+      (ih₂ : EvalProp σ T Δ e₂ (Value.vInt i₂))
+      (r   : evalSIntOp op (Value.vInt i₁) (Value.vInt i₂) = some v) :
+      EvalProp σ T Δ (Expr.sintExpr e₁ op e₂) v
 
   -- E‑BOOLBINOP
   | BoolOp   {σ T Δ e₁ e₂ op b₁ b₂ b}

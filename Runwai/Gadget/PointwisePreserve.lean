@@ -162,10 +162,14 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       exact h
     | TE_ConstF => intros; constructor
     | TE_ConstN => intros; constructor
+    | TE_ConstInt => intros; constructor
     | TE_ConstBool => intros; constructor
     | TE_Assert _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_Assert (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_BinOpField _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpField (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_BinOpUInt _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpUInt (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_BinOpSInt _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpSInt (ih₁ Γ₂ h) (ih₂ Γ₂ h)
+    | TE_UtoS _ ih => intro Γ₂ h; apply Ty.TypeJudgment.TE_UtoS (ih Γ₂ h)
+    | TE_StoU _ ih => intro Γ₂ h; apply Ty.TypeJudgment.TE_StoU (ih Γ₂ h)
     | TE_BinOpRel _ _ ih₁ ih₂ => intro Γ₂ h; apply Ty.TypeJudgment.TE_BinOpRel (ih₁ Γ₂ h) (ih₂ Γ₂ h)
     | TE_Abs ih₀ _ ih₂ =>
       intro Γ₂ h

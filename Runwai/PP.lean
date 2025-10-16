@@ -24,6 +24,11 @@ def unexpConstZ : Unexpander
   | `($_ $n) => `($n)
   | _ => throw ()
 
+@[app_unexpander Ast.Expr.constInt]
+def unexpConstInt : Unexpander
+  | `($_ $n) => `($n)
+  | _ => throw ()
+
 @[app_unexpander Ast.Expr.arrIdx]
 def unexpArrIdx : Unexpander
   | `($_ $a $i) => `($a[$i])
@@ -101,6 +106,20 @@ def unexpLet : Unexpander
     `($f₀ $id = $v $f₁ $body)
   | _ => throw ()
 
+@[app_unexpander Ast.Expr.UtoS]
+def unexpUtoS : Unexpander
+  | `($_ $e) =>
+      let f := mkIdent $ Name.mkSimple "UtoS"
+      `($f $e)
+  | _ => throw ()
+
+@[app_unexpander Ast.Expr.StoU]
+def unexpStoU : Unexpander
+  | `($_ $e) =>
+      let f := mkIdent $ Name.mkSimple "StoU"
+      `($f $e)
+  | _ => throw ()
+
 @[app_unexpander Ast.Predicate.ind]
 def unexpPredInd : Unexpander
   | `($_ $e) => `($e)
@@ -133,6 +152,12 @@ def unexpTyField : Unexpander
 def unexpTyInt : Unexpander
   | `($_) =>
     let id := mkIdent (Name.mkSimple "int")
+    `($id)
+
+@[app_unexpander Ast.Ty.sint]
+def unexpTySInt : Unexpander
+  | `($_) =>
+    let id := mkIdent (Name.mkSimple "sint")
     `($id)
 
 @[app_unexpander Ast.Ty.bool]

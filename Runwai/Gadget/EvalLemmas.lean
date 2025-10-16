@@ -18,6 +18,8 @@ theorem evalRelOp_eq_symm {v₁ v₂: Ast.Value} (h: Eval.evalRelOp Ast.RelOp.eq
     repeat simp_all
     cases v₂
     repeat simp_all
+    cases v₂
+    repeat simp_all
   }
 
 /--
@@ -49,6 +51,7 @@ theorem evalprop_deterministic
   induction h₁ generalizing v₂ with
   | ConstF => cases h₂; rfl
   | ConstN => cases h₂; rfl
+  | ConstInt => cases h₂; rfl
   | ConstBool => cases h₂; rfl
   | ConstArr h_length h_forall in_det =>
     rename_i es xs
@@ -111,6 +114,13 @@ theorem evalprop_deterministic
   | NBinOp ih₁ ih₂ r ih₁_ih ih₂_ih => {
     cases h₂
     case NBinOp i₁' i₂' ih₁' ih₂' ih₃' =>
+    have h₁_eq := ih₁_ih ih₁'
+    have h₂_eq := ih₂_ih ih₂'
+    simp_all
+  }
+  | SIntBinOp ih₁ ih₂ r ih₁_ih ih₂_ih => {
+    cases h₂
+    case SIntBinOp i₁' i₂' ih₁' ih₂' ih₃' =>
     have h₁_eq := ih₁_ih ih₁'
     have h₂_eq := ih₂_ih ih₂'
     simp_all
@@ -190,6 +200,20 @@ theorem evalprop_deterministic
     have h' : v₁ = fv₂ := by simp_all
     simp_all
   }
+  | UtoS => {
+    cases h₂
+    rename_i v₁ ih₀ ih₁ fv₂ ih₃
+    have h := ih₁ ih₃
+    have h' : v₁ = fv₂ := by simp_all
+    simp_all
+  }
+  | StoU => {
+    cases h₂
+    rename_i v₁ ih₀ ih₁ fv₂ ih₃
+    have h := ih₁ ih₃
+    have h' : v₁ = fv₂ := by simp_all
+    simp_all
+  }
 
 /--
 The transitivity of equality at the expression level. If `e₁ = e₂` evaluates to true
@@ -229,6 +253,22 @@ theorem evalProp_eq_trans
       | vN => {
         cases v₄ with
         | vN => {
+          simp at ih₃ ih₆
+          apply Eval.EvalProp.Rel
+          exact ih₂
+          exact ih₅
+          simp [Eval.evalRelOp]
+          rw[← ih₃, ← ih₆]
+        }
+        | _ => simp at ih₆
+      }
+      | _ => simp at ih₃
+    }
+    | vInt => {
+      cases v₂ with
+      | vInt => {
+        cases v₄ with
+        | vInt => {
           simp at ih₃ ih₆
           apply Eval.EvalProp.Rel
           exact ih₂

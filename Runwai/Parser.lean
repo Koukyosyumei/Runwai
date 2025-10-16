@@ -22,6 +22,7 @@ declare_syntax_cat runwai_expr
 -- Basic types
 syntax "Field"                                     : runwai_ty
 syntax "UInt"                                      : runwai_ty
+syntax "SInt"                                      : runwai_ty
 syntax "Bool"                                      : runwai_ty
 syntax "Unit"                                      : runwai_ty
 
@@ -42,6 +43,8 @@ syntax "(" ident ":" runwai_ty ")" "→" runwai_ty   : runwai_ty
 -- Constants:
 syntax num                                       : runwai_expr
 syntax "Fp" num                                   : runwai_expr
+syntax "Sint" num                                 : runwai_expr
+syntax "Sint" "-" num                             : runwai_expr
 syntax "true"                                    : runwai_expr
 syntax "false"                                   : runwai_expr
 
@@ -65,6 +68,10 @@ syntax runwai_expr "<->" runwai_expr                 : runwai_expr
 syntax runwai_expr "<*>" runwai_expr                 : runwai_expr
 syntax runwai_expr "</>" runwai_expr                 : runwai_expr
 
+syntax runwai_expr "{+}" runwai_expr                 : runwai_expr
+syntax runwai_expr "{-}" runwai_expr                 : runwai_expr
+syntax runwai_expr "{*}" runwai_expr                 : runwai_expr
+
 -- Relational:  “e₁ == e₂”  “e₁ < e₂”  “e₁ <= e₂”
 syntax runwai_expr "==" runwai_expr                  : runwai_expr
 syntax runwai_expr "<"  runwai_expr                  : runwai_expr
@@ -81,6 +88,12 @@ syntax "toN" "(" runwai_expr ")"                     : runwai_expr
 
 -- "toF"
 syntax "toF" "(" runwai_expr ")"                     : runwai_expr
+
+-- "UtoS" (Unsigned to Signed)
+syntax "UtoS" "(" runwai_expr ")"                    : runwai_expr
+
+-- "StoU" (Signed to Unsigned)
+syntax "StoU" "(" runwai_expr ")"                    : runwai_expr
 
 -- Array indexing: “a[e]”
 syntax runwai_expr "[" runwai_expr "]"               : runwai_expr
@@ -132,6 +145,8 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
 
   -- Field and Bool
   | `(runwai_ty| Field)      => pure (Ast.Ty.refin Ast.Ty.field (Ast.Predicate.ind (Ast.Expr.constBool True)))
+  | `(runwai_ty| UInt)       => pure (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.ind (Ast.Expr.constBool True)))
+  | `(runwai_ty| SInt)       => pure (Ast.Ty.refin Ast.Ty.sint (Ast.Predicate.ind (Ast.Expr.constBool True)))
   | `(runwai_ty| Bool)       => pure (Ast.Ty.refin Ast.Ty.bool (Ast.Predicate.ind (Ast.Expr.constBool True)))
   | `(runwai_ty| Unit)       => pure Ast.Ty.unit
 
@@ -140,11 +155,12 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
       let t' ← elaborateType t
       pure (Ast.Ty.arr t' n.getNat)
 
-  -- Refinement: “{ x : T | φ }”
+  -- Refinement: "{ x : T | φ }"
   | `(runwai_ty| { $T:runwai_ty | $φ:runwai_expr } ) => do
       let T' ← match T with
       | `(runwai_ty| Field) => pure Ast.Ty.field
       | `(runwai_ty| UInt) => pure Ast.Ty.uint
+      | `(runwai_ty| SInt) => pure Ast.Ty.sint
       | `(runwai_ty| Bool) => pure Ast.Ty.bool
       | `(runwai_ty| Unit) => pure Ast.Ty.unit
       | _ => throwError "unsupported type syntax: {stx}"
@@ -155,6 +171,7 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
   | `(runwai_ty| { $x:ident : $T:runwai_ty | $φ:runwai_expr } ) => do
       let T' ← match T with
       | `(runwai_ty| UInt) => pure Ast.Ty.uint
+      | `(runwai_ty| SInt) => pure Ast.Ty.sint
       | `(runwai_ty| Field) => pure Ast.Ty.field
       | `(runwai_ty| Bool) => pure Ast.Ty.bool
       | `(runwai_ty| Unit) => pure Ast.Ty.unit
@@ -189,11 +206,23 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let v := n.getNat
     pure (Ast.Expr.constN v)
 
-  -- Field literal “123”: → `constF 123`
+  -- Field literal "123": → `constF 123`
   | `(runwai_expr| Fp $n:num) => do
     let v := n.getNat
     let v' := (v: F)
     pure (Ast.Expr.constF v')
+
+  -- Signed integer literals "Sint 123": → `constInt 123`
+  | `(runwai_expr| Sint $n:num) => do
+    let v := n.getNat
+    let v' := (v: ℤ)
+    pure (Ast.Expr.constInt v')
+
+  -- Signed integer literals "Sint - 123": → `constInt -123`
+  | `(runwai_expr| Sint - $n:num) => do
+    let v := n.getNat
+    let v' := -(v: ℤ)
+    pure (Ast.Expr.constInt v')
 
   -- Boolean literals
   | `(runwai_expr| true)  => pure (Ast.Expr.constBool True)
@@ -274,6 +303,22 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     let e₂' ← elaborateExpr e₂
     pure (Ast.Expr.uintExpr e₁' Ast.IntOp.mul e₂')
 
+  -- SInt arithmetic
+  | `(runwai_expr| $e₁ {+} $e₂) => do
+    let e₁' ← elaborateExpr e₁
+    let e₂' ← elaborateExpr e₂
+    pure (Ast.Expr.sintExpr e₁' Ast.IntOp.add e₂')
+
+  | `(runwai_expr| $e₁ {-} $e₂) => do
+    let e₁' ← elaborateExpr e₁
+    let e₂' ← elaborateExpr e₂
+    pure (Ast.Expr.sintExpr e₁' Ast.IntOp.sub e₂')
+
+  | `(runwai_expr| $e₁ {*} $e₂) => do
+    let e₁' ← elaborateExpr e₁
+    let e₂' ← elaborateExpr e₂
+    pure (Ast.Expr.sintExpr e₁' Ast.IntOp.mul e₂')
+
   -- Relational: “e₁ == e₂”, “e₁ < e₂”, “e₁ <= e₂”
   | `(runwai_expr| $e₁ == $e₂) => do
     let e₁' ← elaborateExpr e₁
@@ -298,6 +343,14 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
   | `(runwai_expr| toF ($e)) => do
     let e' ← elaborateExpr e
     pure (Ast.Expr.toF e')
+
+  | `(runwai_expr| UtoS ($e)) => do
+    let e' ← elaborateExpr e
+    pure (Ast.Expr.UtoS e')
+
+  | `(runwai_expr| StoU ($e)) => do
+    let e' ← elaborateExpr e
+    pure (Ast.Expr.StoU e')
 
   -- Array indexing: “a[e]”
   | `(runwai_expr| $a [ $i ] ) => do
