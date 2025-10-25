@@ -162,7 +162,7 @@ pub enum Predicate {
         right: Box<Predicate>,
     },
     Not {
-        φ: Box<Predicate>,
+        phi: Box<Predicate>,
     },
 }
 
@@ -625,10 +625,10 @@ pub fn walkthrough_ast<AB: AirBuilder>(
             );
         }
         Expr::Lookup {
-            vname,
-            cname,
-            args,
-            body,
+            vname: _vname,
+            cname: _cname,
+            args: _args,
+            body: _body,
         } => todo!(),
         _ => {}
     }
