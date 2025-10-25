@@ -235,9 +235,23 @@ impl Expr {
         let expr: Expr = serde_json::from_str(&data)?;
         Ok(expr)
     }
-}
 
-impl Expr {
+    pub fn is_dummy_assert(&self) -> bool {
+        if let Expr::AssertE { lhs, rhs } = &self {
+            if let Expr::ConstBool { val } = &**lhs {
+                if *val {
+                    if let Expr::ConstBool { val } = &**rhs {
+                        if *val {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        false
+    }
+
     pub fn to_ab_expr<AB: AirBuilder>(
         &self,
         colid_to_var_fn: &dyn Fn(bool, usize) -> AB::Var,
@@ -345,11 +359,93 @@ impl Expr {
 }
 
 #[derive(Debug, Clone)]
-pub enum When {
+pub enum BoundaryInfo {
     IsFirst,
     IsLast,
     IsTransition,
     All,
+}
+
+#[derive(Debug, Clone)]
+pub enum CondInfo {
+    When(Box<Expr>),
+    WhenNe(Box<Expr>, Box<Expr>),
+}
+
+pub fn is_first_cond<AB: AirBuilder>(cond: &Expr, row_index_name: &str) -> bool {
+    if let Expr::BinRel {
+        lhs,
+        op: RelOp::Eq,
+        rhs,
+    } = cond
+    {
+        if let Expr::Var { name } = &**lhs {
+            if name == row_index_name {
+                if let Expr::ConstN { val } = &**rhs {
+                    if *val == 0 {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+pub fn is_transition_cond<AB: AirBuilder>(cond: &Expr, row_index_name: &str) -> bool {
+    if let Expr::BinRel {
+        lhs,
+        op: RelOp::Lt,
+        rhs,
+    } = cond
+    {
+        if let Expr::Var { name } = &**lhs {
+            if name == row_index_name {
+                if let Expr::UintExpr {
+                    lhs,
+                    op: IntOp::Sub,
+                    rhs,
+                } = &**rhs
+                {
+                    if let Expr::Var { name } = &**lhs {
+                        if let Expr::ConstN { val } = &**rhs {
+                            if name == "n" && *val == 1 {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+pub fn is_zero_cond<AB: AirBuilder>(cond: &Expr) -> bool {
+    if let Expr::BinRel {
+        lhs,
+        op: RelOp::Lt,
+        rhs,
+    } = cond
+    {
+        if let Expr::Var { name } = &**lhs {
+            if let Expr::UintExpr {
+                lhs,
+                op: IntOp::Sub,
+                rhs,
+            } = &**rhs
+            {
+                if let Expr::Var { name } = &**lhs {
+                    if let Expr::ConstN { val } = &**rhs {
+                        if name == "n" && *val == 1 {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
 pub fn walkthrough_ast<AB: AirBuilder>(
@@ -359,8 +455,8 @@ pub fn walkthrough_ast<AB: AirBuilder>(
     colid_to_var_fn: &dyn Fn(bool, usize) -> AB::Var,
     trace_name: &String,
     row_index_name: &String,
-    when: When,
-    mut conditions: &mut Vec<(bool, AB::Expr)>,
+    when: BoundaryInfo,
+    mut conditions: &mut Vec<CondInfo>,
 ) where
     AB::F: Field + PrimeCharacteristicRing,
 {
@@ -372,74 +468,47 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 rhs.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
 
             match when {
-                When::IsFirst => builder.when_first_row().assert_eq(lhs_ab, rhs_ab),
-                When::IsLast => builder.when_last_row().assert_eq(lhs_ab, rhs_ab),
-                When::IsTransition => builder.when_transition().assert_eq(lhs_ab, rhs_ab),
-                When::All => builder.assert_eq(lhs_ab, rhs_ab),
+                BoundaryInfo::IsFirst => builder.when_first_row().assert_eq(lhs_ab, rhs_ab),
+                BoundaryInfo::IsLast => builder.when_last_row().assert_eq(lhs_ab, rhs_ab),
+                BoundaryInfo::IsTransition => builder.when_transition().assert_eq(lhs_ab, rhs_ab),
+                BoundaryInfo::All => {
+                    if conditions.is_empty() {
+                        builder.assert_eq(lhs_ab, rhs_ab)
+                    } else {
+                        match &conditions[0] {
+                            CondInfo::When(cond) => {
+                                let cond_ab = cond.to_ab_expr::<AB>(
+                                    colid_to_var_fn,
+                                    env,
+                                    trace_name,
+                                    row_index_name,
+                                );
+                                builder.when(cond_ab).assert_eq(lhs_ab, rhs_ab)
+                            }
+                            CondInfo::WhenNe(cond_lhs, cond_rhs) => {
+                                let cond_lhs_ab = cond_lhs.to_ab_expr::<AB>(
+                                    colid_to_var_fn,
+                                    env,
+                                    trace_name,
+                                    row_index_name,
+                                );
+                                let cond_rhs_ab = cond_rhs.to_ab_expr::<AB>(
+                                    colid_to_var_fn,
+                                    env,
+                                    trace_name,
+                                    row_index_name,
+                                );
+                                builder
+                                    .when_ne(cond_lhs_ab, cond_rhs_ab)
+                                    .assert_eq(lhs_ab, rhs_ab)
+                            }
+                        }
+                    }
+                }
             }
         }
         Expr::Branch { cond, th, els } => {
-            if let Expr::BinRel { lhs, op, rhs } = &*cond {
-                match op {
-                    RelOp::Eq => {
-                        if let Expr::Var { name } = &**lhs {
-                            if name == row_index_name {
-                                if let Expr::ConstN { val } = &**rhs {
-                                    if *val == 0 {
-                                        walkthrough_ast(
-                                            builder,
-                                            env,
-                                            *th,
-                                            colid_to_var_fn,
-                                            trace_name,
-                                            row_index_name,
-                                            When::IsFirst,
-                                            &mut conditions,
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    RelOp::Lt => {
-                        if let Expr::Var { name } = &**lhs {
-                            if name == row_index_name {
-                                if let Expr::UintExpr {
-                                    lhs,
-                                    op: IntOp::Sub,
-                                    rhs,
-                                } = &**rhs
-                                {
-                                    if let Expr::Var { name } = &**lhs {
-                                        if let Expr::ConstN { val } = &**rhs {
-                                            if name == "n" && *val == 1 {
-                                                //let mut when = builder.when_first_row();
-                                                walkthrough_ast(
-                                                    builder,
-                                                    env,
-                                                    *th,
-                                                    colid_to_var_fn,
-                                                    trace_name,
-                                                    row_index_name,
-                                                    When::IsTransition,
-                                                    &mut conditions,
-                                                );
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    RelOp::Le => todo!(),
-                }
-            } else {
-                let cond_ab: AB::Expr =
-                    cond.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
-                let mut conditions_ne = conditions.clone();
-                conditions.push((true, cond_ab.clone()));
-                conditions_ne.push((false, cond_ab));
-
+            if is_first_cond::<AB>(&cond, &row_index_name) {
                 walkthrough_ast(
                     builder,
                     env,
@@ -447,19 +516,60 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     colid_to_var_fn,
                     trace_name,
                     row_index_name,
-                    when.clone(),
-                    conditions,
+                    BoundaryInfo::IsFirst,
+                    &mut conditions,
                 );
+            } else if is_transition_cond::<AB>(&cond, row_index_name) {
                 walkthrough_ast(
                     builder,
                     env,
-                    *els,
+                    *th,
                     colid_to_var_fn,
                     trace_name,
                     row_index_name,
-                    when,
-                    &mut conditions_ne,
+                    BoundaryInfo::IsTransition,
+                    &mut conditions,
                 );
+            } else {
+                if let Expr::BinRel {
+                    lhs,
+                    op: RelOp::Eq,
+                    rhs,
+                } = &*cond
+                {
+                    if let Expr::ConstF { val } = &**rhs {
+                        if th.is_dummy_assert() {
+                            panic!();
+                        }
+                        if *val == 0 {
+                            let mut conditions_ne = conditions.clone();
+                            conditions_ne.push(CondInfo::When(lhs.clone()));
+                            walkthrough_ast(
+                                builder,
+                                env,
+                                *els,
+                                colid_to_var_fn,
+                                trace_name,
+                                row_index_name,
+                                when,
+                                &mut conditions_ne,
+                            );
+                        } else {
+                            let mut conditions_ne = conditions.clone();
+                            conditions_ne.push(CondInfo::WhenNe(lhs.clone(), rhs.clone()));
+                            walkthrough_ast(
+                                builder,
+                                env,
+                                *els,
+                                colid_to_var_fn,
+                                trace_name,
+                                row_index_name,
+                                when,
+                                &mut conditions_ne,
+                            );
+                        }
+                    }
+                }
             }
         }
         Expr::LetIn { name, val, body } => {

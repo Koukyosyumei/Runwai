@@ -8,7 +8,7 @@ use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::Matrix;
 use p3_uni_stark::{get_symbolic_constraints, SymbolicExpression};
 
-use runwai_p3::ast::{walkthrough_ast, Expr, When};
+use runwai_p3::ast::{walkthrough_ast, BoundaryInfo, Expr};
 
 #[derive(Clone)]
 pub struct RunwaiAir<F>
@@ -53,7 +53,7 @@ where
             &load_var,
             &"trace".to_string(),
             &"i".to_string(),
-            When::All,
+            BoundaryInfo::All,
             &mut conditiosn,
         );
     }
