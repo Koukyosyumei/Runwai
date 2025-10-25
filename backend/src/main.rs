@@ -51,8 +51,9 @@ where
             &mut env,
             self.runwai_ast.clone(),
             &load_var,
-            &"trace".to_string(),
-            &"i".to_string(),
+            "trace",
+            "i",
+            "n",
             BoundaryInfo::All,
             &mut conditiosn,
         );

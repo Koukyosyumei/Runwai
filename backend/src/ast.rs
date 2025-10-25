@@ -252,12 +252,77 @@ impl Expr {
         false
     }
 
+    pub fn get_trace_i_j<AB: AirBuilder>(
+        &self,
+        colid_to_var_fn: &dyn Fn(bool, usize) -> AB::Var,
+        trace_name: &str,
+        row_index_name: &str,
+    ) -> Option<AB::Expr> {
+        // find `trace[i][j]`
+        if let Expr::ArrIdx { arr, idx } = &self {
+            if let Expr::ConstN { val } = &**idx {
+                let colid = val.clone();
+                if let Expr::ArrIdx { arr, idx } = &**arr {
+                    if let Expr::Var { name } = &**arr {
+                        if name == trace_name {
+                            if let Expr::Var { name } = &**idx {
+                                if name == row_index_name {
+                                    return Some(colid_to_var_fn(true, colid as usize).into());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    pub fn get_trace_ip1_j<AB: AirBuilder>(
+        &self,
+        colid_to_var_fn: &dyn Fn(bool, usize) -> AB::Var,
+        trace_name: &str,
+        row_index_name: &str,
+    ) -> Option<AB::Expr> {
+        // find `trace[i+1][j]`
+        if let Expr::ArrIdx { arr, idx } = &self {
+            if let Expr::ConstN { val } = &**idx {
+                let colid = val.clone();
+                if let Expr::ArrIdx { arr, idx } = &**arr {
+                    if let Expr::Var { name } = &**arr {
+                        if name == trace_name {
+                            if let Expr::UintExpr {
+                                lhs,
+                                op: IntOp::Add,
+                                rhs,
+                            } = &**idx
+                            {
+                                if let Expr::Var { name } = &**lhs {
+                                    if name == row_index_name {
+                                        if let Expr::ConstN { val } = &**rhs {
+                                            if *val == 1 {
+                                                return Some(
+                                                    colid_to_var_fn(false, colid as usize).into(),
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
     pub fn to_ab_expr<AB: AirBuilder>(
         &self,
         colid_to_var_fn: &dyn Fn(bool, usize) -> AB::Var,
         env: &HashMap<String, Expr>,
-        trace_name: &String,
-        row_index_name: &String,
+        trace_name: &str,
+        row_index_name: &str,
     ) -> AB::Expr
     where
         AB::F: Field + PrimeCharacteristicRing,
@@ -267,15 +332,22 @@ impl Expr {
             Expr::ConstN { val: _val } => panic!("something went wrong"),
             Expr::ConstInt { val: _val } => panic!("something went wrong"),
             Expr::ConstBool { val: _val } => panic!("something went wrong"),
-            Expr::Arr { elems } => todo!(),
+            Expr::Arr { elems: _elems } => todo!(),
             Expr::Var { name } => env.get(name).unwrap().to_ab_expr::<AB>(
                 colid_to_var_fn,
                 env,
                 trace_name,
                 row_index_name,
             ),
-            Expr::AssertE { lhs, rhs } => panic!("something went wrong"),
-            Expr::BoolExpr { lhs, op, rhs } => panic!("something went wrong"),
+            Expr::AssertE {
+                lhs: _lhs,
+                rhs: _rhs,
+            } => panic!("something went wrong"),
+            Expr::BoolExpr {
+                lhs: _lhs,
+                op: _op,
+                rhs: _rhs,
+            } => panic!("something went wrong"),
             Expr::FieldExpr { lhs, op, rhs } => {
                 let lhs_ab = lhs.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
                 let rhs_ab = rhs.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
@@ -286,74 +358,64 @@ impl Expr {
                     FieldOp::Div => panic!("div cannot be used within constraints"),
                 }
             }
-            Expr::UintExpr { lhs, op, rhs } => panic!("something went wrong"),
-            Expr::SintExpr { lhs, op, rhs } => panic!("something went wrong"),
-            Expr::BinRel { lhs, op, rhs } => panic!("something went wrong"),
-            Expr::ArrIdx { arr, idx } => {
-                if let Expr::ConstN { val } = &**idx {
-                    if let Expr::ArrIdx { arr, idx } = &**arr {
-                        if let Expr::Var { name } = &**arr {
-                            if name == trace_name {
-                                if let Expr::Var { name } = &**idx {
-                                    if name == row_index_name {
-                                        colid_to_var_fn(true, (*val) as usize).into()
-                                    } else {
-                                        panic!("unresolved name: {}", name)
-                                    }
-                                } else if let Expr::UintExpr {
-                                    lhs,
-                                    op: IntOp::Add,
-                                    rhs,
-                                } = &**idx
-                                {
-                                    if let Expr::Var { name } = &**lhs {
-                                        if name == row_index_name {
-                                            if let Expr::ConstN { val } = &**rhs {
-                                                if *val == 1 {
-                                                    colid_to_var_fn(false, (*val) as usize).into()
-                                                } else {
-                                                    panic!("something went wrong")
-                                                }
-                                            } else {
-                                                panic!("something went wrong")
-                                            }
-                                        } else {
-                                            panic!("unresolved name: {}", name)
-                                        }
-                                    } else {
-                                        panic!("something went wrong")
-                                    }
-                                } else {
-                                    panic!("something went wrong")
-                                }
-                            } else {
-                                panic!("unresolved name: {}", name)
-                            }
-                        } else {
-                            todo!()
-                        }
-                    } else {
-                        todo!()
-                    }
-                } else {
-                    todo!()
+            Expr::UintExpr {
+                lhs: _lhs,
+                op: _op,
+                rhs: _rhs,
+            } => panic!("something went wrong"),
+            Expr::SintExpr {
+                lhs: _lhs,
+                op: _op,
+                rhs: _rhs,
+            } => panic!("something went wrong"),
+            Expr::BinRel {
+                lhs: _lhs,
+                op: _op,
+                rhs: _rhs,
+            } => panic!("something went wrong"),
+            Expr::ArrIdx {
+                arr: _arr,
+                idx: _idx,
+            } => {
+                if let Some(ab_expr) =
+                    self.get_trace_i_j::<AB>(colid_to_var_fn, trace_name, row_index_name)
+                {
+                    return ab_expr;
                 }
+                if let Some(ab_expr) =
+                    self.get_trace_ip1_j::<AB>(colid_to_var_fn, trace_name, row_index_name)
+                {
+                    return ab_expr;
+                }
+                panic!("{:?} cannot be simplified to a cell representation (either trace[i][j] or trace[i+1][j])", &self)
             }
-            Expr::Len { arr: _arr } => panic!("cannot use Len in the constraints"),
-            Expr::Branch { cond, th, els } => todo!(),
-            Expr::Lam { param, ty, body } => todo!(),
-            Expr::App { f, arg } => todo!(),
-            Expr::LetIn { name, val, body } => todo!(),
-            Expr::Lookup {
-                vname,
-                cname,
-                args,
-                body,
+            Expr::Len { arr: _arr } => panic!("cannot use Len within the `assert`"),
+            Expr::Branch {
+                cond: _cond,
+                th: _th,
+                els: _els,
+            } => todo!("currently cannot use Branch statement inside the `assert`"),
+            Expr::Lam {
+                param: _param,
+                ty: _ty,
+                body: _body,
             } => todo!(),
-            Expr::ToN { body: _body } => panic!("cannot use toN in the constraints"),
-            Expr::ToF { body: _body } => panic!("cannot use toF in the constraints"),
-            Expr::UtoS { body: _body } => panic!("cannot use UtoS in the constraints"),
-            Expr::StoU { body: _body } => panic!("cannot use StoU in the constraints"),
+            Expr::App { f: _f, arg: _arg } => todo!(),
+            Expr::LetIn {
+                name: _name,
+                val: _val,
+                body: _body,
+            } => panic!("cannot use LetIn within the `assert`"),
+            Expr::Lookup {
+                vname: _vname,
+                cname: _cname,
+                args: _args,
+                body: _body,
+            } => panic!("cannot use Lookup within the `assert`"),
+            Expr::ToN { body: _body } => panic!("cannot use toN within the `assert`"),
+            Expr::ToF { body: _body } => panic!("cannot use toF within the `assert`"),
+            Expr::UtoS { body: _body } => panic!("cannot use UtoS within the `assert`"),
+            Expr::StoU { body: _body } => panic!("cannot use StoU within the `assert`"),
         }
     }
 }
@@ -392,7 +454,11 @@ pub fn is_first_cond<AB: AirBuilder>(cond: &Expr, row_index_name: &str) -> bool 
     return false;
 }
 
-pub fn is_transition_cond<AB: AirBuilder>(cond: &Expr, row_index_name: &str) -> bool {
+pub fn is_transition_cond<AB: AirBuilder>(
+    cond: &Expr,
+    row_index_name: &str,
+    height_name: &str,
+) -> bool {
     if let Expr::BinRel {
         lhs,
         op: RelOp::Lt,
@@ -409,36 +475,9 @@ pub fn is_transition_cond<AB: AirBuilder>(cond: &Expr, row_index_name: &str) -> 
                 {
                     if let Expr::Var { name } = &**lhs {
                         if let Expr::ConstN { val } = &**rhs {
-                            if name == "n" && *val == 1 {
+                            if name == height_name && *val == 1 {
                                 return true;
                             }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return false;
-}
-
-pub fn is_zero_cond<AB: AirBuilder>(cond: &Expr) -> bool {
-    if let Expr::BinRel {
-        lhs,
-        op: RelOp::Lt,
-        rhs,
-    } = cond
-    {
-        if let Expr::Var { name } = &**lhs {
-            if let Expr::UintExpr {
-                lhs,
-                op: IntOp::Sub,
-                rhs,
-            } = &**rhs
-            {
-                if let Expr::Var { name } = &**lhs {
-                    if let Expr::ConstN { val } = &**rhs {
-                        if name == "n" && *val == 1 {
-                            return true;
                         }
                     }
                 }
@@ -453,8 +492,9 @@ pub fn walkthrough_ast<AB: AirBuilder>(
     env: &mut HashMap<String, Expr>,
     expr: Expr,
     colid_to_var_fn: &dyn Fn(bool, usize) -> AB::Var,
-    trace_name: &String,
-    row_index_name: &String,
+    trace_name: &str,
+    row_index_name: &str,
+    height_name: &str,
     when: BoundaryInfo,
     mut conditions: &mut Vec<CondInfo>,
 ) where
@@ -475,6 +515,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     if conditions.is_empty() {
                         builder.assert_eq(lhs_ab, rhs_ab)
                     } else {
+                        // TODO: support nested filter constraints.
                         match &conditions[0] {
                             CondInfo::When(cond) => {
                                 let cond_ab = cond.to_ab_expr::<AB>(
@@ -516,10 +557,11 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     colid_to_var_fn,
                     trace_name,
                     row_index_name,
+                    height_name,
                     BoundaryInfo::IsFirst,
                     &mut conditions,
                 );
-            } else if is_transition_cond::<AB>(&cond, row_index_name) {
+            } else if is_transition_cond::<AB>(&cond, row_index_name, height_name) {
                 walkthrough_ast(
                     builder,
                     env,
@@ -527,6 +569,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     colid_to_var_fn,
                     trace_name,
                     row_index_name,
+                    height_name,
                     BoundaryInfo::IsTransition,
                     &mut conditions,
                 );
@@ -537,13 +580,12 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     rhs,
                 } = &*cond
                 {
+                    if th.is_dummy_assert() {
+                        panic!("then-statement should be dummy assert: (assert(true, true))");
+                    }
                     if let Expr::ConstF { val } = &**rhs {
-                        if th.is_dummy_assert() {
-                            panic!();
-                        }
                         if *val == 0 {
-                            let mut conditions_ne = conditions.clone();
-                            conditions_ne.push(CondInfo::When(lhs.clone()));
+                            conditions.push(CondInfo::When(lhs.clone()));
                             walkthrough_ast(
                                 builder,
                                 env,
@@ -551,24 +593,42 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                                 colid_to_var_fn,
                                 trace_name,
                                 row_index_name,
+                                height_name,
                                 when,
-                                &mut conditions_ne,
+                                conditions,
                             );
-                        } else {
-                            let mut conditions_ne = conditions.clone();
-                            conditions_ne.push(CondInfo::WhenNe(lhs.clone(), rhs.clone()));
-                            walkthrough_ast(
-                                builder,
-                                env,
-                                *els,
-                                colid_to_var_fn,
-                                trace_name,
-                                row_index_name,
-                                when,
-                                &mut conditions_ne,
-                            );
+                            return;
                         }
                     }
+                    if let Expr::ConstF { val } = &**lhs {
+                        if *val == 0 {
+                            conditions.push(CondInfo::When(rhs.clone()));
+                            walkthrough_ast(
+                                builder,
+                                env,
+                                *els,
+                                colid_to_var_fn,
+                                trace_name,
+                                row_index_name,
+                                height_name,
+                                when,
+                                conditions,
+                            );
+                            return;
+                        }
+                    }
+                    conditions.push(CondInfo::WhenNe(lhs.clone(), rhs.clone()));
+                    walkthrough_ast(
+                        builder,
+                        env,
+                        *els,
+                        colid_to_var_fn,
+                        trace_name,
+                        row_index_name,
+                        height_name,
+                        when,
+                        conditions,
+                    );
                 }
             }
         }
@@ -580,6 +640,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 colid_to_var_fn,
                 trace_name,
                 row_index_name,
+                height_name,
                 when.clone(),
                 &mut conditions,
             );
@@ -591,6 +652,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 colid_to_var_fn,
                 trace_name,
                 row_index_name,
+                height_name,
                 when,
                 &mut conditions,
             );
