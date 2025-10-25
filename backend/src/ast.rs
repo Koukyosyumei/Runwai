@@ -329,25 +329,12 @@ impl Expr {
     {
         match &self {
             Expr::ConstF { val } => AB::F::from_u64(*val).into(),
-            Expr::ConstN { val: _val } => panic!("something went wrong"),
-            Expr::ConstInt { val: _val } => panic!("something went wrong"),
-            Expr::ConstBool { val: _val } => panic!("something went wrong"),
-            Expr::Arr { elems: _elems } => todo!(),
             Expr::Var { name } => env.get(name).unwrap().to_ab_expr::<AB>(
                 colid_to_var_fn,
                 env,
                 trace_name,
                 row_index_name,
             ),
-            Expr::AssertE {
-                lhs: _lhs,
-                rhs: _rhs,
-            } => panic!("something went wrong"),
-            Expr::BoolExpr {
-                lhs: _lhs,
-                op: _op,
-                rhs: _rhs,
-            } => panic!("something went wrong"),
             Expr::FieldExpr { lhs, op, rhs } => {
                 let lhs_ab = lhs.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
                 let rhs_ab = rhs.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
@@ -355,24 +342,9 @@ impl Expr {
                     FieldOp::Add => lhs_ab + rhs_ab,
                     FieldOp::Sub => lhs_ab - rhs_ab,
                     FieldOp::Mul => lhs_ab * rhs_ab,
-                    FieldOp::Div => panic!("div cannot be used within constraints"),
+                    FieldOp::Div => panic!("div cannot be used within `assert`"),
                 }
             }
-            Expr::UintExpr {
-                lhs: _lhs,
-                op: _op,
-                rhs: _rhs,
-            } => panic!("something went wrong"),
-            Expr::SintExpr {
-                lhs: _lhs,
-                op: _op,
-                rhs: _rhs,
-            } => panic!("something went wrong"),
-            Expr::BinRel {
-                lhs: _lhs,
-                op: _op,
-                rhs: _rhs,
-            } => panic!("something went wrong"),
             Expr::ArrIdx {
                 arr: _arr,
                 idx: _idx,
@@ -389,33 +361,29 @@ impl Expr {
                 }
                 panic!("{:?} cannot be simplified to a cell representation (either trace[i][j] or trace[i+1][j])", &self)
             }
-            Expr::Len { arr: _arr } => panic!("cannot use Len within the `assert`"),
-            Expr::Branch {
-                cond: _cond,
-                th: _th,
-                els: _els,
-            } => todo!("currently cannot use Branch statement inside the `assert`"),
-            Expr::Lam {
-                param: _param,
-                ty: _ty,
-                body: _body,
-            } => todo!(),
-            Expr::App { f: _f, arg: _arg } => todo!(),
-            Expr::LetIn {
-                name: _name,
-                val: _val,
-                body: _body,
-            } => panic!("cannot use LetIn within the `assert`"),
-            Expr::Lookup {
-                vname: _vname,
-                cname: _cname,
-                args: _args,
-                body: _body,
-            } => panic!("cannot use Lookup within the `assert`"),
-            Expr::ToN { body: _body } => panic!("cannot use toN within the `assert`"),
-            Expr::ToF { body: _body } => panic!("cannot use toF within the `assert`"),
-            Expr::UtoS { body: _body } => panic!("cannot use UtoS within the `assert`"),
-            Expr::StoU { body: _body } => panic!("cannot use StoU within the `assert`"),
+            Expr::App { .. } | Expr::Branch { .. } => {
+                todo!(
+                    "currently unsupported construct inside `assert`: {:?}",
+                    &self
+                )
+            }
+            Expr::LetIn { .. }
+            | Expr::Lookup { .. }
+            | Expr::Lam { .. }
+            | Expr::Len { .. }
+            | Expr::ToN { .. }
+            | Expr::ToF { .. }
+            | Expr::UtoS { .. }
+            | Expr::StoU { .. } => panic!("invalid construct inside `assert`: {:?}", &self),
+            Expr::Arr { .. }
+            | Expr::ConstN { .. }
+            | Expr::ConstInt { .. }
+            | Expr::ConstBool { .. }
+            | Expr::AssertE { .. }
+            | Expr::BoolExpr { .. }
+            | Expr::UintExpr { .. }
+            | Expr::SintExpr { .. }
+            | Expr::BinRel { .. } => panic!("invalid expression inside `assert`: {:?}", &self),
         }
     }
 }
@@ -581,7 +549,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 } = &*cond
                 {
                     if th.is_dummy_assert() {
-                        panic!("then-statement should be dummy assert: (assert(true, true))");
+                        panic!("then-statement should be a dummy assert: (assert(true, true))");
                     }
                     if let Expr::ConstF { val } = &**rhs {
                         if *val == 0 {
