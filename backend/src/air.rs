@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use p3_air::{Air, AirBuilder, AirBuilderWithPublicValues, BaseAir, PairBuilder, VirtualPairCol};
+use p3_air::{Air, AirBuilder, AirBuilderWithPublicValues, BaseAir, PairBuilder};
 use p3_field::{Field, PrimeCharacteristicRing};
-use p3_koala_bear::KoalaBear;
-use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::Matrix;
 
 use crate::ast::{walkthrough_ast, BoundaryInfo, Expr};

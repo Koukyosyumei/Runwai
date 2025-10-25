@@ -2,9 +2,9 @@ use core::panic;
 use std::path::Path;
 use std::{collections::HashMap, fs};
 
-use p3_air::{AirBuilder, FilteredAirBuilder};
+use p3_air::AirBuilder;
 use p3_field::{Field, PrimeCharacteristicRing};
-use serde::{de::value::Error, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /* ======== Operators ======== */
 #[derive(Debug, Clone, Serialize, Deserialize)]
