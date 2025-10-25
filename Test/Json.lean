@@ -19,7 +19,7 @@ example : (Ast.Value.vBool true) ≠ (Ast.Value.vBool false) := by simp_all
 #eval exprToJson (.letIn "u₀" (.branch (Ast.exprEq (.var "i") (.constN 0))
                           (.assertE (Ast.trace_i_j "trace" "i" 0) (.constF 0))
                           (.assertE (.constF 1) (.constF 1)))
-          (.letIn "u₁" (.branch (.binRel (.var "i") Ast.RelOp.lt (.uintExpr (.var "n") Ast.IntOp.sub (.constN 1)))
+          (.letIn "u₁" (.branch (.binRel (.var "i") Ast.RelOp.lt (.uintExpr (.var "@n") Ast.IntOp.sub (.constN 1)))
                           (.assertE (Ast.trace_ip1_j "trace" "i" 0) (.fieldExpr (Ast.trace_i_j "trace" "i" 0) .add (.constF 1)))
                           (.assertE (.constF 1) (.constF 1)))
            (.var "u₁")))
