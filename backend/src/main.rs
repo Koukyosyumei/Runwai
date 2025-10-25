@@ -8,7 +8,7 @@ use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::Matrix;
 use p3_uni_stark::{get_symbolic_constraints, SymbolicExpression};
 
-use runwai_p3::ast::{walkthrough_ast, Expr};
+use runwai_p3::ast::{walkthrough_ast, Expr, When};
 
 #[derive(Clone)]
 pub struct RunwaiAir<F>
@@ -52,6 +52,7 @@ where
             &load_var,
             &"trace".to_string(),
             &"i".to_string(),
+            When::All,
         );
     }
 }
@@ -68,7 +69,7 @@ impl<F: Field> RunwaiAir<F> {
 
 fn main() {
     let expr = Expr::from_json_file("expr.json").unwrap();
-    println!("{:#?}", expr);
+    //println!("{:#?}", expr);
 
     let air = RunwaiAir::<KoalaBear>::new(expr, 2);
     let symbolic_constraints = get_symbolic_constraints(&air, 0, 0);

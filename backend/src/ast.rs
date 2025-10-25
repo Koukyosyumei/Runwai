@@ -344,6 +344,14 @@ impl Expr {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum When {
+    IsFirst,
+    IsLast,
+    IsTransition,
+    All,
+}
+
 pub fn walkthrough_ast<AB: AirBuilder>(
     builder: &mut AB,
     env: &mut HashMap<String, Expr>,
@@ -351,17 +359,22 @@ pub fn walkthrough_ast<AB: AirBuilder>(
     colid_to_var_fn: &dyn Fn(bool, usize) -> AB::Var,
     trace_name: &String,
     row_index_name: &String,
+    when: When,
 ) where
     AB::F: Field + PrimeCharacteristicRing,
 {
-    println!("{:?}", expr);
     match expr {
         Expr::AssertE { lhs, rhs } => {
             let lhs_ab: AB::Expr =
                 lhs.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
             let rhs_ab: AB::Expr =
                 rhs.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
-            builder.assert_eq(lhs_ab, rhs_ab);
+            match when {
+                When::IsFirst => builder.when_first_row().assert_eq(lhs_ab, rhs_ab),
+                When::IsLast => builder.when_last_row().assert_eq(lhs_ab, rhs_ab),
+                When::IsTransition => builder.when_transition().assert_eq(lhs_ab, rhs_ab),
+                When::All => builder.assert_eq(lhs_ab, rhs_ab),
+            }
         }
         Expr::Branch { cond, th, els } => {
             if let Expr::BinRel { lhs, op, rhs } = &*cond {
@@ -371,7 +384,6 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                             if name == row_index_name {
                                 if let Expr::ConstN { val } = &**rhs {
                                     if *val == 0 {
-                                        //let mut when = builder.when_first_row();
                                         walkthrough_ast(
                                             builder,
                                             env,
@@ -379,6 +391,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                                             colid_to_var_fn,
                                             trace_name,
                                             row_index_name,
+                                            When::IsFirst,
                                         );
                                     }
                                 }
@@ -405,6 +418,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                                                     colid_to_var_fn,
                                                     trace_name,
                                                     row_index_name,
+                                                    When::IsTransition,
                                                 );
                                             }
                                         }
@@ -416,9 +430,9 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     RelOp::Le => todo!(),
                 }
             } else {
+                /*
                 let cond_ab: AB::Expr =
                     cond.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
-                /*
                 let mut when = builder.when(cond_ab.clone());
                 walkthrough_ast(
                     &mut when,
@@ -448,6 +462,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 colid_to_var_fn,
                 trace_name,
                 row_index_name,
+                when.clone(),
             );
             env.insert(name, *val);
             walkthrough_ast(
@@ -457,6 +472,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 colid_to_var_fn,
                 trace_name,
                 row_index_name,
+                when,
             );
         }
         Expr::Lookup {
