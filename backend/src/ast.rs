@@ -2,7 +2,7 @@ use core::panic;
 use std::path::Path;
 use std::{collections::HashMap, fs};
 
-use p3_air::AirBuilder;
+use p3_air::{AirBuilder, FilteredAirBuilder};
 use p3_field::{Field, PrimeCharacteristicRing};
 use serde::{de::value::Error, Deserialize, Serialize};
 
@@ -360,6 +360,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
     trace_name: &String,
     row_index_name: &String,
     when: When,
+    mut conditions: &mut Vec<(bool, AB::Expr)>,
 ) where
     AB::F: Field + PrimeCharacteristicRing,
 {
@@ -369,6 +370,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 lhs.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
             let rhs_ab: AB::Expr =
                 rhs.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
+
             match when {
                 When::IsFirst => builder.when_first_row().assert_eq(lhs_ab, rhs_ab),
                 When::IsLast => builder.when_last_row().assert_eq(lhs_ab, rhs_ab),
@@ -392,6 +394,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                                             trace_name,
                                             row_index_name,
                                             When::IsFirst,
+                                            &mut conditions,
                                         );
                                     }
                                 }
@@ -419,6 +422,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                                                     trace_name,
                                                     row_index_name,
                                                     When::IsTransition,
+                                                    &mut conditions,
                                                 );
                                             }
                                         }
@@ -430,28 +434,32 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     RelOp::Le => todo!(),
                 }
             } else {
-                /*
                 let cond_ab: AB::Expr =
                     cond.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
-                let mut when = builder.when(cond_ab.clone());
+                let mut conditions_ne = conditions.clone();
+                conditions.push((true, cond_ab.clone()));
+                conditions_ne.push((false, cond_ab));
+
                 walkthrough_ast(
-                    &mut when,
+                    builder,
                     env,
                     *th,
                     colid_to_var_fn,
                     trace_name,
                     row_index_name,
+                    when.clone(),
+                    conditions,
                 );
-                let mut when_ne = builder.when_ne(cond_ab, AB::Expr::ZERO);
                 walkthrough_ast(
-                    &mut when_ne,
+                    builder,
                     env,
                     *els,
                     colid_to_var_fn,
                     trace_name,
                     row_index_name,
+                    when,
+                    &mut conditions_ne,
                 );
-                */
             }
         }
         Expr::LetIn { name, val, body } => {
@@ -463,6 +471,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 trace_name,
                 row_index_name,
                 when.clone(),
+                &mut conditions,
             );
             env.insert(name, *val);
             walkthrough_ast(
@@ -473,6 +482,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 trace_name,
                 row_index_name,
                 when,
+                &mut conditions,
             );
         }
         Expr::Lookup {

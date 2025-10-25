@@ -44,6 +44,7 @@ where
         };
 
         let mut env = HashMap::<String, Expr>::new();
+        let mut conditiosn = vec![];
 
         walkthrough_ast(
             builder,
@@ -53,6 +54,7 @@ where
             &"trace".to_string(),
             &"i".to_string(),
             When::All,
+            &mut conditiosn,
         );
     }
 }
