@@ -1,6 +1,5 @@
 use p3_koala_bear::KoalaBear;
-use p3_matrix::dense::RowMajorMatrix;
-use p3_uni_stark::{get_symbolic_constraints, SymbolicExpression};
+use p3_uni_stark::get_symbolic_constraints;
 
 use runwai_p3::air::RunwaiAir;
 use runwai_p3::ast::Expr;
