@@ -8,10 +8,6 @@ license = "GPL-3.0"
 repository = "https://github.com/Koukyosyumei/Runwai"
 keywords = ["formal method", "security", "zero-knowledge-proof", "zkp"]
 
-[[bin]]
-name = "runwai_p3"
-path = "src/main.rs"
-
 [dependencies]
 serde = {version = "1.0.228", features = ["derive"]}
 serde_json = "1.0.145"
