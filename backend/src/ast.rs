@@ -354,6 +354,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
 ) where
     AB::F: Field + PrimeCharacteristicRing,
 {
+    println!("{:?}", expr);
     match expr {
         Expr::AssertE { lhs, rhs } => {
             let lhs_ab: AB::Expr =
@@ -363,32 +364,61 @@ pub fn walkthrough_ast<AB: AirBuilder>(
             builder.assert_eq(lhs_ab, rhs_ab);
         }
         Expr::Branch { cond, th, els } => {
-            if let Expr::BinRel {
-                lhs,
-                op: RelOp::Eq,
-                rhs,
-            } = &*cond
-            {
-                if let Expr::Var { name } = &**lhs {
-                    if name == row_index_name {
-                        if let Expr::ConstN { val } = &**rhs {
-                            if *val == 0 {
-                                let mut when = builder.when_first_row();
-                                walkthrough_ast(
-                                    &mut when,
-                                    env,
-                                    *th,
-                                    colid_to_var_fn,
-                                    trace_name,
-                                    row_index_name,
-                                );
+            if let Expr::BinRel { lhs, op, rhs } = &*cond {
+                match op {
+                    RelOp::Eq => {
+                        if let Expr::Var { name } = &**lhs {
+                            if name == row_index_name {
+                                if let Expr::ConstN { val } = &**rhs {
+                                    if *val == 0 {
+                                        //let mut when = builder.when_first_row();
+                                        walkthrough_ast(
+                                            builder,
+                                            env,
+                                            *th,
+                                            colid_to_var_fn,
+                                            trace_name,
+                                            row_index_name,
+                                        );
+                                    }
+                                }
                             }
                         }
                     }
+                    RelOp::Lt => {
+                        if let Expr::Var { name } = &**lhs {
+                            if name == row_index_name {
+                                if let Expr::UintExpr {
+                                    lhs,
+                                    op: IntOp::Sub,
+                                    rhs,
+                                } = &**rhs
+                                {
+                                    if let Expr::Var { name } = &**lhs {
+                                        if let Expr::ConstN { val } = &**rhs {
+                                            if name == "n" && *val == 1 {
+                                                //let mut when = builder.when_first_row();
+                                                walkthrough_ast(
+                                                    builder,
+                                                    env,
+                                                    *th,
+                                                    colid_to_var_fn,
+                                                    trace_name,
+                                                    row_index_name,
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    RelOp::Le => todo!(),
                 }
             } else {
                 let cond_ab: AB::Expr =
                     cond.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name);
+                /*
                 let mut when = builder.when(cond_ab.clone());
                 walkthrough_ast(
                     &mut when,
@@ -398,15 +428,16 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     trace_name,
                     row_index_name,
                 );
-                let mut when = builder.when_ne(cond_ab, AB::Expr::ZERO);
+                let mut when_ne = builder.when_ne(cond_ab, AB::Expr::ZERO);
                 walkthrough_ast(
-                    &mut when,
+                    &mut when_ne,
                     env,
                     *els,
                     colid_to_var_fn,
                     trace_name,
                     row_index_name,
                 );
+                */
             }
         }
         Expr::LetIn { name, val, body } => {

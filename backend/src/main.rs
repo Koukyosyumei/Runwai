@@ -3,8 +3,10 @@ use std::marker::PhantomData;
 
 use p3_air::{Air, AirBuilder, AirBuilderWithPublicValues, BaseAir, PairBuilder, VirtualPairCol};
 use p3_field::{Field, PrimeCharacteristicRing};
+use p3_koala_bear::KoalaBear;
 use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::Matrix;
+use p3_uni_stark::{get_symbolic_constraints, SymbolicExpression};
 
 use runwai_p3::ast::{walkthrough_ast, Expr};
 
@@ -42,6 +44,7 @@ where
         };
 
         let mut env = HashMap::<String, Expr>::new();
+
         walkthrough_ast(
             builder,
             &mut env,
@@ -66,4 +69,10 @@ impl<F: Field> RunwaiAir<F> {
 fn main() {
     let expr = Expr::from_json_file("expr.json").unwrap();
     println!("{:#?}", expr);
+
+    let air = RunwaiAir::<KoalaBear>::new(expr, 2);
+    let symbolic_constraints = get_symbolic_constraints(&air, 0, 0);
+    for sc in &symbolic_constraints {
+        println!("{:?}", sc);
+    }
 }

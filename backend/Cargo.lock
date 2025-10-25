@@ -197,6 +197,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "p3-koala-bear"
+version = "0.3.0"
+source = "git+https://github.com/Plonky3/Plonky3#a33a31274a5e78bb5fbe3f82ffd2c294e17fa830"
+dependencies = [
+ "p3-field",
+ "p3-monty-31",
+ "p3-poseidon2",
+ "p3-symmetric",
+ "rand",
+]
+
+[[package]]
 name = "p3-matrix"
 version = "0.3.0"
 source = "git+https://github.com/Plonky3/Plonky3#a33a31274a5e78bb5fbe3f82ffd2c294e17fa830"
@@ -373,6 +385,7 @@ dependencies = [
  "p3-field",
  "p3-fri",
  "p3-keccak",
+ "p3-koala-bear",
  "p3-matrix",
  "p3-maybe-rayon",
  "p3-merkle-tree",
