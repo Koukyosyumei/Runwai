@@ -21,7 +21,6 @@ def main (args : List String) : IO UInt32 := do
     pure 1
 
 where
-  /-- 実際の処理部分 -/
   processFile (filePath : String) (outDir : String) : IO UInt32 := do
     let content ← FS.readFile filePath
 
