@@ -1,0 +1,60 @@
+{"val":
+ {"kind": "ArrIdx",
+  "idx": {"val": 0, "kind": "ConstN"},
+  "arr":
+  {"kind": "ArrIdx",
+   "idx": {"name": "i", "kind": "Var"},
+   "arr": {"name": "trace", "kind": "Var"}}},
+ "name": "x",
+ "kind": "LetIn",
+ "body":
+ {"val":
+  {"kind": "ArrIdx",
+   "idx": {"val": 1, "kind": "ConstN"},
+   "arr":
+   {"kind": "ArrIdx",
+    "idx": {"name": "i", "kind": "Var"},
+    "arr": {"name": "trace", "kind": "Var"}}},
+  "name": "y",
+  "kind": "LetIn",
+  "body":
+  {"val":
+   {"kind": "ArrIdx",
+    "idx": {"val": 2, "kind": "ConstN"},
+    "arr":
+    {"kind": "ArrIdx",
+     "idx": {"name": "i", "kind": "Var"},
+     "arr": {"name": "trace", "kind": "Var"}}},
+   "name": "inv",
+   "kind": "LetIn",
+   "body":
+   {"val":
+    {"rhs":
+     {"rhs": {"val": 1, "kind": "ConstF"},
+      "op": "add",
+      "lhs":
+      {"rhs": {"name": "inv", "kind": "Var"},
+       "op": "mul",
+       "lhs":
+       {"rhs": {"name": "x", "kind": "Var"},
+        "op": "sub",
+        "lhs": {"val": 0, "kind": "ConstF"},
+        "kind": "FieldExpr"},
+       "kind": "FieldExpr"},
+      "kind": "FieldExpr"},
+     "lhs": {"name": "y", "kind": "Var"},
+     "kind": "AssertE"},
+    "name": "u₁",
+    "kind": "LetIn",
+    "body":
+    {"val":
+     {"rhs": {"val": 0, "kind": "ConstF"},
+      "lhs":
+      {"rhs": {"name": "y", "kind": "Var"},
+       "op": "mul",
+       "lhs": {"name": "x", "kind": "Var"},
+       "kind": "FieldExpr"},
+      "kind": "AssertE"},
+     "name": "u₂",
+     "kind": "LetIn",
+     "body": {"name": "u₂", "kind": "Var"}}}}}}

@@ -14,6 +14,8 @@ import Runwai.Tactic
   let u₂ = assert_eq(x*y, Fp 0) in u₂
 }
 
+#runwai_compile_to_json IsZero
+
 #runwai_register chip Lookup(trace, i, 2) -> {Unit| trace [i][0] == Fp 2} {
   let u = lookup Assert1(trace [i][0] : trace [i][1]) in u
 }

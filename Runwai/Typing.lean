@@ -1,5 +1,5 @@
-import Init.Data.List.Basic
-import Init.Data.List.Find
+--import Init.Data.List.Basic
+--import Init.Data.List.Find
 import Mathlib.Data.List.Basic
 
 import Runwai.Ast
@@ -21,10 +21,21 @@ import Runwai.PropSemantics
 
 namespace Ty
 
+
+@[simp]
 abbrev branchLabel      : String := "@branch"
+
+@[simp]
 abbrev indBaseLabel     : String := "@ind_base"
+
+@[simp]
 abbrev indStepPrevLabel : String := "@ind_step_prev"
+
+@[simp]
 abbrev indStepEqKLabel  : String := "@ind_step_eq_k"
+
+@[simp]
+abbrev heightLabel      : String := "@n"
 
 /--
   Subtyping judgment between two optional types `τ₁ → τ₂`
@@ -245,7 +256,7 @@ def makeEnvs (c : Ast.Chip) (height: ℕ): Env.TyEnv :=
     c.ident_t (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constN height)))))
     c.ident_i (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN height)))))
-    "n" (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
+    heightLabel (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
 
 /--
 Check of the structure of a trace. It ensures the trace is a 2D array

@@ -597,11 +597,6 @@ lemma eval_var_eq_int (h: Eval.EvalProp σ T Δ (Ast.exprEq (Ast.Expr.var x) (As
       }
   }
 
-/-
-Eval.EvalProp σ T Δ
-  ((Ast.Expr.lam Ast.nu Ast.Ty.uint (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))).app (Ast.Expr.var "n"))
-  (Ast.Value.vBool true)
--/
 lemma eval_app_lam_eq_int (h: Eval.EvalProp σ T Δ
   ((Ast.Expr.lam x Ast.Ty.uint (Ast.exprEq (Ast.Expr.var x) (Ast.Expr.constN v))).app (Ast.Expr.var y))
   (Ast.Value.vBool true)):

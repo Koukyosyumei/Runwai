@@ -1,4 +1,4 @@
-import Init.Prelude
+--import Init.Prelude
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.Algebra.Field.Basic
 import Mathlib.Data.ZMod.Basic
@@ -30,7 +30,7 @@ instance : NeZero p := ⟨by
 /-- `F` is the prime field of order `p`, assuming `p` is prime. -/
 abbrev F := ZMod p
 instance [Fact p.Prime] : Field F := ZMod.instField p
-instance [Fact p.Prime] : Fintype F := ZMod.fintype p
+--instance [Fact p.Prime] : Fintype F := ZMod.fintype p
 instance [Fact p.Prime] : Inhabited F := ⟨0⟩
 instance : CommRing F := ZMod.commRing p
 instance : Repr F where

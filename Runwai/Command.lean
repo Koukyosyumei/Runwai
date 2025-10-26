@@ -4,12 +4,14 @@ import Lean.Parser
 import Lean.Elab
 
 import Runwai.Parser
+import Runwai.Json
 
 open Lean Parser
 open Lean Meta
 
 syntax (name := runwai_register) "#runwai_register" runwai_chip : command
 syntax (name := runwai_check) "#runwai_check" ident : command
+syntax (name := runwai_compile_to_json) "#runwai_compile_to_json" ident : command
 syntax (name := runwai_prove) "#runwai_prove" ident ident ":=" "by" tacticSeq: command
 
 builtin_initialize tempChipRef : IO.Ref (Option Ast.Chip) ← IO.mkRef none
@@ -31,6 +33,15 @@ unsafe def elabLodaChipCheck : Elab.Command.CommandElab
     let Δ ← Elab.Command.liftCoreM Env.getChipEnv
     let circ := Env.getChip Δ cName.getId.toString
     logInfo m!"{repr circ}"
+  | _ => Elab.throwUnsupportedSyntax
+
+@[command_elab runwai_compile_to_json]
+unsafe def elabLodaChipToJson : Elab.Command.CommandElab
+  | `(command| #runwai_compile_to_json $cName:ident) => do
+    let Δ ← Elab.Command.liftCoreM Env.getChipEnv
+    let circ := Env.getChip Δ cName.getId.toString
+    let result := exprToJson circ.body
+    logInfo m!"{result}"
   | _ => Elab.throwUnsupportedSyntax
 
 @[command_elab runwai_prove]

@@ -1,4 +1,3 @@
-import Lean
 import Runwai.Ast
 
 open Lean PrettyPrinter Delaborator SubExpr
@@ -129,12 +128,6 @@ def unexpPredInd : Unexpander
 def unexpPredDep : Unexpander
   | `($_ $e) => `($e)
   | _        => throw ()
-
-@[app_unexpander Ast.Ty.unknown]
-def unexpTyUnknown : Unexpander
-  | `($_) =>
-    let id := mkIdent (Name.mkSimple "unknown")
-    `($id)
 
 @[app_unexpander Ast.Ty.unit]
 def unexpTyUnit : Unexpander

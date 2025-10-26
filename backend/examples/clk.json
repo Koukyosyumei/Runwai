@@ -1,0 +1,66 @@
+{"val":
+ {"th":
+  {"rhs": {"val": 0, "kind": "ConstF"},
+   "lhs":
+   {"kind": "ArrIdx",
+    "idx": {"val": 0, "kind": "ConstN"},
+    "arr":
+    {"kind": "ArrIdx",
+     "idx": {"name": "i", "kind": "Var"},
+     "arr": {"name": "trace", "kind": "Var"}}},
+   "kind": "AssertE"},
+  "kind": "Branch",
+  "els":
+  {"rhs": {"val": 1, "kind": "ConstF"},
+   "lhs": {"val": 1, "kind": "ConstF"},
+   "kind": "AssertE"},
+  "cond":
+  {"rhs": {"val": 0, "kind": "ConstN"},
+   "op": "eq",
+   "lhs": {"name": "i", "kind": "Var"},
+   "kind": "BinRel"}},
+ "name": "u₀",
+ "kind": "LetIn",
+ "body":
+ {"val":
+  {"th":
+   {"rhs":
+    {"rhs": {"val": 1, "kind": "ConstF"},
+     "op": "add",
+     "lhs":
+     {"kind": "ArrIdx",
+      "idx": {"val": 0, "kind": "ConstN"},
+      "arr":
+      {"kind": "ArrIdx",
+       "idx": {"name": "i", "kind": "Var"},
+       "arr": {"name": "trace", "kind": "Var"}}},
+     "kind": "FieldExpr"},
+    "lhs":
+    {"kind": "ArrIdx",
+     "idx": {"val": 0, "kind": "ConstN"},
+     "arr":
+     {"kind": "ArrIdx",
+      "idx":
+      {"rhs": {"val": 1, "kind": "ConstN"},
+       "op": "add",
+       "lhs": {"name": "i", "kind": "Var"},
+       "kind": "UintExpr"},
+      "arr": {"name": "trace", "kind": "Var"}}},
+    "kind": "AssertE"},
+   "kind": "Branch",
+   "els":
+   {"rhs": {"val": 1, "kind": "ConstF"},
+    "lhs": {"val": 1, "kind": "ConstF"},
+    "kind": "AssertE"},
+   "cond":
+   {"rhs":
+    {"rhs": {"val": 1, "kind": "ConstN"},
+     "op": "sub",
+     "lhs": {"name": "n", "kind": "Var"},
+     "kind": "UintExpr"},
+    "op": "lt",
+    "lhs": {"name": "i", "kind": "Var"},
+    "kind": "BinRel"}},
+  "name": "u₁",
+  "kind": "LetIn",
+  "body": {"name": "u₁", "kind": "Var"}}}
