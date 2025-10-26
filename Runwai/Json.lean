@@ -1,4 +1,3 @@
-import Lean
 import Lean.Data.Json.Basic
 import Runwai.Ast
 

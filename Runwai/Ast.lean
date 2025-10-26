@@ -2,7 +2,6 @@ import Mathlib.Algebra.Field.ZMod
 import Mathlib.Algebra.Field.Basic
 import Mathlib.Data.ZMod.Basic
 
-import Lean
 import Lean.Meta
 import Lean.Elab.Command
 

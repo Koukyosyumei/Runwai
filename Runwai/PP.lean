@@ -1,4 +1,3 @@
-import Lean
 import Runwai.Ast
 
 open Lean PrettyPrinter Delaborator SubExpr

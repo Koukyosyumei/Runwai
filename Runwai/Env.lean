@@ -1,6 +1,5 @@
 import Std.Data.HashMap.Basic
 
-import Lean
 import Lean.Elab
 import Lean.Meta
 

@@ -1,5 +1,5 @@
-import Init.Data.List.Basic
-import Init.Data.List.Find
+--import Init.Data.List.Basic
+--import Init.Data.List.Find
 import Mathlib.Data.List.Basic
 
 import Runwai.Ast

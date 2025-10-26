@@ -1,4 +1,3 @@
-import Lean
 import Lean.Meta
 import Lean.Elab.Command
 import Lean.Parser
@@ -9,6 +8,7 @@ import Runwai.Typing
 import Runwai.Field
 import Runwai.Env
 import Runwai.Eval
+import Runwai.Json
 
 open Lean Parser
 open Lean Meta
@@ -140,7 +140,7 @@ namespace Frontend
 
 mutual
 /-- Given a `Syntax` of category `runwai_ty`, return the corresponding `Ast.Ty`. -/
-unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
+partial def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
   match stx with
 
   -- Field and Bool
@@ -187,7 +187,7 @@ unsafe def elaborateType (stx : Syntax) : MetaM Ast.Ty := do
 
   | _ => throwError "unsupported type syntax: {stx}"
 
-unsafe def elaborateExprPair (stx : Syntax) : MetaM (Ast.Expr × Ast.Expr) := do
+partial def elaborateExprPair (stx : Syntax) : MetaM (Ast.Expr × Ast.Expr) := do
   match stx with
   | `(pair| $left:runwai_expr : $right:runwai_expr) => do
     let left' ← elaborateExpr left
@@ -200,7 +200,7 @@ unsafe def elaborateExprPair (stx : Syntax) : MetaM (Ast.Expr × Ast.Expr) := do
   `elaborateExpr` turns a `Syntax` node of category `runwai_expr` into an `Ast.Expr`.
   We match eagerly on every concrete‐syntax pattern we declared above.
 -/
-unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
+partial def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
   match stx with
   | `(runwai_expr| $n:num) => do
     let v := n.getNat
@@ -390,7 +390,7 @@ unsafe def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
 end
 
 /-- Helper: elaborate a single parameter syntax `(x : T)` into `(String × Ast.Ty)`. -/
-unsafe def elaborateParam (stx : Syntax) : MetaM (String × Ast.Ty) := do
+partial def elaborateParam (stx : Syntax) : MetaM (String × Ast.Ty) := do
   match stx with
   | `(runwai_param| $x:ident : $T:runwai_ty) => do
       let T' ← elaborateType T
@@ -400,7 +400,7 @@ unsafe def elaborateParam (stx : Syntax) : MetaM (String × Ast.Ty) := do
 
 -- Chip A (x1, x2, …, xn) -> T {body}
 /-- Given a single `runwai_chip` syntax, produce an `Ast.Chip`. -/
-unsafe def elaborateChip (stx : Syntax) : MetaM Ast.Chip := do
+partial def elaborateChip (stx : Syntax) : MetaM Ast.Chip := do
   match stx with
   | `(runwai_chip| chip $name:ident ( $ident_t:ident, $ident_i:ident, $width:num ) -> $goal:runwai_ty { $body:runwai_expr } ) => do
       let goal'    ← elaborateType goal
@@ -416,23 +416,19 @@ unsafe def elaborateChip (stx : Syntax) : MetaM Ast.Chip := do
   | _ => throwError "invalid `Chip …` syntax: {stx}"
 
 /-- A “file” of Loda is one or more `Chip` declarations. -/
-unsafe def elabLodaFile (stx : Syntax) : MetaM (Array Ast.Chip) := do
+partial def elabLodaFile (stx : Syntax) : MetaM (Array Ast.Chip) := do
   match stx with
   | `(runwai_file| $[$cs:runwai_chip]*) =>
       cs.mapM fun c => elaborateChip c
   | _ => throwError "invalid Loda file syntax"
 
-/--
-  If you ever want to parse a string in MetaM (outside of the “command” front‐end),
-  you can do something like this:
--/
-unsafe def parseLodaProgram (content : String) : MetaM (List Ast.Chip) := do
+partial def parseRunwaiProgram (content : String) : MetaM (List Ast.Chip) := do
   let env ← getEnv
   let fname := `anonymous
   match Lean.Parser.runParserCategory env `runwai_file content fname.toString with
   | Except.error err => throwError err
   | Except.ok stx   =>
-      let cs ← elabLodaFile stx
+      let cs ← Frontend.elabLodaFile stx
       pure cs.toList
 
 end Frontend
