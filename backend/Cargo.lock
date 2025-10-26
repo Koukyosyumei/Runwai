@@ -113,6 +113,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "p3-circle"
+version = "0.3.0"
+source = "git+https://github.com/Plonky3/Plonky3#a33a31274a5e78bb5fbe3f82ffd2c294e17fa830"
+dependencies = [
+ "itertools",
+ "p3-challenger",
+ "p3-commit",
+ "p3-dft",
+ "p3-field",
+ "p3-fri",
+ "p3-matrix",
+ "p3-maybe-rayon",
+ "p3-util",
+ "serde",
+ "tracing",
+]
+
+[[package]]
 name = "p3-commit"
 version = "0.3.0"
 source = "git+https://github.com/Plonky3/Plonky3#a33a31274a5e78bb5fbe3f82ffd2c294e17fa830"
@@ -258,6 +276,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "p3-mersenne-31"
+version = "0.3.0"
+source = "git+https://github.com/Plonky3/Plonky3#a33a31274a5e78bb5fbe3f82ffd2c294e17fa830"
+dependencies = [
+ "itertools",
+ "num-bigint",
+ "p3-dft",
+ "p3-field",
+ "p3-matrix",
+ "p3-mds",
+ "p3-poseidon2",
+ "p3-symmetric",
+ "p3-util",
+ "paste",
+ "rand",
+ "serde",
+]
+
+[[package]]
 name = "p3-monty-31"
 version = "0.3.0"
 source = "git+https://github.com/Plonky3/Plonky3#a33a31274a5e78bb5fbe3f82ffd2c294e17fa830"
@@ -380,6 +417,7 @@ dependencies = [
  "p3-air",
  "p3-baby-bear",
  "p3-challenger",
+ "p3-circle",
  "p3-commit",
  "p3-dft",
  "p3-field",
@@ -389,6 +427,7 @@ dependencies = [
  "p3-matrix",
  "p3-maybe-rayon",
  "p3-merkle-tree",
+ "p3-mersenne-31",
  "p3-poseidon2",
  "p3-symmetric",
  "p3-uni-stark",
