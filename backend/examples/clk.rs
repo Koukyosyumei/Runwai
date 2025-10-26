@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use p3_challenger::{HashChallenger, SerializingChallenger32};
 use p3_circle::CirclePcs;
 use p3_commit::ExtensionMmcs;
@@ -29,7 +27,7 @@ pub fn generate_fibonacci_trace<F: Field>(num_steps: usize) -> RowMajorMatrix<F>
 }
 
 fn main() {
-    type Val = Mersenne31;
+    type Val = Mersenne31; // TODO: Change to KoalaBear
     type Challenge = BinomialExtensionField<Val, 3>;
 
     type ByteHash = Keccak256Hash;
