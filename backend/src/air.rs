@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 use p3_air::{Air, AirBuilder, AirBuilderWithPublicValues, BaseAir, PairBuilder};
 use p3_field::{Field, PrimeCharacteristicRing};
 use p3_matrix::Matrix;
+use p3_uni_stark::SymbolicAirBuilder;
 
 use crate::ast::{walkthrough_ast, BoundaryInfo, Expr};
 
@@ -23,7 +24,7 @@ impl<F: Field> BaseAir<F> for RunwaiAir<F> {
     }
 }
 
-impl<AB: AirBuilderWithPublicValues + PairBuilder> Air<AB> for RunwaiAir<AB::F>
+impl<AB: AirBuilderWithPublicValues> Air<AB> for RunwaiAir<AB::F>
 where
     AB::F: Field + PrimeCharacteristicRing,
 {

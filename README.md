@@ -13,7 +13,7 @@ Runwai is a refinement-typed DSL for certified AIR constraints in zero-knowledge
 
 ## Quickstart
 
-- AIR Constraint
+- Define a Constraint
 
 ```haskell
 #runwai_register chip IsZero(trace, i, 3) -> {Unit| y == if x == Fp 0 then {Fp 1} else {Fp 0}} {
@@ -25,7 +25,7 @@ Runwai is a refinement-typed DSL for certified AIR constraints in zero-knowledge
 }
 ```
 
-- Theorem
+- Prove Its Correctness
 
 ```haskell
 #runwai_prove IsZero := by {
@@ -38,19 +38,45 @@ Runwai is a refinement-typed DSL for certified AIR constraints in zero-knowledge
 }
 ```
 
+- Compile to JSON
+
+```bash
+lake exe runwai examples/iszero.rwai
+```
+
+- Integrate with Plonky3 Backend
+
+```rust
+use p3_uni_stark::{prove, verify};
+
+use runwai_p3::air::RunwaiAir;
+use runwai_p3::ast::Expr;
+
+let expr = Expr::from_json_file("examples/IsZero.json").unwrap();
+let air = RunwaiAir::<Val>::new(expr, 3);
+
+let proof = prove(&config, &air, trace, &vec![]);
+let result = verify(&config, &air, &proof, &vec![]);
+```
+
 ## Why use Runwai?
 
-Developing zero-knowledge (ZK) circuits is notoriously challenging. Standard approaches, such as directly writing Algebraic Intermediate Representation (AIR) constraints in zkVM frameworks like Plonky3, require encoding low-level, row-by-row polynomial relations. This process is error-prone, unintuitive, and makes reasoning about correctness extremely difficult, especially for complex programs.
+Designing a zero-knowledge proof (ZKP) application is notoriously complex. Developers must not only express computations as field polynomial constraints but also ensure their correctness and efficiency. Existing domain-specific languages (DSLs) for ZK circuits force users into a painful trade-off between **efficiency**, **simplicity**, and **safety** — but Runwai aims to deliver all three.
 
-Runwai addresses these challenges by providing a **refinement-typed, high-level DSL for AIR circuits**. Here’s why Runwai stands out:
+### 🧩 The Problem: The ZK DSL Trilemma
 
-* 🏗️ **High-level abstraction for AIR constraints**
-  Runwai lets you express constraints over execution traces directly, without manually handling low-level matrix operations. This makes programs easier to write, read, and maintain.
+Most ZK languages fall into one of three unsatisfying paths:
 
-* ✅ **Refinement types for correctness guarantees**
-  Runwai’s type system allows developers to formally specify and statically verify circuit properties. This reduces the risk of subtle bugs that could compromise the security of ZK proofs.
+- **The Path of Efficiency**: Low-level DSLs offer fine-grained control over arithmetic constraints, achieving high performance. However, reasoning about correctness (e.g., $1 / 2 = 4 \bmod 7$) becomes unintuitive and error-prone.
 
-* 📚 **Concise and readable syntax**
-  Compared to traditional AIR implementations, Runwai programs are shorter, more expressive, and easier to understand.
+- **The Path of Simplicity**: High-level DSLs provide a familiar imperative style with automatic constraints generation, but they often generate bloated, unoptimized circuits — often 3×–300× slower than handcrafted ones.
 
-In short, Runwai allows ZK developers to **write correct, secure, and maintainable AIR circuits efficiently**, while benefiting from the guarantees of a strong, refinement-based type system.
+- **The Path of Safety**: Some DSLs naively integrate formal verification, but either lack support for modern zkVM primitives (like AIR and lookups) or introduce highly abstract semantics that are too difirent from standard languages and hard for normal programmers to learn.
+
+### 🧠 The Runwai Approach: Refinement-Typed ZK Constraints
+
+**Runwai** eliminates this trilemma with a refinement-typed DSL, offering low-level expressivity with an optional rigorous verification layer.
+
+- **Native AIR & Lookup Support** – Designed for modern zkVM, supporting algebraic intermediate representations (AIR) and lookup arguments as first-class primitives.
+- **Type-Integrated Specifications** – Correctness conditions are embedded directly in function types via refinement predicates, making specifications local, compositional, and intuitive.
+- **Interactive Theorem Proving** – Built on Lean 4, Runwai allows developers to formally prove properties of circuits within the same environment. Proofs can be assisted by automation yet remain fully inspectable and human-guided.
