@@ -15,7 +15,7 @@ lean_lib «Runwai» where
 lean_lib «Test» where
 
 @[default_target]
-lean_exe «runwai_cli» where
+lean_exe «runwai» where
   root := `Main
   supportInterpreter := true
   --supportInterpreter := true
