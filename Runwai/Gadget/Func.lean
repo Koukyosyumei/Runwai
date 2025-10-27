@@ -593,7 +593,7 @@ abbrev add_operation_func: Ast.Expr :=
     ))))))))))))))))))))))))))))))))
 
 lemma add_operation_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) :
-  @Ty.TypeJudgment Δ Γ Η koalabear_word_range_checker_func
+  @Ty.TypeJudgment Δ Γ Η add_operation_func
     (Ast.Ty.func "a_0" (field_lt_const 256)
     (Ast.Ty.func "a_1" (field_lt_const 256)
     (Ast.Ty.func "a_2" (field_lt_const 256)
@@ -615,5 +615,60 @@ lemma add_operation_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) 
                     .add
                     (pack_word_from_bytes "b_0" "b_1" "b_2" "b_3"))
         .eq (pack_word_from_bytes "value_0" "value_1" "value_2" "value_3"))))))))))))))))))) := by {
-      sorry
-    }
+    repeat
+      apply Ty.TypeJudgment.TE_Abs
+      apply get_update_self
+    repeat
+      apply Ty.TypeJudgment.TE_LetIn;
+      apply get_update_self;
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply get_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply get_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply get_update_ne
+      simp
+    repeat
+      apply Ty.TypeJudgment.TE_LetIn;
+      apply get_update_self;
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply get_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply get_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply get_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply get_update_ne
+      simp
+
+    repeat
+      apply Ty.TypeJudgment.TE_LetIn;
+      apply get_update_self;
+      apply Ty.TypeJudgment.TE_Assert
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply get_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_BinOpField
+      apply Ty.TypeJudgment.TE_VarEnv
+      apply get_update_ne
+      simp
+      apply Ty.TypeJudgment.TE_ConstF
+      apply Ty.TypeJudgment.TE_ConstF
+
+
+    apply Ty.TypeJudgment.TE_SUB
+    apply Ty.TypeJudgment.TE_VarEnv
+    apply get_update_self
+    sorry
+  }
