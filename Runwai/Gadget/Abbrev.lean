@@ -17,6 +17,11 @@ abbrev eq_mul_refinement (i₁ i₂ i₃: String): Ast.Ty := Ast.Ty.unit.refin
 abbrev field_lt_const (t: ℕ): Ast.Ty := (Ast.Ty.field.refin
 (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).toN.binRel Ast.RelOp.lt (Ast.Expr.constN t))))
 
+abbrev pack_word_from_bytes (v₀ v₁ v₂ v₃: String) : Ast.Expr := (.uintExpr (.uintExpr (.uintExpr
+          (.toN (.var v₀)) .add (.uintExpr (.toN (.var v₁)) .mul (.constN 256)))
+                                  .add (.uintExpr (.toN (.var v₂)) .mul (.constN (256^2))))
+                                  .add (.uintExpr (.toN (.var v₃)) .mul (.constN (256^3))))
+
 abbrev bits_to_byte_expr (i₀ i₁ i₂ i₃ i₄ i₅ i₆ i₇: String) : Ast.Expr :=
                                       ((((((((Ast.Expr.var i₀).fieldExpr Ast.FieldOp.add
                                                                 ((Ast.Expr.var i₁).fieldExpr

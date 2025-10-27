@@ -475,10 +475,7 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
     (Ast.Ty.func "and_most_sig_byte_decomp_0_to_6" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
     (Ast.Ty.func "and_most_sig_byte_decomp_0_to_7" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
       (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind
-        (.binRel (.uintExpr (.uintExpr (.uintExpr
-          (.toN (.var "value_0")) .add (.uintExpr (.toN (.var "value_1")) .mul (.constN 256)))
-                                  .add (.uintExpr (.toN (.var "value_2")) .mul (.constN (256^2))))
-                                  .add (.uintExpr (.toN (.var "value_3")) .mul (.constN (256^3))))
+        (.binRel (pack_word_from_bytes "value_0" "value_1" "value_2" "value_3")
         .lt (.constN 2130706433)))))))))))))))))))))) := by {
   repeat
     apply Ty.TypeJudgment.TE_Abs
@@ -558,3 +555,65 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
     apply get_update_ne
     simp
 }
+
+abbrev add_operation_func: Ast.Expr :=
+  (.lam "a_0" (field_lt_const 256)
+  (.lam "a_1" (field_lt_const 256)
+  (.lam "a_2" (field_lt_const 256)
+  (.lam "a_3" (field_lt_const 256)
+  (.lam "b_0" (field_lt_const 256)
+  (.lam "b_1" (field_lt_const 256)
+  (.lam "b_2" (field_lt_const 256)
+  (.lam "b_3" (field_lt_const 256)
+  (.lam "value_0" (field_lt_const 256)
+  (.lam "value_1" (field_lt_const 256)
+  (.lam "value_2" (field_lt_const 256)
+  (.lam "value_3" (field_lt_const 256)
+  (.lam "carry_0" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+  (.lam "carry_1" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+  (.lam "carry_2" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+    (.letIn "overflow_0" (.fieldExpr (.fieldExpr (.var "a_0") .add (.var "b_0")) .sub (.var "value_0"))
+    (.letIn "overflow_1" (.fieldExpr (.fieldExpr (.fieldExpr (.var "a_1") .add (.var "b_1")) .sub (.var "value_1")) .add (.var "value_0"))
+    (.letIn "overflow_2" (.fieldExpr (.fieldExpr (.fieldExpr (.var "a_2") .add (.var "b_2")) .sub (.var "value_2")) .add (.var "value_1"))
+    (.letIn "overflow_3" (.fieldExpr (.fieldExpr (.fieldExpr (.var "a_3") .add (.var "b_3")) .sub (.var "value_3")) .add (.var "value_2"))
+    (.letIn "u₀" (.assertE (.fieldExpr (.var "overflow_0") .mul (.fieldExpr (.var "overflow_0") .sub (.constF 256))) (.constF 0))
+    (.letIn "u₁" (.assertE (.fieldExpr (.var "overflow_1") .mul (.fieldExpr (.var "overflow_1") .sub (.constF 256))) (.constF 0))
+    (.letIn "u₂" (.assertE (.fieldExpr (.var "overflow_2") .mul (.fieldExpr (.var "overflow_2") .sub (.constF 256))) (.constF 0))
+    (.letIn "u₃" (.assertE (.fieldExpr (.var "overflow_3") .mul (.fieldExpr (.var "overflow_3") .sub (.constF 256))) (.constF 0))
+    (.letIn "u₄" (.assertE (.fieldExpr (.var "carry_0") .mul (.fieldExpr (.var "overflow_0") .sub (.constF 256))) (.constF 0))
+    (.letIn "u₅" (.assertE (.fieldExpr (.var "carry_1") .mul (.fieldExpr (.var "overflow_1") .sub (.constF 256))) (.constF 0))
+    (.letIn "u₆" (.assertE (.fieldExpr (.var "carry_2") .mul (.fieldExpr (.var "overflow_2") .sub (.constF 256))) (.constF 0))
+    (.letIn "u₇" (.assertE (.fieldExpr (.var "overflow_0") .mul (.fieldExpr (.var "carry_0") .sub (.constF 1))) (.constF 0))
+    (.letIn "u₈" (.assertE (.fieldExpr (.var "overflow_1") .mul (.fieldExpr (.var "carry_1") .sub (.constF 1))) (.constF 0))
+    (.letIn "u₉" (.assertE (.fieldExpr (.var "overflow_2") .mul (.fieldExpr (.var "carry_2") .sub (.constF 1))) (.constF 0))
+    (.letIn "b₀" (.assertE (.fieldExpr (.var "carry_0") .mul (.fieldExpr (.var "carry_0") .sub (.constF 1))) (.constF 0))
+    (.letIn "b₁" (.assertE (.fieldExpr (.var "carry_1") .mul (.fieldExpr (.var "carry_1") .sub (.constF 1))) (.constF 0))
+    (.letIn "b₂" (.assertE (.fieldExpr (.var "carry_2") .mul (.fieldExpr (.var "carry_2") .sub (.constF 1))) (.constF 0))
+      (.var "b₂")
+    ))))))))))))))))))))))))))))))))
+
+lemma add_operation_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) :
+  @Ty.TypeJudgment Δ Γ Η koalabear_word_range_checker_func
+    (Ast.Ty.func "a_0" (field_lt_const 256)
+    (Ast.Ty.func "a_1" (field_lt_const 256)
+    (Ast.Ty.func "a_2" (field_lt_const 256)
+    (Ast.Ty.func "a_3" (field_lt_const 256)
+    (Ast.Ty.func "b_0" (field_lt_const 256)
+    (Ast.Ty.func "b_1" (field_lt_const 256)
+    (Ast.Ty.func "b_2" (field_lt_const 256)
+    (Ast.Ty.func "b_3" (field_lt_const 256)
+    (Ast.Ty.func "value_0" (field_lt_const 256)
+    (Ast.Ty.func "value_1" (field_lt_const 256)
+    (Ast.Ty.func "value_2" (field_lt_const 256)
+    (Ast.Ty.func "value_3" (field_lt_const 256)
+    (Ast.Ty.func "carry_0" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+    (Ast.Ty.func "carry_1" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+    (Ast.Ty.func "carry_2" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
+      (Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind
+        (.binRel (.uintExpr
+                    (pack_word_from_bytes "a_0" "a_1" "a_2" "a_3")
+                    .add
+                    (pack_word_from_bytes "b_0" "b_1" "b_2" "b_3"))
+        .eq (pack_word_from_bytes "value_0" "value_1" "value_2" "value_3"))))))))))))))))))) := by {
+      sorry
+    }
