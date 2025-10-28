@@ -105,12 +105,12 @@ syntax "lam" ident ":" runwai_ty "=>" runwai_expr    : runwai_expr
 syntax runwai_expr "(" runwai_expr ")"               : runwai_expr
 
 -- Let‐binding: “let x = e₁ in e₂”
-syntax "let" ident "=" runwai_expr "in" runwai_expr  : runwai_expr
+syntax "let" ident "=" runwai_expr ";" runwai_expr  : runwai_expr
 
 syntax pair := runwai_expr ":" runwai_expr
 
 -- Lookup: “let x = #Name (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
-syntax "let" ident "=" "lookup" ident "(" sepBy1(pair, ",") ")" "in" runwai_expr  : runwai_expr
+syntax "let" ident "=" "lookup" ident "(" sepBy1(pair, ",") ")" ";" runwai_expr  : runwai_expr
 
 syntax "(" runwai_expr ")" : runwai_expr
 
@@ -371,13 +371,13 @@ partial def elaborateExpr (stx : Syntax) : MetaM Ast.Expr := do
     pure (Ast.Expr.app f' a')
 
   -- Let‐binding: “let x = v in body”
-  | `(runwai_expr| let $x:ident = $v in $body) => do
+  | `(runwai_expr| let $x:ident = $v ; $body) => do
     let v' ← elaborateExpr v
     let b' ← elaborateExpr body
     pure (Ast.Expr.letIn x.getId.toString v' b')
 
   -- Lookup: “let x = lookup Name (f₁:t₁, f₂:t₂, … ,fₙ:tₙ) in e”
-  | `(runwai_expr| let $vname:ident = lookup $cname:ident ($args:pair,*) in $body) => do
+  | `(runwai_expr| let $vname:ident = lookup $cname:ident ($args:pair,*) ; $body) => do
     let args' ← args.getElems.toList.mapM elaborateExprPair
     let b' ← elaborateExpr body
     pure (Ast.Expr.lookup vname.getId.toString cname.getId.toString args' b')
