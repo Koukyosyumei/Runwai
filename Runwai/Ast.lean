@@ -110,6 +110,7 @@ mutual
     deriving Lean.ToExpr
 end
 
+@[simp]
 def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr :=
   if cnt > 0 then
     match e with
@@ -147,6 +148,7 @@ def renameVar (e : Expr) (oldName : String) (newExpr: Ast.Expr) (cnt: ℕ): Expr
     | Expr.StoU body => Expr.StoU ((renameVar body oldName newExpr (cnt - 1)))
   else e
 
+@[simp]
 def renameVarinPred (p: Predicate) (oldName : String) (newExpr: Ast.Expr) : Predicate :=
   match p with
   | Predicate.dep ident body => if ident = oldName then p else Predicate.dep ident (renameVar body oldName newExpr 1000)
@@ -155,6 +157,7 @@ def renameVarinPred (p: Predicate) (oldName : String) (newExpr: Ast.Expr) : Pred
   | Predicate.or  left right => Predicate.or (renameVarinPred left oldName newExpr) (renameVarinPred right oldName newExpr)
   | Predicate.not φ => Predicate.not (renameVarinPred φ oldName newExpr)
 
+@[simp]
 def renameTy (τ: Ast.Ty) (oldName: String) (newExpr: Ast.Expr) : Ast.Ty :=
   match τ with
   | .refin b φ => .refin b (renameVarinPred φ oldName newExpr)
@@ -189,6 +192,7 @@ structure Chip where
   ident_t : String
   ident_i : String
   width   : ℕ
+  height  : String
   goal    : Ast.Ty
   body    : Ast.Expr
 deriving Lean.ToExpr
@@ -305,6 +309,7 @@ def DefaultChip : Chip := {
     ident_t := "trace"
     ident_i := "i"
     width   := 0
+    height  := "@n"
     goal    := Ty.refin Ty.unit constTruePred
     body    := Expr.assertE (Expr.constF 1) (Expr.constF 1)
   }

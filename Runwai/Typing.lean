@@ -34,9 +34,6 @@ abbrev indStepPrevLabel : String := "@ind_step_prev"
 @[simp]
 abbrev indStepEqKLabel  : String := "@ind_step_eq_k"
 
-@[simp]
-abbrev heightLabel      : String := "@n"
-
 /--
   Subtyping judgment between two optional types `τ₁ → τ₂`
   under valuation `σ`, Chips `Δ`, type env `Γ`, and fuel.
@@ -207,11 +204,12 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η e τ₂
 
   -- TE-LETIN
-  | TE_LetIn {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ : Ast.Ty}
+  | TE_LetIn {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ τ₃: Ast.Ty}
     (h₀: Env.getTy (Env.updateTy Γ x τ₁) x = τ₁)
     (h₁: @TypeJudgment Δ Γ Η e₁ τ₁)
-    (h₂: @TypeJudgment Δ (Env.updateTy Γ x τ₁) Η e₂ τ₂):
-    TypeJudgment Γ Η (Ast.Expr.letIn x e₁ e₂) τ₂
+    (h₂: @TypeJudgment Δ (Env.updateTy Γ x τ₁) Η e₂ τ₂)
+    (h₃: τ₃ = Ast.renameTy τ₂ x e₁):
+    TypeJudgment Γ Η (Ast.Expr.letIn x e₁ e₂) τ₃
 
   -- TE-UtoS
   | TE_UtoS {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {φ: Ast.Predicate}:
@@ -256,7 +254,7 @@ def makeEnvs (c : Ast.Chip) (height: ℕ): Env.TyEnv :=
     c.ident_t (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constN height)))))
     c.ident_i (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN height)))))
-    heightLabel (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
+    c.height (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
 
 /--
 Check of the structure of a trace. It ensures the trace is a 2D array

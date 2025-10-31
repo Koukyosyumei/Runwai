@@ -90,7 +90,7 @@ def getTrace (T: TraceEnv) (c: Ast.Chip) : Option Ast.Value :=
 
 abbrev UsedNames := List String
 
-@[inline]
+@[simp]
 def freshName (Η: UsedNames) (ident: String) : String :=
   if List.contains Η ident then ident ++ "'" else ident
 

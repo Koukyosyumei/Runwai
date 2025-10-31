@@ -3,14 +3,15 @@ import Runwai.Gadget
 import Runwai.Command
 import Runwai.Tactic
 
-#runwai_register chip Assert1(trace, i, 2) -> {Unit| trace [i][1] == Fp 2} {
+#runwai_register chip Assert1(trace: [[Field: 2]: n], i : {v: UInt | v < n}) -> {Unit| trace [i][1] == Fp 2} {
   let u = assert_eq(trace [i][1], Fp 2);
   u
 }
 
 #runwai_check Assert1
 
-#runwai_register chip IsZero(trace, i, 3) -> {Unit| y == if x == Fp 0 then {Fp 1} else {Fp 0}} {
+#runwai_register chip IsZero(trace: [[Field: 3]: n], i : {v: UInt | v < n})
+  -> {Unit| trace [i][1] == if trace [i][0] == Fp 0 then {Fp 1} else {Fp 0}} {
   let x = trace [i][0];
   let y = trace [i][1];
   let inv = trace [i][2];
@@ -21,7 +22,7 @@ import Runwai.Tactic
 
 #runwai_compile_to_json IsZero
 
-#runwai_register chip Lookup(trace, i, 2) -> {Unit| trace [i][0] == Fp 2} {
+#runwai_register chip Lookup(trace: [[Field: 2]: n], i: {v: UInt | v < n}) -> {Unit| trace [i][0] == Fp 2} {
   let u = lookup Assert1(trace [i][0] : trace [i][1]);
   u
 }
@@ -41,8 +42,9 @@ import Runwai.Tactic
       apply constZ_refine_lt
       simp
     . apply Ty.TypeJudgment.TE_ConstF
-  . constructor;
+  . apply Ty.TypeJudgment.TE_VarEnv;
     apply get_update_self
+  simp[Ast.renameTy]
 }
 
 #runwai_prove Δ₁ IsZero := by {
@@ -52,6 +54,8 @@ import Runwai.Tactic
   apply Ty.TypeJudgment.TE_VarEnv
   apply get_update_self;
   repeat decide
+  repeat rfl
+  simp[Ast.renameTy]
 }
 
 #runwai_prove Δ₂ Lookup := by {
