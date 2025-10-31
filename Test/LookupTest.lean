@@ -64,19 +64,16 @@ theorem lookupChip_correct : Ty.chipCorrect Δ' getChip 1 := by
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ T v h₁ h₂
-  unfold PropSemantics.tyenvToProp at h₁
+  simp [PropSemantics.tyenvToProp] at h₁
   have h₃ := h₁ "u"
-  unfold Env.getTy Env.updateTy PropSemantics.varToProp Env.getTy at h₃
-  simp at h₃
+  simp [Env.getTy, Env.updateTy, Env.getTy] at h₃
   unfold Ty.lookup_pred at h₃
   have hat : (Env.getChip Δ' "assert").ident_t = "trace" := by {
     unfold Env.getChip Δ'; simp }
   have hai : (Env.getChip Δ' "assert").ident_i = "i" := by {
     unfold Env.getChip Δ'; simp }
   rw[hat, hai] at h₃
-  unfold Env.freshName at h₃
-  simp at h₃
-  simp [Ast.renameVarinPred, Ast.renameVar] at h₃
+  simp [Η, Env.freshName, Ast.renameVarinPred, Ast.renameVar]  at h₃
   obtain ⟨h₄,h₅⟩ := h₃
   simp [PropSemantics.exprToProp] at h₄ h₅ ⊢
   apply evalProp_eq_symm at h₅
