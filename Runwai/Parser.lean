@@ -127,7 +127,7 @@ declare_syntax_cat runwai_chip
 
 -- Chip A (trace, i, width) -> T {body}
 -- syntax "Chip" ident "(" sepBy(runwai_param, ",") ")" "->" runwai_ty "{" runwai_expr "}" : runwai_chip
-syntax "chip" ident "(" ident "," ident "," num ")" "->" runwai_ty "{" runwai_expr "}" : runwai_chip
+syntax "chip" ident "(" ident ":" "[" "[" "Fp" ":" num "]" ":" ident "]" "," ident ")" "->" runwai_ty "{" runwai_expr "}" : runwai_chip
 
 ---------------------------------------------------
 --------------- Declare File ----------------------
@@ -402,14 +402,14 @@ partial def elaborateParam (stx : Syntax) : MetaM (String × Ast.Ty) := do
 /-- Given a single `runwai_chip` syntax, produce an `Ast.Chip`. -/
 partial def elaborateChip (stx : Syntax) : MetaM Ast.Chip := do
   match stx with
-  | `(runwai_chip| chip $name:ident ( $ident_t:ident, $ident_i:ident, $width:num ) -> $goal:runwai_ty { $body:runwai_expr } ) => do
+  | `(runwai_chip| chip $name:ident ( $ident_t:ident : [[Fp: $m:num]: $n:ident], $ident_i:ident ) -> $goal:runwai_ty { $body:runwai_expr } ) => do
       let goal'    ← elaborateType goal
       let body'    ← elaborateExpr body
       pure {
         name    := name.getId.toString,
         ident_t := ident_t.getId.toString
         ident_i := ident_i.getId.toString
-        width   := width.getNat
+        width   := m.getNat
         goal    := goal'
         body    := body'
       }
