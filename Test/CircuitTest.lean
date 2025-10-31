@@ -32,7 +32,7 @@ def iszeroChip : Ast.Chip := {
   width   := 3,
   goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
-      (Ast.exprEq (.var "y") (.branch (.binRel (.var "x") (.eq) (.constF 0)) (.constF 1) (.constF 0))))
+      (Ast.exprEq ((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))) (.branch (.binRel ((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 0))) (.eq) (.constF 0)) (.constF 1) (.constF 0))))
   body    := (Ast.Expr.letIn "x" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 0))
               (Ast.Expr.letIn "y" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))
                 (Ast.Expr.letIn "inv" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 2))
@@ -51,7 +51,7 @@ def iszeroChip2: Ast.Chip := {
   width   := 3,
   goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
-      (Ast.exprEq (.var "β") (.branch (.binRel (.var "α") (.eq) (.constF 0)) (.constF 1) (.constF 0))))
+      (Ast.exprEq ((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))) (.branch (.binRel ((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 0))) (.eq) (.constF 0)) (.constF 1) (.constF 0))))
   body    := (Ast.Expr.letIn "α" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 0))
               (Ast.Expr.letIn "β" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))
                 (Ast.Expr.letIn "γ" (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 2))
@@ -95,7 +95,7 @@ def koalabearWordRangeCheckerChip : Ast.Chip := {
   ident_i := "i",
   width := 18,
   goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind
-    (.binRel (.uintExpr (.uintExpr (.uintExpr (.toN (.var "alpha_0")) .add ((.uintExpr (.toN (.var "alpha_1")) .mul (.constN 256)))) .add ((.uintExpr (.toN (.var "alpha_2")) .mul (.constN (256^2))))) .add (.uintExpr (.toN (.var "alpha_3")) .mul (.constN (256^3))))
+    (.binRel (.uintExpr (.uintExpr (.uintExpr (.toN ((Ast.trace_i_j "trace" "i" 0))) .add ((.uintExpr (.toN ((Ast.trace_i_j "trace" "i" 1))) .mul (.constN 256)))) .add ((.uintExpr (.toN ((Ast.trace_i_j "trace" "i" 2))) .mul (.constN (256^2))))) .add (.uintExpr (.toN ((Ast.trace_i_j "trace" "i" 3))) .mul (.constN (256^3))))
       .lt (.constN 2130706433)))
   body := (.letIn "alpha_0" (Ast.trace_i_j "trace" "i" 0)
           (.letIn "alpha_1" (Ast.trace_i_j "trace" "i" 1)
@@ -138,8 +138,9 @@ theorem assertChip_correct : Ty.chipCorrect Δ assertChip 1 := by
       apply constZ_refine_lt
       simp
     . apply Ty.TypeJudgment.TE_ConstF
-  . constructor;
-    apply get_update_self
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply get_update_self
+  simp [Ast.renameTy]
 
 theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
   unfold Ty.chipCorrect
@@ -150,6 +151,8 @@ theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
   apply Ty.TypeJudgment.TE_VarEnv
   apply get_update_self;
   repeat decide
+  repeat rfl
+  simp [Ast.renameTy]
 
 theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   unfold Ty.chipCorrect
@@ -181,34 +184,110 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply Ty.TypeJudgment.TE_VarEnv
   apply get_update_self
+  repeat rfl
+  simp [Ast.renameTy]
 
 theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   unfold Ty.chipCorrect
   intro height hh Γ Η
   apply Ty.TypeJudgment.TE_LetIn
   apply get_update_self
-  repeatConstructorAtMost 10; simp[Η]; simp[Η]
+  apply Ty.TypeJudgment.TE_Branch
+  apply Ty.TypeJudgment.TE_BinOpRel
   apply Ty.TypeJudgment.TE_VarEnv
-  apply get_update_ne; simp; simp[Η]
-  apply constZ_refine_lt; simp
-  repeatConstructorAtMost 3
+  apply get_update_ne
+  simp
+  apply Ty.TypeJudgment.TE_ConstN
+  apply Ty.TypeJudgment.TE_Assert
+  apply Ty.TypeJudgment.TE_ArrayIndex
+  apply Ty.TypeJudgment.TE_ArrayIndex
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply get_update_ne
+  simp
+  simp[Η, Env.freshName]
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply get_update_ne
+  simp
+  simp[Η, Env.freshName]
+  apply constZ_refine_lt
+  simp
+  apply Ty.TypeJudgment.TE_ConstF
+  apply Ty.TypeJudgment.TE_Assert
+  apply Ty.TypeJudgment.TE_ConstF
+  apply Ty.TypeJudgment.TE_ConstF
 
   apply Ty.TypeJudgment.TE_LetIn
   apply get_update_self
-  repeatConstructorAtMost 9; simp[Η]
-  apply varZ_refine_int_diff_lt "@n" (Env.freshName Η Ty.branchLabel)
-  repeatConstructorAtMost 1; simp[Η]; simp[Ast.nu]
-  apply constZ_refine_lt; simp
-  repeatConstructorAtMost 3; simp[Η]
+  apply Ty.TypeJudgment.TE_Branch
+  apply Ty.TypeJudgment.TE_BinOpRel
   apply Ty.TypeJudgment.TE_VarEnv
-  apply get_update_ne; simp[Η]
-  apply constZ_refine_lt; simp
-  repeatConstructorAtMost 3
+  apply get_update_ne
+  simp
+  apply Ty.TypeJudgment.TE_BinOpUInt
+  apply Ty.TypeJudgment.TE_Var
+  apply get_update_ne
+  simp
+  apply Ty.TypeJudgment.TE_ConstN
+  apply Ty.TypeJudgment.TE_Assert
+  apply Ty.TypeJudgment.TE_ArrayIndex
+  apply Ty.TypeJudgment.TE_ArrayIndex
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply get_update_ne
+  simp
+  simp[Η, Env.freshName]
+  apply varZ_refine_int_diff_lt "@n" (Env.freshName Η Ty.branchLabel)
+  apply get_update_ne
+  simp[Η, Env.freshName]
+  simp[Η, Env.freshName]
+  apply get_update_self
+  apply get_update_ne
+  simp[Η, Env.freshName]
+  unfold Ast.nu
+  simp
+  apply constZ_refine_lt
+  simp
+  apply Ty.TypeJudgment.TE_BinOpField
+  apply Ty.TypeJudgment.TE_ArrayIndex
+  apply Ty.TypeJudgment.TE_ArrayIndex
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply get_update_ne
+  simp[Η, Env.freshName, Ty.branchLabel]
+  apply Ty.TypeJudgment.TE_VarEnv
+  apply get_update_ne
+  simp[Η, Env.freshName, Ty.branchLabel]
+  apply constZ_refine_lt
+  simp
+  apply Ty.TypeJudgment.TE_ConstF
+  apply Ty.TypeJudgment.TE_Assert
+  apply Ty.TypeJudgment.TE_ConstF
+  apply Ty.TypeJudgment.TE_ConstF
+  set Γ' := (Env.updateTy
+    (Env.updateTy Γ "u₀"
+      (Ast.Ty.unit.refin
+        (((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN 0))).and
+              (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 0)))).or
+          ((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN 0))).not.and
+            (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1)))))))
+    "u₁"
+    (Ast.Ty.unit.refin
+      (((Ast.Predicate.ind
+                ((Ast.Expr.var "i").binRel Ast.RelOp.lt
+                  ((Ast.Expr.var "@n").uintExpr Ast.IntOp.sub (Ast.Expr.constN 1)))).and
+            (Ast.Predicate.ind
+              (Ast.exprEq (Ast.trace_ip1_j "trace" "i" 0)
+                ((Ast.trace_i_j "trace" "i" 0).fieldExpr Ast.FieldOp.add (Ast.Expr.constF 1))))).or
+        ((Ast.Predicate.ind
+                ((Ast.Expr.var "i").binRel Ast.RelOp.lt
+                  ((Ast.Expr.var "@n").uintExpr Ast.IntOp.sub (Ast.Expr.constN 1)))).not.and
+          (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))) with hΓ'
+  apply Ty.TypeJudgment.TE_VarEnv
   apply Ty.TypeJudgment.TE_SUB
   apply Ty.TypeJudgment.TE_VarEnv
   apply get_update_self
   apply Ty.SubtypeJudgment.TSub_RefineInduction "i"
-  have hΓ: Γ = Ty.makeEnvs clkChip height := by{rfl}
+  have hΓ: Γ = Ty.makeEnvs clkChip height := by{
+    rfl
+  }
   apply get_update_ne
   simp
   apply Ty.SubtypeJudgment.TSub_Refl
@@ -216,7 +295,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
     intro σ T v h₁ h₂
     unfold PropSemantics.tyenvToProp at h₁
     have hΓ: Γ = Ty.makeEnvs clkChip height := by{rfl}
-    rw [hΓ] at h₁
+    rw [hΓ', hΓ] at h₁
 
     have hu₀ := h₁ "u₀" (Ast.Ty.unit.refin
                 (((Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN 0))).and
@@ -245,7 +324,8 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           simp at r'
           rw[r'] at ih₁
           rw[r] at a
-          simp [Ast.renameVarinPred, Ast.renameVar]
+          simp [Ast.renameVarinPred]
+          simp [Ast.renameVar]
           have : Eval.EvalProp σ T Δ ((Ast.Expr.constN 0).binRel Ast.RelOp.lt (Ast.Expr.var "@n")) (Ast.Value.vBool true) := by {
             apply Eval.EvalProp.Rel
             apply Eval.EvalProp.ConstN
@@ -271,13 +351,25 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           rw[a] at a'
           simp at a'
           rw[← a'] at idx
-          repeat
-            constructor
-            try assumption
+          apply Eval.EvalProp.ArrIdx
+          apply Eval.EvalProp.ArrIdx
+          exact iha
+          apply Eval.EvalProp.ConstN
+          exact idx
+          apply Eval.EvalProp.ConstN
+          rename_i idx' _ _ _ _
+          exact idx'
+          apply Eval.EvalProp.toF
+          apply Eval.EvalProp.ConstN
+          simp[Eval.evalRelOp]
         }
-        | _ => {simp at r'}
+        | _ => {
+          simp at r'
+        }
       }
-      | _ => {simp at r}
+      | _ => {
+        simp at r
+      }
     }
     | inr h => {
       obtain ⟨h₁, h₂⟩ := h
@@ -312,7 +404,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))
     have hu₅ := h₁ "trace" (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) 1) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constN height))))
-    simp [Env.getTy, Env.updateTy, Γ, Ty.makeEnvs, Ty.indStepPrevLabel, Ty.indStepEqKLabel] at hu₀ hu₁ hu₂ hu₃ hu₄ hu₅
+    simp [Env.getTy, Env.updateTy, Γ', Γ, Ty.makeEnvs, Ty.indStepPrevLabel, Ty.indStepEqKLabel] at hu₀ hu₁ hu₂ hu₃ hu₄ hu₅
     have h_n_is_height := eval_app_lam_eq_int hu₀
     have h_i_kp1 := eval_var_eq_int hu₃
     have hu₅' := eval_height_check hu₅
@@ -438,18 +530,36 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
             simp [Eval.evalRelOp]
             exact hkp1_b
           }
-          repeat
-            constructor
-            try assumption
-          have : (k: ℕ) + (1: F) = ((k + 1): ℕ) := by {simp}
+          apply Eval.EvalProp.IfTrue
+          exact this
+          apply Eval.EvalProp.Rel
+          apply Eval.EvalProp.ArrIdx
+          apply Eval.EvalProp.ArrIdx
+          apply Eval.EvalProp.Var
+          exact h_trace
+          apply Eval.EvalProp.ConstN
+          exact idx''
+          apply Eval.EvalProp.ConstN
+          exact idx'''
+          apply Eval.EvalProp.toF
+          apply Eval.EvalProp.ConstN
+          have : (k: ℕ) + (1: F) = ((k + 1): ℕ) := by {
+            simp
+          }
           rw[this] at r'
           exact r'
         }
         {
           have : Eval.EvalProp σ T Δ ((Ast.Expr.var "i").binRel Ast.RelOp.lt ((Ast.Expr.var "@n").uintExpr Ast.IntOp.sub (Ast.Expr.constN 1))) (Ast.Value.vBool true) := by {
-            repeat
-              constructor
-              try assumption
+            apply Eval.EvalProp.Rel
+            apply Eval.EvalProp.Var
+            exact h_i_kp1
+            apply Eval.EvalProp.NBinOp
+            apply Eval.EvalProp.Var
+            exact h_n_is_height
+            apply Eval.EvalProp.ConstN
+            simp[Eval.evalUIntOp]
+            rfl
             simp[Eval.evalRelOp]
             exact hkb
           }
@@ -669,5 +779,6 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
     try (simp)
     rfl
   apply Ty.TypeJudgment.TE_VarEnv
-  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
   apply get_update_self
+  repeat rfl
+  simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]

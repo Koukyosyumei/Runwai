@@ -189,19 +189,20 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
       apply Ty.TypeJudgment.TE_SUB
       · apply ih; assumption
       . exact subtyping_pointwise_preserve Δ _ _ _ h₁ Γ₂ h
-    | TE_LetIn h₁ h₂ ih₁ ih₂ =>
-      rename_i Γ' Η' x₁ e₁ e₂ τ₁ τ₂ h'
+    | TE_LetIn h₁ h₂ ih₁ ih₂ ih₃ =>
+      rename_i Γ' Η' x₁ e₁ e₂ τ₁ τ₂ τ₃ h'
       intro Γ₂ h
       apply Ty.TypeJudgment.TE_LetIn
       have hu := @update_preserve_pointwise Γ' Γ₂ x₁ τ₁ h
       have h' := hu x₁
       rw[h₁] at h'
       rw[← h']
-      apply ih₂
+      apply ih₃
       exact h
       apply h'
       have hu := @update_preserve_pointwise Γ' Γ₂ x₁ τ₁ h
       exact hu
+      exact ih₂
     | TE_LookUp h₁ h₂ => {
       rename_i Γ' Η' vname cname args c φ φ' τ' h₅ h₆ h₇ h₈
       intro Γ₂ h₉

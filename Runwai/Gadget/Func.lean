@@ -67,7 +67,9 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
   (htinv: @Ty.TypeJudgment Δ Γ Η (.var inv) (Ty.refin Ast.Ty.field φ₃))
   (hne₁: ¬ x = u₁)
   (hne₂: ¬ y = u₁)
-  (hne₃: ¬ u₁ = u₂):
+  (hne₃: ¬ u₁ = u₂)
+  (hne₄: ¬ y = u₂)
+  (hne₅: ¬ x = u₂):
   @Ty.TypeJudgment Δ Γ Η
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
@@ -121,6 +123,11 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
     apply Ty.TypeJudgment.TE_VarEnv
     apply get_update_self
     exact h_sub
+    rfl
+    simp [renameTy, renameVar]
+    rw [if_neg hne₄, if_neg hne₅]
+    simp [renameVar]
+    exact ⟨hne₂, hne₁⟩
 }
 
 lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) :
@@ -557,4 +564,7 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
   repeat
     apply get_update_ne
     simp
+  repeat
+    rfl
+  simp [renameTy]
 }

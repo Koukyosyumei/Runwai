@@ -207,11 +207,12 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     TypeJudgment Γ Η e τ₂
 
   -- TE-LETIN
-  | TE_LetIn {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ : Ast.Ty}
+  | TE_LetIn {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ τ₃: Ast.Ty}
     (h₀: Env.getTy (Env.updateTy Γ x τ₁) x = τ₁)
     (h₁: @TypeJudgment Δ Γ Η e₁ τ₁)
-    (h₂: @TypeJudgment Δ (Env.updateTy Γ x τ₁) Η e₂ τ₂):
-    TypeJudgment Γ Η (Ast.Expr.letIn x e₁ e₂) τ₂
+    (h₂: @TypeJudgment Δ (Env.updateTy Γ x τ₁) Η e₂ τ₂)
+    (h₃: τ₃ = Ast.renameTy τ₂ x e₁):
+    TypeJudgment Γ Η (Ast.Expr.letIn x e₁ e₂) τ₃
 
   -- TE-UtoS
   | TE_UtoS {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {φ: Ast.Predicate}:
