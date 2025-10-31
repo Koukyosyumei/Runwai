@@ -3,14 +3,14 @@ import Runwai.Gadget
 import Runwai.Command
 import Runwai.Tactic
 
-#runwai_register chip Assert1(trace: [[Fp: 2]: n], i) -> {Unit| trace [i][1] == Fp 2} {
+#runwai_register chip Assert1(trace: [[Field: 2]: n], i : {v: UInt | v < n}) -> {Unit| trace [i][1] == Fp 2} {
   let u = assert_eq(trace [i][1], Fp 2);
   u
 }
 
 #runwai_check Assert1
 
-#runwai_register chip IsZero(trace: [[Fp: 3]: n], i)
+#runwai_register chip IsZero(trace: [[Field: 3]: n], i : {v: UInt | v < n})
   -> {Unit| trace [i][1] == if trace [i][0] == Fp 0 then {Fp 1} else {Fp 0}} {
   let x = trace [i][0];
   let y = trace [i][1];
@@ -22,7 +22,7 @@ import Runwai.Tactic
 
 #runwai_compile_to_json IsZero
 
-#runwai_register chip Lookup(trace: [[Fp: 2]: n], i) -> {Unit| trace [i][0] == Fp 2} {
+#runwai_register chip Lookup(trace: [[Field: 2]: n], i: {v: UInt | v < n}) -> {Unit| trace [i][0] == Fp 2} {
   let u = lookup Assert1(trace [i][0] : trace [i][1]);
   u
 }

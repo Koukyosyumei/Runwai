@@ -14,6 +14,7 @@ def assertChip : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i",
   width   := 2,
+  height  := "@n",
   goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
       (Ast.Expr.binRel (Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))
@@ -30,6 +31,7 @@ def iszeroChip : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i",
   width   := 3,
+  height  := "@n",
   goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
       (Ast.exprEq ((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))) (.branch (.binRel ((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 0))) (.eq) (.constF 0)) (.constF 1) (.constF 0))))
@@ -49,6 +51,7 @@ def iszeroChip2: Ast.Chip := {
   ident_t := "trace",
   ident_i := "i",
   width   := 3,
+  height  := "@n",
   goal    := Ast.Ty.refin Ast.Ty.unit
     (Ast.Predicate.ind
       (Ast.exprEq ((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 1))) (.branch (.binRel ((Ast.Expr.arrIdx (Ast.Expr.arrIdx (Ast.Expr.var "trace") (Ast.Expr.var "i")) (Ast.Expr.constN 0))) (.eq) (.constF 0)) (.constF 1) (.constF 0))))
@@ -68,6 +71,7 @@ def u8chip : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i"
   width := 1,
+  height  := "@n",
   goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.Expr.binRel (Ast.Expr.toN (Ast.trace_i_j "trace" "i" 0)) Ast.RelOp.lt (Ast.Expr.constN 256))),
   body := Ast.Expr.assertE (Ast.Expr.constF 0) (Ast.Expr.constF 0)
 }
@@ -78,6 +82,7 @@ def clkChip : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i",
   width := 1,
+  height  := "@n",
   goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.Expr.branch (.binRel (.var "i") Ast.RelOp.lt (.var "@n")) (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (.toF (.var "i"))) (Ast.Expr.constBool true)))
   body := (.letIn "u₀" (.branch (Ast.exprEq (.var "i") (.constN 0))
                           (.assertE (Ast.trace_i_j "trace" "i" 0) (.constF 0))
@@ -94,6 +99,7 @@ def koalabearWordRangeCheckerChip : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i",
   width := 18,
+  height  := "@n",
   goal := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind
     (.binRel (.uintExpr (.uintExpr (.uintExpr (.toN ((Ast.trace_i_j "trace" "i" 0))) .add ((.uintExpr (.toN ((Ast.trace_i_j "trace" "i" 1))) .mul (.constN 256)))) .add ((.uintExpr (.toN ((Ast.trace_i_j "trace" "i" 2))) .mul (.constN (256^2))))) .add (.uintExpr (.toN ((Ast.trace_i_j "trace" "i" 3))) .mul (.constN (256^3))))
       .lt (.constN 2130706433)))

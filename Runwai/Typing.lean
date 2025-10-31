@@ -34,9 +34,6 @@ abbrev indStepPrevLabel : String := "@ind_step_prev"
 @[simp]
 abbrev indStepEqKLabel  : String := "@ind_step_eq_k"
 
-@[simp]
-abbrev heightLabel      : String := "@n"
-
 /--
   Subtyping judgment between two optional types `τ₁ → τ₂`
   under valuation `σ`, Chips `Δ`, type env `Γ`, and fuel.
@@ -257,7 +254,7 @@ def makeEnvs (c : Ast.Chip) (height: ℕ): Env.TyEnv :=
     c.ident_t (.refin (.arr (.refin (.arr (.refin .field
       (Ast.Predicate.ind (Ast.Expr.constBool true))) c.width) (Ast.Predicate.ind (Ast.Expr.constBool true))) height) (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.len (.var Ast.nu)) (.constN height)))))
     c.ident_i (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.Expr.binRel (Ast.Expr.var Ast.nu) Ast.RelOp.lt (Ast.Expr.constN height)))))
-    heightLabel (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
+    c.height (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN height))))
 
 /--
 Check of the structure of a trace. It ensures the trace is a 2D array

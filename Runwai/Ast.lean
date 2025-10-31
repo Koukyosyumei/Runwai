@@ -192,6 +192,7 @@ structure Chip where
   ident_t : String
   ident_i : String
   width   : ℕ
+  height  : String
   goal    : Ast.Ty
   body    : Ast.Expr
 deriving Lean.ToExpr
@@ -308,6 +309,7 @@ def DefaultChip : Chip := {
     ident_t := "trace"
     ident_i := "i"
     width   := 0
+    height  := "@n"
     goal    := Ty.refin Ty.unit constTruePred
     body    := Expr.assertE (Expr.constF 1) (Expr.constF 1)
   }
