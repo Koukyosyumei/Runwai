@@ -11,6 +11,7 @@ def assertCircuit : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i",
   width   := 2,
+  height  := "@n",
   goal    := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2))),
   body    := (Ast.Expr.letIn "u" (Ast.Expr.assertE (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 2)) (Ast.Expr.var "u"))
 }
@@ -21,6 +22,7 @@ def assertCircuit_2 : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i",
   width   := 3,
+  height  := "@n",
   goal    := Ast.Ty.refin Ast.Ty.unit (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 2) (Ast.Expr.constF 3))),
   body    := (Ast.Expr.letIn "u" (Ast.Expr.assertE (Ast.trace_i_j "trace" "i" 2) (Ast.Expr.constF 3)) (Ast.Expr.var "u"))
 }
@@ -31,6 +33,7 @@ def getChip : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i",
   width   := 2,
+  height  := "@n",
   goal    := Ast.Ty.refin Ast.Ty.unit
               (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 0) (Ast.Expr.constF 2))),
   body    := Ast.Expr.lookup "u" "assert" [((Ast.trace_i_j "trace" "i" 0), (Ast.trace_i_j "trace" "i" 1))] (Ast.Expr.var "u")
@@ -42,6 +45,7 @@ def lookupChip_2 : Ast.Chip := {
   ident_t := "trace",
   ident_i := "i",
   width   := 2,
+  height  := "@n",
   goal    := Ast.Ty.refin Ast.Ty.unit
               (Ast.Predicate.ind (Ast.exprEq (Ast.trace_i_j "trace" "i" 1) (Ast.Expr.constF 3))),
   body    := Ast.Expr.lookup "u₁" "assert" [((Ast.trace_i_j "trace" "i" 0), (Ast.trace_i_j "trace" "i" 1))]
@@ -112,7 +116,7 @@ theorem lookupChip_correct_2 : Ty.chipCorrect Δ' lookupChip_2 1 := by
   rw[hat, hai] at h₃
   unfold Env.freshName at h₃
   simp at h₃
-  simp [Ast.renameVarinPred, Ast.renameVar] at h₃
+  --simp [Ast.renameVarinPred, Ast.renameVar] at h₃
   obtain ⟨h₄,h₅⟩ := h₃
   apply evalProp_eq_symm at h₅
   apply evalProp_eq_trans h₅ h₄
