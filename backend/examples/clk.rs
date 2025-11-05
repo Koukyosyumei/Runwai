@@ -77,16 +77,16 @@ fn main() {
     let air_instance = RunwaiAirInstance::Main(main_air);
 
     // Create a single VK with multiple AirInfo instances
-    //let byte_range_air = ByteRangeAir::new();
-    //let byte_range_air_instance = RunwaiAirInstance::ByteRange(byte_range_air);
+    let byte_range_air = ByteRangeAir::new();
+    let byte_range_air_instance = RunwaiAirInstance::ByteRange(byte_range_air);
 
     // Create VK with multiple air instances (main + lookup)
     let air_instances = vec![
         (air_instance, main_air_width),
-        //(byte_range_air_instance, 1), // ByteRange has width 1
+        (byte_range_air_instance, 1), // ByteRange has width 1
     ];
 
-    let air_infos: Vec<AirInfo<KoalaBear>> = air_instances
+    let mut air_infos: Vec<AirInfo<KoalaBear>> = air_instances
         .into_iter()
         .map(|(air, trace_width)| AirInfo::new(air, trace_width))
         .collect();
@@ -101,6 +101,10 @@ fn main() {
     // Collect all traces: main trace + lookup traces
     let mut traces = vec![main_trace.clone()];
     traces.extend(lookup_traces);
+
+    if traces.len() == 1 {
+        air_infos = air_infos[..1].to_vec();
+    }
 
     let pis = vec![];
     let proof = prove(&config, &air_infos, &traces, &pis);
