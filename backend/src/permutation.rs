@@ -8,7 +8,7 @@ use p3_field::{ExtensionField, Field, PrimeField32};
 use p3_matrix::{dense::RowMajorMatrix, Matrix};
 
 use crate::{
-    air::RunwaiAirInstance, config::StarkGenericConfig, config::Val, key::VerifyingKey, key::VK,
+    air::RunwaiAirInstance, config::StarkGenericConfig, config::Val, key::VerifyingKey,
     lookup::ByteRangeAir, lookup::Lookup, lookup::LookupType,
 };
 
