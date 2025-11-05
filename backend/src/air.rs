@@ -3,10 +3,13 @@ use std::marker::PhantomData;
 
 use p3_air::{Air, AirBuilder, AirBuilderWithPublicValues, BaseAir, PairBuilder};
 use p3_field::{Field, PrimeCharacteristicRing};
-use p3_matrix::Matrix;
+use p3_matrix::{dense::RowMajorMatrix, Matrix};
 use p3_uni_stark::SymbolicAirBuilder;
 
-use crate::ast::{walkthrough_ast, BoundaryInfo, Expr};
+use crate::{
+    ast::{walkthrough_ast, BoundaryInfo, Expr},
+    lookup::{BaseMessageBuilder, ByteRangeAir, Lookup, LookupType},
+};
 
 #[derive(Clone)]
 pub struct RunwaiAir<F>
@@ -14,7 +17,7 @@ where
     F: Field,
 {
     runwai_ast: Expr,
-    width: usize,
+    pub width: usize,
     _marker: PhantomData<F>,
 }
 
@@ -24,7 +27,7 @@ impl<F: Field> BaseAir<F> for RunwaiAir<F> {
     }
 }
 
-impl<AB: AirBuilderWithPublicValues> Air<AB> for RunwaiAir<AB::F>
+impl<AB: AirBuilderWithPublicValues + PairBuilder + BaseMessageBuilder> Air<AB> for RunwaiAir<AB::F>
 where
     AB::F: Field + PrimeCharacteristicRing,
 {
@@ -42,11 +45,13 @@ where
         };
 
         let mut env = HashMap::<String, Expr>::new();
+        let mut lookup_info = Vec::new();
         let mut conditiosn = vec![];
 
         walkthrough_ast(
             builder,
             &mut env,
+            &mut lookup_info,
             self.runwai_ast.clone(),
             &load_var,
             "trace",
@@ -55,6 +60,15 @@ where
             BoundaryInfo::All,
             &mut conditiosn,
         );
+
+        for c in &lookup_info {
+            if c.0 == "u8" {
+                let v = c.1.clone().into();
+                let mul = AB::F::ONE.into();
+                let l = Lookup::new(LookupType::ByteRange, v, mul);
+                builder.send(l);
+            }
+        }
     }
 }
 
@@ -65,5 +79,41 @@ impl<F: Field> RunwaiAir<F> {
             width,
             _marker: PhantomData,
         }
+    }
+}
+
+/// Enum wrapper to handle multiple AIR types in the same vector
+#[derive(Clone)]
+pub enum CleanAirInstance<F: Field> {
+    Main(RunwaiAir<F>),
+    ByteRange(ByteRangeAir<F>),
+}
+
+impl<F: Field> BaseAir<F> for CleanAirInstance<F> {
+    fn width(&self) -> usize {
+        match self {
+            CleanAirInstance::Main(air) => air.width(),
+            CleanAirInstance::ByteRange(air) => air.width(),
+        }
+    }
+
+    fn preprocessed_trace(&self) -> Option<RowMajorMatrix<F>> {
+        match self {
+            CleanAirInstance::Main(air) => air.preprocessed_trace(),
+            CleanAirInstance::ByteRange(air) => air.preprocessed_trace(),
+        }
+    }
+}
+
+impl<AB> Air<AB> for CleanAirInstance<AB::F>
+where
+    AB: AirBuilder + AirBuilderWithPublicValues + PairBuilder + BaseMessageBuilder,
+    AB::F: Field,
+{
+    fn eval(&self, builder: &mut AB) {
+        match self {
+            CleanAirInstance::Main(air) => air.eval(builder),
+            CleanAirInstance::ByteRange(air) => air.eval(builder),
+        };
     }
 }

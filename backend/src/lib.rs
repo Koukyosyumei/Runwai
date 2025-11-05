@@ -1,2 +1,10 @@
 pub mod air;
 pub mod ast;
+pub mod config;
+pub mod folder;
+pub mod key;
+pub mod lookup;
+pub mod permutation;
+pub mod proof;
+pub mod prover;
+pub mod verify;

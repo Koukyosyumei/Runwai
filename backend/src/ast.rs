@@ -457,6 +457,7 @@ pub fn is_transition_cond<AB: AirBuilder>(
 pub fn walkthrough_ast<AB: AirBuilder>(
     builder: &mut AB,
     env: &mut HashMap<String, Expr>,
+    lookup_info: &mut Vec<(String, AB::Expr)>,
     expr: Expr,
     colid_to_var_fn: &dyn Fn(bool, usize) -> AB::Var,
     trace_name: &str,
@@ -520,6 +521,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 walkthrough_ast(
                     builder,
                     env,
+                    lookup_info,
                     *th,
                     colid_to_var_fn,
                     trace_name,
@@ -532,6 +534,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                 walkthrough_ast(
                     builder,
                     env,
+                    lookup_info,
                     *th,
                     colid_to_var_fn,
                     trace_name,
@@ -556,6 +559,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                             walkthrough_ast(
                                 builder,
                                 env,
+                                lookup_info,
                                 *els,
                                 colid_to_var_fn,
                                 trace_name,
@@ -573,6 +577,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                             walkthrough_ast(
                                 builder,
                                 env,
+                                lookup_info,
                                 *els,
                                 colid_to_var_fn,
                                 trace_name,
@@ -588,6 +593,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     walkthrough_ast(
                         builder,
                         env,
+                        lookup_info,
                         *els,
                         colid_to_var_fn,
                         trace_name,
@@ -603,6 +609,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
             walkthrough_ast(
                 builder,
                 env,
+                lookup_info,
                 *val.clone(),
                 colid_to_var_fn,
                 trace_name,
@@ -615,6 +622,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
             walkthrough_ast(
                 builder,
                 env,
+                lookup_info,
                 *body,
                 colid_to_var_fn,
                 trace_name,
@@ -626,10 +634,29 @@ pub fn walkthrough_ast<AB: AirBuilder>(
         }
         Expr::Lookup {
             vname: _vname,
-            cname: _cname,
-            args: _args,
-            body: _body,
-        } => todo!(),
+            cname: cname,
+            args: args,
+            body: body,
+        } => {
+            lookup_info.push((
+                cname,
+                args[0]
+                    .fst
+                    .to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name),
+            ));
+            walkthrough_ast(
+                builder,
+                env,
+                lookup_info,
+                *body,
+                colid_to_var_fn,
+                trace_name,
+                row_index_name,
+                height_name,
+                when,
+                &mut conditions,
+            );
+        }
         _ => {}
     }
 }
