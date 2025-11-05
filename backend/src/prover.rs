@@ -336,7 +336,7 @@ where
         sels.inv_vanishing.push(Val::<SC>::default());
     }
 
-    let mut alpha_powers = alpha.powers().take(constraint_count + 3).collect_vec();
+    let mut alpha_powers = alpha.powers().take(constraint_count).collect_vec();
     alpha_powers.reverse();
     // alpha powers looks like Vec<EF> ~ Vec<[F; D]>
     // It's useful to also have access to the transpose of this of form [Vec<F>; D].

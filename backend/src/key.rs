@@ -170,11 +170,10 @@ impl<F: Field> VerifyingKey<F> for AirInfo<F> {
 
     fn count_constraints(&self, public_inputs: usize) -> usize {
         let constraints = self.constraints(public_inputs);
-
         if !self.lookups.is_empty() {
             self.lookups.len() + constraints.len() + 3 // 3 for the first row, last row, and transition constraints
         } else {
-            constraints.len()
+            constraints.len() + 3
         }
     }
 

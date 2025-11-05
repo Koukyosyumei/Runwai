@@ -66,9 +66,9 @@ fn main() {
     let main_air = RunwaiAir::<Val>::new(expr, 1);
     let main_air_width = main_air.width + 1;
     let symbolic_constraints = get_symbolic_constraints(&main_air, 0, 0);
-    for sc in &symbolic_constraints {
-        println!("{:?}", sc);
-    }
+    //for sc in &symbolic_constraints {
+    //    println!("{:?}", sc);
+    //}
     let air_instance = CleanAirInstance::Main(main_air);
 
     // Create a single VK with multiple AirInfo instances
@@ -95,8 +95,8 @@ fn main() {
     // Collect all traces: main trace + lookup traces
     let mut traces = vec![main_trace.clone()];
     traces.extend(lookup_traces);
-    println!("{:?}", air_infos.len());
-    println!("{:?}", traces.len());
+    //println!("{:?}", air_infos.len());
+    //println!("{:?}", traces.len());
 
     let pis = vec![];
     let proof = prove(&config, &air_infos, &traces, &pis);
