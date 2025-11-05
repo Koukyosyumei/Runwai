@@ -634,9 +634,9 @@ pub fn walkthrough_ast<AB: AirBuilder>(
         }
         Expr::Lookup {
             vname: _vname,
-            cname: cname,
-            args: args,
-            body: body,
+            cname,
+            args,
+            body,
         } => {
             lookup_info.push((
                 cname,

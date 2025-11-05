@@ -2,11 +2,10 @@ use p3_challenger::DuplexChallenger;
 use p3_commit::ExtensionMmcs;
 use p3_dft::Radix2DitParallel;
 use p3_field::extension::BinomialExtensionField;
-use p3_field::{Field, PrimeCharacteristicRing};
+use p3_field::Field;
 use p3_fri::{create_test_fri_params, TwoAdicFriPcs};
 use p3_koala_bear::{KoalaBear, Poseidon2KoalaBear};
 use p3_matrix::dense::RowMajorMatrix;
-use p3_matrix::Matrix;
 use p3_merkle_tree::MerkleTreeMmcs;
 use p3_symmetric::{PaddingFreeSponge, TruncatedPermutation};
 use p3_uni_stark::get_symbolic_constraints;
@@ -21,6 +20,7 @@ use runwai_p3::lookup::ByteRangeAir;
 use runwai_p3::permutation::generate_multiplicity_traces;
 use runwai_p3::prover::prove;
 use runwai_p3::verify::verify;
+
 use tracing::{info, trace, Level};
 
 pub fn generate_main_trace<F: Field>(num_steps: usize) -> RowMajorMatrix<F> {

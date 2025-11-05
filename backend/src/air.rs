@@ -4,7 +4,6 @@ use std::marker::PhantomData;
 use p3_air::{Air, AirBuilder, AirBuilderWithPublicValues, BaseAir, PairBuilder};
 use p3_field::{Field, PrimeCharacteristicRing};
 use p3_matrix::{dense::RowMajorMatrix, Matrix};
-use p3_uni_stark::SymbolicAirBuilder;
 
 use crate::{
     ast::{walkthrough_ast, BoundaryInfo, Expr},
