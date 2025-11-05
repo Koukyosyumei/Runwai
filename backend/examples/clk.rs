@@ -70,7 +70,7 @@ fn main() {
     let expr = Expr::from_json_file("examples/clk.json").unwrap();
     let main_air = RunwaiAir::<Val>::new(expr, 1);
     let main_air_width = main_air.width + 1;
-    let symbolic_constraints = get_symbolic_constraints(&main_air, 0, 0);
+    //let symbolic_constraints = get_symbolic_constraints(&main_air, 0, 0);
     //for sc in &symbolic_constraints {
     //    println!("{:?}", sc);
     //}
@@ -100,69 +100,10 @@ fn main() {
     // Collect all traces: main trace + lookup traces
     let mut traces = vec![main_trace.clone()];
     traces.extend(lookup_traces);
-    //println!("{:?}", air_infos.len());
-    //println!("{:?}", traces.len());
 
     let pis = vec![];
     let proof = prove(&config, &air_infos, &traces, &pis);
     verify(&config, &air_infos, &proof, &pis).expect("verification failed");
 
     info!("Proof Verified");
-
-    /*
-    type Val = Mersenne31; // TODO: Change to KoalaBear
-    type Challenge = BinomialExtensionField<Val, 3>;
-
-    type ByteHash = Keccak256Hash;
-    type FieldHash = SerializingHasher<ByteHash>;
-    let byte_hash = ByteHash {};
-    let field_hash = FieldHash::new(Keccak256Hash {});
-
-    type MyCompress = CompressionFunctionFromHasher<ByteHash, 2, 32>;
-    let compress = MyCompress::new(byte_hash);
-
-    type ValMmcs = MerkleTreeMmcs<Val, u8, FieldHash, MyCompress, 32>;
-    let val_mmcs = ValMmcs::new(field_hash, compress);
-
-    type ChallengeMmcs = ExtensionMmcs<Val, Challenge, ValMmcs>;
-    let challenge_mmcs = ChallengeMmcs::new(val_mmcs.clone());
-
-    type Challenger = SerializingChallenger32<Val, HashChallenger<u8, ByteHash, 32>>;
-
-    let fri_params = FriParameters {
-        log_blowup: 1,
-        num_queries: 100,
-        proof_of_work_bits: 16,
-        mmcs: challenge_mmcs,
-        log_final_poly_len: 1,
-    };
-
-    type Pcs = CirclePcs<Val, ValMmcs, ChallengeMmcs>;
-    let pcs = Pcs {
-        mmcs: val_mmcs,
-        fri_params,
-        _phantom: std::marker::PhantomData,
-    };
-
-    type MyConfig = StarkConfig<Pcs, Challenge, Challenger>;
-    let challenger = Challenger::from_hasher(vec![], byte_hash);
-    let config = MyConfig::new(pcs, challenger);
-
-    let expr = Expr::from_json_file("examples/clk.json").unwrap();
-    let air = RunwaiAir::<Val>::new(expr, 1);
-    let symbolic_constraints = get_symbolic_constraints(&air, 0, 0);
-    for sc in &symbolic_constraints {
-        println!("{:?}", sc);
-    }
-
-    let num_steps = 8; // Choose the number of Fibonacci steps
-    let trace = generate_fibonacci_trace::<Val>(num_steps);
-    //let proof = prove(&config, &air, trace, &vec![]);
-
-    //let result = verify(&config, &air, &proof, &vec![]);
-
-    //if result.is_ok() {
-    //    println!("verification successes");
-    //}
-    */
 }
