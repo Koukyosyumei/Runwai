@@ -92,7 +92,7 @@ fn main() {
         .collect();
 
     // ##################################### Execute the Program ##########################################
-    let num_steps = 512; // Choose the number of Fibonacci steps
+    let num_steps = 8; // Choose the number of Fibonacci steps
     let main_trace = generate_main_trace::<Val>(num_steps);
 
     // Generate lookup traces using the AirInfo instances from the VK
