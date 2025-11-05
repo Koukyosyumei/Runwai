@@ -1,10 +1,10 @@
-use p3_baby_bear::{BabyBear, Poseidon2BabyBear};
 use p3_challenger::DuplexChallenger;
 use p3_commit::ExtensionMmcs;
 use p3_dft::Radix2DitParallel;
 use p3_field::extension::BinomialExtensionField;
 use p3_field::{Field, PrimeCharacteristicRing};
 use p3_fri::{create_test_fri_params, TwoAdicFriPcs};
+use p3_koala_bear::{KoalaBear, Poseidon2KoalaBear};
 use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::Matrix;
 use p3_merkle_tree::MerkleTreeMmcs;
@@ -40,8 +40,8 @@ fn main() {
         .init();
 
     // ##################################### Setting #####################################################
-    type Val = BabyBear;
-    type Perm = Poseidon2BabyBear<16>;
+    type Val = KoalaBear;
+    type Perm = Poseidon2KoalaBear<16>;
     type MyHash = PaddingFreeSponge<Perm, 16, 8, 8>;
     type MyCompress = TruncatedPermutation<Perm, 2, 8, 16>;
     type ValMmcs =
@@ -86,7 +86,7 @@ fn main() {
         //(byte_range_air_instance, 1), // ByteRange has width 1
     ];
 
-    let air_infos: Vec<AirInfo<BabyBear>> = air_instances
+    let air_infos: Vec<AirInfo<KoalaBear>> = air_instances
         .into_iter()
         .map(|(air, trace_width)| AirInfo::new(air, trace_width))
         .collect();
@@ -96,7 +96,8 @@ fn main() {
     let main_trace = generate_fibonacci_trace::<Val>(num_steps);
 
     // Generate lookup traces using the AirInfo instances from the VK
-    let lookup_traces = generate_multiplicity_traces::<BabyBear, MyConfig>(&air_infos, &main_trace);
+    let lookup_traces =
+        generate_multiplicity_traces::<KoalaBear, MyConfig>(&air_infos, &main_trace);
     // Collect all traces: main trace + lookup traces
     let mut traces = vec![main_trace.clone()];
     traces.extend(lookup_traces);
