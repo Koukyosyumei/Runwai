@@ -23,7 +23,7 @@ use runwai_p3::prover::prove;
 use runwai_p3::verify::verify;
 use tracing::{info, Level};
 
-pub fn generate_fibonacci_trace<F: Field>(num_steps: usize) -> RowMajorMatrix<F> {
+pub fn generate_main_trace<F: Field>(num_steps: usize) -> RowMajorMatrix<F> {
     let mut values = Vec::with_capacity(num_steps * 1);
     let mut a = F::ZERO;
     values.push(a);
@@ -93,7 +93,7 @@ fn main() {
 
     // ##################################### Execute the Program ##########################################
     let num_steps = 512; // Choose the number of Fibonacci steps
-    let main_trace = generate_fibonacci_trace::<Val>(num_steps);
+    let main_trace = generate_main_trace::<Val>(num_steps);
 
     // Generate lookup traces using the AirInfo instances from the VK
     let lookup_traces =
