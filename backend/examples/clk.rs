@@ -21,6 +21,7 @@ use runwai_p3::lookup::ByteRangeAir;
 use runwai_p3::permutation::generate_multiplicity_traces;
 use runwai_p3::prover::prove;
 use runwai_p3::verify::verify;
+use tracing::{info, Level};
 
 pub fn generate_fibonacci_trace<F: Field>(num_steps: usize) -> RowMajorMatrix<F> {
     let mut values = Vec::with_capacity(num_steps * 1);
@@ -34,6 +35,10 @@ pub fn generate_fibonacci_trace<F: Field>(num_steps: usize) -> RowMajorMatrix<F>
 }
 
 fn main() {
+    tracing_subscriber::fmt()
+        .with_max_level(Level::TRACE)
+        .init();
+
     // ##################################### Setting #####################################################
     type Val = BabyBear;
     type Perm = Poseidon2BabyBear<16>;
@@ -102,7 +107,7 @@ fn main() {
     let proof = prove(&config, &air_infos, &traces, &pis);
     verify(&config, &air_infos, &proof, &pis).expect("verification failed");
 
-    println!("Success");
+    info!("Proof Verified");
 
     /*
     type Val = Mersenne31; // TODO: Change to KoalaBear
