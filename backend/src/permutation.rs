@@ -8,7 +8,7 @@ use p3_field::{ExtensionField, Field, PrimeField32};
 use p3_matrix::{dense::RowMajorMatrix, Matrix};
 
 use crate::{
-    air::CleanAirInstance, config::StarkGenericConfig, config::Val, key::VerifyingKey, key::VK,
+    air::RunwaiAirInstance, config::StarkGenericConfig, config::Val, key::VerifyingKey, key::VK,
     lookup::ByteRangeAir, lookup::Lookup, lookup::LookupType,
 };
 
@@ -72,7 +72,7 @@ where
         // Find the corresponding ByteRange air in the VK
         let _byte_range_air_info = air_infos
             .iter()
-            .find(|air_info| matches!(&air_info.air, CleanAirInstance::ByteRange(_)))
+            .find(|air_info| matches!(&air_info.air, RunwaiAirInstance::ByteRange(_)))
             .expect("ByteRange air not found in VK");
 
         // Create multiplicity trace for byte range lookups (256 possible values, 0-255)

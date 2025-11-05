@@ -13,7 +13,7 @@ use p3_util::log2_ceil_usize;
 extern crate alloc;
 use alloc::vec;
 
-use crate::air::CleanAirInstance;
+use crate::air::RunwaiAirInstance;
 use crate::config::{StarkGenericConfig, Val};
 use crate::lookup::{BaseMessageBuilder, Lookup, LookupBuilder};
 use crate::permutation::{eval_permutation_constraints, MultiTableBuilder};
@@ -107,14 +107,14 @@ impl<SC: StarkGenericConfig> VK<SC> {
 
 #[derive(Clone)]
 pub struct AirInfo<F: Field> {
-    pub air: CleanAirInstance<F>,
+    pub air: RunwaiAirInstance<F>,
     pub lookups: Vec<(Lookup<VirtualPairCol<F>>, bool)>,
     pub preprocessed: Option<RowMajorMatrix<F>>,
 }
 
 impl<F: Field> AirInfo<F> {
     /// Create a new VK from air instance and trace width, building lookups automatically
-    pub fn new(air: CleanAirInstance<F>, trace_width: usize) -> Self {
+    pub fn new(air: RunwaiAirInstance<F>, trace_width: usize) -> Self {
         let preprocessed_width = if air.preprocessed_trace().is_some() {
             air.preprocessed_trace().unwrap().width()
         } else {
@@ -125,10 +125,10 @@ impl<F: Field> AirInfo<F> {
         let mut lookup_builder = LookupBuilder::new(preprocessed_width, trace_width);
 
         match &air {
-            CleanAirInstance::Main(air) => {
+            RunwaiAirInstance::Main(air) => {
                 air.eval(&mut lookup_builder);
             }
-            CleanAirInstance::ByteRange(air) => {
+            RunwaiAirInstance::ByteRange(air) => {
                 air.eval(&mut lookup_builder);
             }
         }

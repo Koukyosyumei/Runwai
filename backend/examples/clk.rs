@@ -13,7 +13,7 @@ use p3_uni_stark::get_symbolic_constraints;
 
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
-use runwai_p3::air::{CleanAirInstance, RunwaiAir};
+use runwai_p3::air::{RunwaiAir, RunwaiAirInstance};
 use runwai_p3::ast::Expr;
 use runwai_p3::config::StarkConfig;
 use runwai_p3::key::AirInfo;
@@ -21,7 +21,7 @@ use runwai_p3::lookup::ByteRangeAir;
 use runwai_p3::permutation::generate_multiplicity_traces;
 use runwai_p3::prover::prove;
 use runwai_p3::verify::verify;
-use tracing::{info, Level};
+use tracing::{info, trace, Level};
 
 pub fn generate_main_trace<F: Field>(num_steps: usize) -> RowMajorMatrix<F> {
     let mut values = Vec::with_capacity(num_steps * 1);
@@ -70,15 +70,15 @@ fn main() {
     let expr = Expr::from_json_file("examples/clk.json").unwrap();
     let main_air = RunwaiAir::<Val>::new(expr, 1);
     let main_air_width = main_air.width + 1;
-    //let symbolic_constraints = get_symbolic_constraints(&main_air, 0, 0);
-    //for sc in &symbolic_constraints {
-    //    println!("{:?}", sc);
-    //}
-    let air_instance = CleanAirInstance::Main(main_air);
+    let symbolic_constraints = get_symbolic_constraints(&main_air, 0, 0);
+    for sc in &symbolic_constraints {
+        trace!("{:?}", sc);
+    }
+    let air_instance = RunwaiAirInstance::Main(main_air);
 
     // Create a single VK with multiple AirInfo instances
     //let byte_range_air = ByteRangeAir::new();
-    //let byte_range_air_instance = CleanAirInstance::ByteRange(byte_range_air);
+    //let byte_range_air_instance = RunwaiAirInstance::ByteRange(byte_range_air);
 
     // Create VK with multiple air instances (main + lookup)
     let air_instances = vec![

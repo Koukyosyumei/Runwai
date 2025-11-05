@@ -84,36 +84,36 @@ impl<F: Field> RunwaiAir<F> {
 
 /// Enum wrapper to handle multiple AIR types in the same vector
 #[derive(Clone)]
-pub enum CleanAirInstance<F: Field> {
+pub enum RunwaiAirInstance<F: Field> {
     Main(RunwaiAir<F>),
     ByteRange(ByteRangeAir<F>),
 }
 
-impl<F: Field> BaseAir<F> for CleanAirInstance<F> {
+impl<F: Field> BaseAir<F> for RunwaiAirInstance<F> {
     fn width(&self) -> usize {
         match self {
-            CleanAirInstance::Main(air) => air.width(),
-            CleanAirInstance::ByteRange(air) => air.width(),
+            RunwaiAirInstance::Main(air) => air.width(),
+            RunwaiAirInstance::ByteRange(air) => air.width(),
         }
     }
 
     fn preprocessed_trace(&self) -> Option<RowMajorMatrix<F>> {
         match self {
-            CleanAirInstance::Main(air) => air.preprocessed_trace(),
-            CleanAirInstance::ByteRange(air) => air.preprocessed_trace(),
+            RunwaiAirInstance::Main(air) => air.preprocessed_trace(),
+            RunwaiAirInstance::ByteRange(air) => air.preprocessed_trace(),
         }
     }
 }
 
-impl<AB> Air<AB> for CleanAirInstance<AB::F>
+impl<AB> Air<AB> for RunwaiAirInstance<AB::F>
 where
     AB: AirBuilder + AirBuilderWithPublicValues + PairBuilder + BaseMessageBuilder,
     AB::F: Field,
 {
     fn eval(&self, builder: &mut AB) {
         match self {
-            CleanAirInstance::Main(air) => air.eval(builder),
-            CleanAirInstance::ByteRange(air) => air.eval(builder),
+            RunwaiAirInstance::Main(air) => air.eval(builder),
+            RunwaiAirInstance::ByteRange(air) => air.eval(builder),
         };
     }
 }
