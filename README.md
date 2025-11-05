@@ -11,8 +11,6 @@
 
 Runwai is a refinement-typed DSL for certified AIR constraints in zero-knowledge proof systems.
 
-The working-in-progress documentation paper is available at [link](https://drive.google.com/file/d/15s1s3ecBxd5B5Y06nsZ1sRocjB8CfwHK/view?usp=sharing).
-
 ## Quickstart
 
 - Define a Constraint
