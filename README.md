@@ -53,16 +53,17 @@ lake exe runwai examples/iszero.rwai
 - Integrate with Plonky3 Backend
 
 ```rust
-use p3_uni_stark::{prove, verify};
-
 use runwai_p3::air::RunwaiAir;
 use runwai_p3::ast::Expr;
+use runwai_p3::prover::prove;
+use runwai_p3::verify::verify;
 
 let expr = Expr::from_json_file("examples/IsZero.json").unwrap();
 let air = RunwaiAir::<Val>::new(expr, 3);
+let air_info = AirInfo::new(air, 3);
 
-let proof = prove(&config, &air, trace, &vec![]);
-let result = verify(&config, &air, &proof, &vec![]);
+let proof = prove(&config, &vec![air_info], vec![trace], &vec![]);
+let result = verify(&config, &vec![air_info], &proof, &vec![]);
 ```
 
 ## Why use Runwai?
