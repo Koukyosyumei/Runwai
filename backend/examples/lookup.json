@@ -1,0 +1,19 @@
+{"vname": "u",
+ "kind": "Lookup",
+ "cname": "u8",
+ "body": {"name": "u", "kind": "Var"},
+ "args":
+ [{"snd":
+   {"kind": "ArrIdx",
+    "idx": {"val": 0, "kind": "ConstN"},
+    "arr":
+    {"kind": "ArrIdx",
+     "idx": {"name": "i", "kind": "Var"},
+     "arr": {"name": "trace", "kind": "Var"}}},
+   "fst":
+   {"kind": "ArrIdx",
+    "idx": {"val": 0, "kind": "ConstN"},
+    "arr":
+    {"kind": "ArrIdx",
+     "idx": {"name": "i", "kind": "Var"},
+     "arr": {"name": "trace", "kind": "Var"}}}}]}

@@ -67,7 +67,7 @@ fn main() {
     let config = MyConfig::new(pcs, challenger);
 
     // ##################################### Load AIR #####################################################
-    let expr = Expr::from_json_file("examples/clk.json").unwrap();
+    let expr = Expr::from_json_file("examples/lookup.json").unwrap();
     let main_air = RunwaiAir::<Val>::new(expr, 1);
     let main_air_width = main_air.width + 1;
     let symbolic_constraints = get_symbolic_constraints(&main_air, 0, 0);
