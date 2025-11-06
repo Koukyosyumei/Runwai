@@ -302,7 +302,7 @@ where
         .iter()
         .map(|o| o.local_cumulative_sum)
         .sum::<SC::Challenge>();
-
+    tracing::info!("cum_sum: {}", cum_sums);
     if cum_sums != zero {
         return Err(VerificationError::CumulativeSumMismatch);
     }

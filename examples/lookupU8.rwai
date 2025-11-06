@@ -1,0 +1,5 @@
+chip LookupU8(trace: [[Field: 1]: n], i : {v: UInt | v < n})
+  -> {Unit| True} {
+  let u = lookup u8(trace [i][0] : trace [i][0]);
+  u
+}

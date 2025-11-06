@@ -56,7 +56,7 @@ where
 
     // Main VK should only send lookups, not receive them
     let receives: Vec<_> = lookups.iter().filter(|(_, is_send)| !*is_send).collect();
-    assert!(
+    debug_assert!(
         receives.is_empty(),
         "The main air should only send lookups, as it is not a lookup air"
     );
@@ -87,7 +87,7 @@ where
 
                 // Convert lookup value to index of multiplicity trace and increment multiplicity
                 let lookup_idx = v.as_canonical_u32() as usize;
-                assert!(
+                debug_assert!(
                     lookup_idx < 256,
                     "Lookup value out of range for byte range lookup: {}",
                     lookup_idx
