@@ -1,4 +1,4 @@
-# Runwai:
+# Runwai
 
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Koukyosyumei/Runwai/lean_action_ci.yaml)
 ![GitHub License](https://img.shields.io/github/license/Koukyosyumei/Runwai)
