@@ -13,6 +13,10 @@ def intOpToJson : Ast.IntOp → Json
   | .add => Json.str "add"
   | .sub => Json.str "sub"
   | .mul => Json.str "mul"
+  | .and => Json.str "and"
+  | .or  => Json.str "or"
+  | .shl => Json.str "shl"
+  | .shr => Json.str "shr"
 
 /-- Convert FieldOp to JSON -/
 def fieldOpToJson : Ast.FieldOp → Json

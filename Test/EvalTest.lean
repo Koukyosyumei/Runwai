@@ -87,3 +87,7 @@ example: Eval.EvalProp σ₀ T₀ Δ'₀
 example: Eval.EvalProp σ₀ T₀ Δ'₀ (.UtoS (.constN 42)) (.vInt 42) := by
   apply Eval.EvalProp.UtoS
   apply Eval.EvalProp.ConstN
+
+-- Code to test bitwise and and bitwise or operations in IntOp
+example : Eval.evalUIntOp Ast.IntOp.and (Ast.Value.vN 6) (Ast.Value.vN 3) = some (Ast.Value.vN 2) := rfl
+example : Eval.evalUIntOp Ast.IntOp.or (Ast.Value.vN 6) (Ast.Value.vN 3) = some (Ast.Value.vN 7) := rfl
