@@ -32,6 +32,11 @@ inductive IntOp where
   | add   -- +
   | sub   -- -
   | mul   -- *
+  | and   -- &
+  | or    -- |
+  -- | xor   -- ^
+  | shl   -- <<
+  | shr   -- >>
   deriving DecidableEq, Repr, Lean.ToExpr
 
 /-- Field `F p` binary operators. -/
@@ -207,6 +212,11 @@ instance : Repr IntOp where
     | IntOp.add, _ => Format.text "+"
     | IntOp.sub, _ => Format.text "-"
     | IntOp.mul, _ => Format.text "*"
+    | IntOp.and, _ => Format.text "&"
+    | IntOp.or, _  => Format.text "|"
+    -- | IntOp.xor, _ => Format.text "^"
+    | IntOp.shl, _ => Format.text "<<"
+    | IntOp.shr, _ => Format.text ">>"
 
 instance : Repr FieldOp where
   reprPrec

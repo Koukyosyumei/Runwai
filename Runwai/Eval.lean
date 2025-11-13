@@ -37,6 +37,10 @@ def evalUIntOp (op: IntOp) : Value → Value → Option Value
       | IntOp.add => x + y
       | IntOp.sub => x - y
       | IntOp.mul => x * y
+      | IntOp.and => x &&& y -- Bitwise and
+      | IntOp.or  => x ||| y -- Bitwise or
+      | IntOp.shl => x <<< y
+      | IntOp.shr => x >>> y
   | _, _ => none
 
 @[simp]
@@ -47,6 +51,10 @@ def evalSIntOp (op: IntOp) : Value → Value → Option Value
       | IntOp.add => x + y
       | IntOp.sub => x - y
       | IntOp.mul => x * y
+      | IntOp.and => x.toNat &&& y.toNat -- Bitwise and
+      | IntOp.or  => x.toNat ||| y.toNat -- Bitwise or
+      | IntOp.shl => x.toNat <<< y.toNat
+      | IntOp.shr => x.toNat >>> y.toNat
   | _, _ => none
 
 /-- Evaluate a relational operator `op` on two `Value` arguments. -/
