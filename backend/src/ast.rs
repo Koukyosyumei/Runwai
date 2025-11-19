@@ -401,7 +401,7 @@ pub enum CondInfo {
     WhenNe(Box<Expr>, Box<Expr>),
 }
 
-pub fn is_first_cond<AB: AirBuilder>(cond: &Expr, row_index_name: &str) -> bool {
+pub fn is_first_row_cond<AB: AirBuilder>(cond: &Expr, row_index_name: &str) -> bool {
     if let Expr::BinRel {
         lhs,
         op: RelOp::Eq,
@@ -421,7 +421,7 @@ pub fn is_first_cond<AB: AirBuilder>(cond: &Expr, row_index_name: &str) -> bool 
     return false;
 }
 
-pub fn is_transition_cond<AB: AirBuilder>(
+pub fn is_transition_row_cond<AB: AirBuilder>(
     cond: &Expr,
     row_index_name: &str,
     height_name: &str,
@@ -457,7 +457,7 @@ pub fn is_transition_cond<AB: AirBuilder>(
 pub fn walkthrough_ast<AB: AirBuilder>(
     builder: &mut AB,
     env: &mut HashMap<String, Expr>,
-    lookup_info: &mut Vec<(String, AB::Expr)>,
+    lookup_info: &mut Vec<(String, AB::Expr, AB::Expr)>,
     expr: Expr,
     colid_to_var_fn: &dyn Fn(bool, usize) -> AB::Var,
     trace_name: &str,
@@ -517,7 +517,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
             }
         }
         Expr::Branch { cond, th, els } => {
-            if is_first_cond::<AB>(&cond, &row_index_name) {
+            if is_first_row_cond::<AB>(&cond, &row_index_name) {
                 walkthrough_ast(
                     builder,
                     env,
@@ -530,7 +530,7 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     BoundaryInfo::IsFirst,
                     &mut conditions,
                 );
-            } else if is_transition_cond::<AB>(&cond, row_index_name, height_name) {
+            } else if is_transition_row_cond::<AB>(&cond, row_index_name, height_name) {
                 walkthrough_ast(
                     builder,
                     env,
@@ -543,66 +543,64 @@ pub fn walkthrough_ast<AB: AirBuilder>(
                     BoundaryInfo::IsTransition,
                     &mut conditions,
                 );
-            } else {
-                if let Expr::BinRel {
-                    lhs,
-                    op: RelOp::Eq,
-                    rhs,
-                } = &*cond
-                {
-                    if th.is_dummy_assert() {
-                        panic!("then-statement should be a dummy assert: (assert(true, true))");
-                    }
-                    if let Expr::ConstF { val } = &**rhs {
-                        if *val == 0 {
-                            conditions.push(CondInfo::When(lhs.clone()));
-                            walkthrough_ast(
-                                builder,
-                                env,
-                                lookup_info,
-                                *els,
-                                colid_to_var_fn,
-                                trace_name,
-                                row_index_name,
-                                height_name,
-                                when,
-                                conditions,
-                            );
-                            return;
-                        }
-                    }
-                    if let Expr::ConstF { val } = &**lhs {
-                        if *val == 0 {
-                            conditions.push(CondInfo::When(rhs.clone()));
-                            walkthrough_ast(
-                                builder,
-                                env,
-                                lookup_info,
-                                *els,
-                                colid_to_var_fn,
-                                trace_name,
-                                row_index_name,
-                                height_name,
-                                when,
-                                conditions,
-                            );
-                            return;
-                        }
-                    }
-                    conditions.push(CondInfo::WhenNe(lhs.clone(), rhs.clone()));
-                    walkthrough_ast(
-                        builder,
-                        env,
-                        lookup_info,
-                        *els,
-                        colid_to_var_fn,
-                        trace_name,
-                        row_index_name,
-                        height_name,
-                        when,
-                        conditions,
-                    );
+            } else if let Expr::BinRel {
+                lhs,
+                op: RelOp::Eq,
+                rhs,
+            } = &*cond
+            {
+                if th.is_dummy_assert() {
+                    panic!("then-statement should be a dummy assert: (assert(true, true))");
                 }
+                if let Expr::ConstF { val } = &**rhs {
+                    if *val == 0 {
+                        conditions.push(CondInfo::When(lhs.clone()));
+                        walkthrough_ast(
+                            builder,
+                            env,
+                            lookup_info,
+                            *els,
+                            colid_to_var_fn,
+                            trace_name,
+                            row_index_name,
+                            height_name,
+                            when,
+                            conditions,
+                        );
+                        return;
+                    }
+                }
+                if let Expr::ConstF { val } = &**lhs {
+                    if *val == 0 {
+                        conditions.push(CondInfo::When(rhs.clone()));
+                        walkthrough_ast(
+                            builder,
+                            env,
+                            lookup_info,
+                            *els,
+                            colid_to_var_fn,
+                            trace_name,
+                            row_index_name,
+                            height_name,
+                            when,
+                            conditions,
+                        );
+                        return;
+                    }
+                }
+                conditions.push(CondInfo::WhenNe(lhs.clone(), rhs.clone()));
+                walkthrough_ast(
+                    builder,
+                    env,
+                    lookup_info,
+                    *els,
+                    colid_to_var_fn,
+                    trace_name,
+                    row_index_name,
+                    height_name,
+                    when,
+                    conditions,
+                );
             }
         }
         Expr::LetIn { name, val, body } => {
@@ -638,11 +636,38 @@ pub fn walkthrough_ast<AB: AirBuilder>(
             args,
             body,
         } => {
+            // TODO: support nested filter constraints.
+            let multiplicity = if conditions.is_empty() {
+                AB::Expr::ONE
+            } else {
+                match &conditions[0] {
+                    CondInfo::When(cond) => {
+                        cond.to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name)
+                    }
+                    CondInfo::WhenNe(cond_lhs, cond_rhs) => {
+                        let cond_lhs_ab = cond_lhs.to_ab_expr::<AB>(
+                            colid_to_var_fn,
+                            env,
+                            trace_name,
+                            row_index_name,
+                        );
+                        let cond_rhs_ab = cond_rhs.to_ab_expr::<AB>(
+                            colid_to_var_fn,
+                            env,
+                            trace_name,
+                            row_index_name,
+                        );
+                        cond_lhs_ab - cond_rhs_ab
+                    }
+                }
+            };
+
             lookup_info.push((
                 cname,
                 args[0]
                     .fst
                     .to_ab_expr::<AB>(colid_to_var_fn, env, trace_name, row_index_name),
+                multiplicity,
             ));
             walkthrough_ast(
                 builder,

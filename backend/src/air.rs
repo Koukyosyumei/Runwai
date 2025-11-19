@@ -63,7 +63,7 @@ where
         for c in &lookup_info {
             if c.0 == "u8" {
                 let v = c.1.clone().into();
-                let mul = AB::F::ONE.into();
+                let mul = c.2.clone();
                 let l = Lookup::new(LookupType::ByteRange, v, mul);
                 builder.send(l);
             }
