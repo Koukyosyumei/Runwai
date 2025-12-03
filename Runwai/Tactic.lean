@@ -1,3 +1,4 @@
+import Runwai.Ast
 import Runwai.Typing
 import Runwai.Gadget
 
@@ -9,13 +10,15 @@ macro_rules
       · apply get_update_self
       · apply Ty.TypeJudgment.TE_ArrayIndex
         apply Ty.TypeJudgment.TE_ArrayIndex
-        apply Ty.TypeJudgment.TE_VarEnv
+        apply var_has_type_in_tyenv
         apply get_update_ne
         try (simp)
-        apply Ty.TypeJudgment.TE_VarEnv
+        try (simp [Ast.nu])
+        apply var_has_type_in_tyenv
         try (apply get_update_self)
         try (apply get_update_ne)
         try (simp)
+        try (simp [Ast.nu])
         apply constZ_refine_lt
         try (simp)
   )
@@ -31,9 +34,10 @@ macro_rules
 syntax "auto_resolve_varenv" : tactic
 macro_rules
 | `(tactic| auto_resolve_varenv) => `(tactic|
-    apply Ty.TypeJudgment.TE_VarEnv;
+    apply var_has_type_in_tyenv;
     apply get_update_ne;
     simp;
+    try (simp [Ast.nu]);
   )
 
 syntax "repeatConstructorAtMost" num : tactic

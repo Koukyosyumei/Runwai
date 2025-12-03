@@ -132,7 +132,6 @@ theorem typing_pointwise_preserve (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ₁: 
         @Ty.TypeJudgment Δ Γ₂ Η e τ := by {
     induction h₂ with
     | TE_Var ha => intro Γ₂ h; apply Ty.TypeJudgment.TE_Var; rwa [← h]
-    | TE_VarEnv h₁ => intro Γ₂ h; apply Ty.TypeJudgment.TE_VarEnv; rwa [← h]
     | TE_VarFunc _ =>
       rename_i Γ' x₁ x₂ τ₁ τ₂ h
       intro Γ₂ h'
