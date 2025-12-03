@@ -36,14 +36,16 @@ import Runwai.Tactic
       apply Ty.TypeJudgment.TE_Var
       apply get_update_ne
       simp
-      apply Ty.TypeJudgment.TE_VarEnv
+      apply var_has_type_in_tyenv
       apply get_update_ne
       simp
+      simp [Ast.nu]
       apply constZ_refine_lt
       simp
     . apply Ty.TypeJudgment.TE_ConstF
-  . apply Ty.TypeJudgment.TE_VarEnv;
+  . apply var_has_type_in_tyenv;
     apply get_update_self
+    simp [Ast.nu]
   simp[Ast.renameTy]
 }
 
@@ -51,7 +53,7 @@ import Runwai.Tactic
   auto_trace_index
   apply isZero_typing_soundness
   repeat apply get_update_ne; simp
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_self;
   repeat decide
   repeat rfl
@@ -62,12 +64,13 @@ import Runwai.Tactic
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   simp
   apply Ty.TypeJudgment.TE_SUB
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   unfold Env.getTy Env.updateTy
   simp
   apply And.intro
   rfl
   rfl
+  simp [Ast.nu]
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ T v h₁ h₂

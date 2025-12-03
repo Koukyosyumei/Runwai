@@ -162,11 +162,12 @@ lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
   exact h
 }
 
-lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.getTy Γ x = (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN v₁))))} {h₁: v₁ < v₂} :
+lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.getTy Γ x = (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN v₁))))} {h₁: v₁ < v₂} {h₂: x ≠ nu} :
   @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.uint.refin (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constN v₂)))) := by {
   apply Ty.TypeJudgment.TE_SUB
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   exact h₀
+  exact h₂
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ T v h₃ h₄
@@ -223,8 +224,9 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
     (Ast.Ty.uint.refin (Ast.Predicate.dep Ast.nu  ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constN height)))) := by {
     apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_BinOpUInt
-    apply Ty.TypeJudgment.TE_VarEnv
+    apply var_has_type_in_tyenv
     exact h₂
+    exact h₃
     apply Ty.TypeJudgment.TE_ConstN
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl
