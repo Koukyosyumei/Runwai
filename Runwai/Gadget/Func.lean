@@ -43,10 +43,14 @@ elab "autoTy" : tactic => do
     if ¬applied then
       let success ← tryLean (evalTactic (← `(tactic| apply get_update_self)))
       if ¬success then
-        let _ ← tryLean (evalTactic (← `(tactic| assumption)))
-        pure ()
+        let success' ← tryLean (evalTactic (← `(tactic| apply get_update_ne)))
+        if success' then
+          let _ ← tryLean (evalTactic (← `(tactic| simp)))
+        if ¬success' then
+          let _ ← tryLean (evalTactic (← `(tactic| assumption)))
+          pure ()
     loop (depth - 1)
-  loop 50
+  loop 259
 
 /-- ゴールの EvalProp (Branch) を if文の等式に変換する補題 -/
 theorem vcg_branch_intro {σ T Δ c t f vc vt vf v}
@@ -958,179 +962,6 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
                                   .add (.uintExpr (.toN (.var "value_3")) .mul (.constN (256^3))))
         .lt (.constN 2130706433)))))))))))))))))))))) := by {
   autoTy
-  autoTy
-  /-
-  repeat
-    apply Ty.TypeJudgment.TE_Abs
-    apply get_update_self
-  repeat
-    apply Ty.TypeJudgment.TE_LetIn;
-    apply get_update_self;
-    apply Ty.TypeJudgment.TE_Assert
-    apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_Var
-    apply get_update_ne
-    simp
-    apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_Var
-    apply get_update_ne
-    simp
-    repeat apply Ty.TypeJudgment.TE_ConstF
-  -/
-  --apply Ty.TypeJudgment.TE_LetIn;
-  --apply get_update_self;
-  --apply Ty.TypeJudgment.TE_Assert
-  --repeat apply Ty.TypeJudgment.TE_BinOpField
-  --apply Ty.TypeJudgment.TE_Var
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
-  autoTy
-  apply get_update_ne
-  simp
   apply Ty.TypeJudgment.TE_SUB
   apply var_has_type_in_tyenv
   apply get_update_self
