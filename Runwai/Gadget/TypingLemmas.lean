@@ -1,8 +1,32 @@
 import Runwai.Typing
 import Runwai.Gadget.Utils
 import Runwai.Gadget.EnvLemmas
+import Runwai.Gadget.PredLemmas
 
 open Ast
+
+lemma ty_varenv {Γ: Env.TyEnv} {Δ: Env.ChipEnv} {Η: Env.UsedNames}
+    {x : String} {τ: Ast.Ty} {φ: Ast.Predicate} (h: Env.getTy Γ x = (Ast.Ty.refin τ φ)):
+    @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.refin τ φ) := by
+    apply Ty.TypeJudgment.TE_SUB
+    apply Ty.TypeJudgment.TE_Var h
+    apply Ty.SubtypeJudgment.TSub_Refine
+    apply Ty.SubtypeJudgment.TSub_Refl
+    intro σ T v h₁ h₂
+    unfold PropSemantics.tyenvToProp at h₁
+    unfold PropSemantics.varToProp at h₁
+    have h₃ := h₁ x (τ.refin φ)
+    simp_all
+    cases h₂
+    rename_i ihf iha ihb
+    cases ihf
+    cases ihb
+    rename_i ih₁ ih₂
+    cases ih₁
+    rename_i ih₁₁ ih₁₂
+    cases ih₁₁
+    rename_i ih₁₃
+    sorry
 
 /--
 If a variable `x` is typed with a refinement `{_ : unit | e}` in a semantically valid

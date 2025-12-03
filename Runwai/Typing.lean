@@ -245,6 +245,8 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     : TypeJudgment Γ Η e (Ast.Ty.refin τ φ)
   -/
 
+
+
 /--
 Creates the initial value (`σ`) and type (`Γ`) environments for verifying a chip's body.
 It binds the chip's trace and instance identifiers to their expected types.
