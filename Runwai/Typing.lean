@@ -193,12 +193,6 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     (h₃: τ₂' = (Ast.renameTy τ₂ s x₂)):
     TypeJudgment Γ Η (Ast.Expr.app x₁ x₂) τ₂'
 
-  -- TE_SUB
-  | TE_SUB {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
-    (ht : @TypeJudgment Δ Γ Η e τ₁)
-    (h₀ : SubtypeJudgment Δ Γ τ₁ τ₂) :
-    TypeJudgment Γ Η e τ₂
-
   -- TE-LETIN
   | TE_LetIn {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {e₁ e₂ : Ast.Expr} {τ₁ τ₂ τ₃: Ast.Ty}
     (h₀: Env.getTy (Env.updateTy Γ x τ₁) x = τ₁)
@@ -225,6 +219,12 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     (hn: φ' = lookup_pred args c φ Η)
     (h₂: @TypeJudgment Δ (Env.updateTy Γ vname (Ast.Ty.refin Ast.Ty.unit φ')) (update_UsedNames c Η) e τ):
     TypeJudgment Γ Η (Ast.Expr.lookup vname cname args e) τ
+
+  -- TE_SUB
+  | TE_SUB {Γ: Env.TyEnv} {Η: Env.UsedNames} {e: Ast.Expr} {τ₁ τ₂: Ast.Ty}
+    (ht : @TypeJudgment Δ Γ Η e τ₁)
+    (h₀ : SubtypeJudgment Δ Γ τ₁ τ₂) :
+    TypeJudgment Γ Η e τ₂
 
   /-
   -- TE-INDUCTIVE (TODO: convert this rule to a theorem via TSUB-REFINE)

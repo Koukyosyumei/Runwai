@@ -8,6 +8,46 @@ import Runwai.Gadget.FieldLemmas
 open Ast
 open Lean Meta Elab Tactic
 
+-- ヘルパー
+def tryLean (tac : TacticM Unit) : TacticM Bool := do
+  try
+    tac
+    pure true
+  catch _ =>
+    pure false
+
+def isTyTypeJudgment (e : Lean.Expr) : Bool :=
+  match e.getAppFn with
+  | Expr.const n _ => n == ``Ty.TypeJudgment
+  | _ => false
+
+/--
+Ty.TypeJudgment 専用の自動化 tactic。
+- ゴールが Ty.TypeJudgment 型なら constructor
+- それ以外は try get_update_self や assumption
+- repeat で繰り返す
+-/
+elab "autoTy" : tactic => do
+  let rec loop (depth : Nat) : TacticM Unit := do
+    if depth == 0 then return ()
+    let g ← Tactic.getMainGoal
+    let t ← g.getType
+    let _ ← tryLean (evalTactic (← `(tactic| assumption)))
+    let applied ←
+      if isTyTypeJudgment t then
+        do
+          -- Lean.logInfo m!"constructor applied!"
+          evalTactic (← `(tactic| constructor))
+          pure true
+      else pure false
+    if ¬applied then
+      let success ← tryLean (evalTactic (← `(tactic| apply get_update_self)))
+      if ¬success then
+        let _ ← tryLean (evalTactic (← `(tactic| assumption)))
+        pure ()
+    loop (depth - 1)
+  loop 50
+
 /-- ゴールの EvalProp (Branch) を if文の等式に変換する補題 -/
 theorem vcg_branch_intro {σ T Δ c t f vc vt vf v}
     (hc : Eval.EvalProp σ T Δ c (Ast.Value.vBool vc))
@@ -507,12 +547,7 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
-    apply Ty.TypeJudgment.TE_LetIn; apply get_update_self;
-    apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_Var; exact hty;
-    repeat apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_Var; exact htx; exact htinv
-    apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_LetIn; apply get_update_self
-    apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_BinOpField; apply Ty.TypeJudgment.TE_Var
+    autoTy
     rw[← htx]; apply get_update_ne; exact hne₁
     apply Ty.TypeJudgment.TE_Var
     rw[← hty]; apply get_update_ne; exact hne₂
@@ -922,6 +957,9 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
                                   .add (.uintExpr (.toN (.var "value_2")) .mul (.constN (256^2))))
                                   .add (.uintExpr (.toN (.var "value_3")) .mul (.constN (256^3))))
         .lt (.constN 2130706433)))))))))))))))))))))) := by {
+  autoTy
+  autoTy
+  /-
   repeat
     apply Ty.TypeJudgment.TE_Abs
     apply get_update_self
@@ -938,56 +976,161 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
     apply get_update_ne
     simp
     repeat apply Ty.TypeJudgment.TE_ConstF
-
-  apply Ty.TypeJudgment.TE_LetIn;
-  apply get_update_self;
-  apply Ty.TypeJudgment.TE_Assert
-  repeat apply Ty.TypeJudgment.TE_BinOpField
-  apply Ty.TypeJudgment.TE_Var
+  -/
+  --apply Ty.TypeJudgment.TE_LetIn;
+  --apply get_update_self;
+  --apply Ty.TypeJudgment.TE_Assert
+  --repeat apply Ty.TypeJudgment.TE_BinOpField
+  --apply Ty.TypeJudgment.TE_Var
   apply get_update_ne
   simp
-  repeat
-    apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_Var
-    apply get_update_ne
-    simp
-    repeat apply Ty.TypeJudgment.TE_ConstF
-  apply Ty.TypeJudgment.TE_Var
+  autoTy
   apply get_update_ne
   simp
-
-  apply Ty.TypeJudgment.TE_LetIn;
-  apply get_update_self;
-  apply Ty.TypeJudgment.TE_Assert
-  apply Ty.TypeJudgment.TE_Var
+  autoTy
   apply get_update_ne
   simp
-  apply Ty.TypeJudgment.TE_ConstF
-
-  repeat
-    apply Ty.TypeJudgment.TE_LetIn;
-    apply get_update_self;
-    apply Ty.TypeJudgment.TE_Assert
-    apply Ty.TypeJudgment.TE_Var
-    apply get_update_ne
-    simp
-    apply Ty.TypeJudgment.TE_BinOpField
-    repeat
-      apply Ty.TypeJudgment.TE_Var
-      apply get_update_ne
-      simp
-
-  repeat
-    apply Ty.TypeJudgment.TE_LetIn;
-    apply get_update_self;
-    apply Ty.TypeJudgment.TE_Assert
-    apply Ty.TypeJudgment.TE_ConstF
-    apply Ty.TypeJudgment.TE_BinOpField
-    repeat
-      apply Ty.TypeJudgment.TE_Var
-      apply get_update_ne
-      simp
-
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
+  autoTy
+  apply get_update_ne
+  simp
   apply Ty.TypeJudgment.TE_SUB
   apply var_has_type_in_tyenv
   apply get_update_self
