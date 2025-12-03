@@ -1,8 +1,88 @@
 import Runwai.Typing
 import Runwai.Gadget.Utils
 import Runwai.Gadget.EnvLemmas
+import Runwai.Gadget.PredLemmas
 
 open Ast
+
+lemma var_has_type_in_tyenv {Γ: Env.TyEnv} {Δ: Env.ChipEnv} {Η: Env.UsedNames}
+    {x : String} {τ: Ast.Ty} {φ: Ast.Predicate}
+    (h: Env.getTy Γ x = (Ast.Ty.refin τ φ))
+    (hneq : x ≠ Ast.nu):
+    @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.refin τ φ) := by
+    apply Ty.TypeJudgment.TE_SUB
+    apply Ty.TypeJudgment.TE_Var h
+    apply Ty.SubtypeJudgment.TSub_Refine
+    apply Ty.SubtypeJudgment.TSub_Refl
+    intro σ T v h₁ h₂
+    unfold PropSemantics.tyenvToProp at h₁
+    unfold PropSemantics.varToProp at h₁
+    have h₃ := h₁ x (τ.refin φ)
+    simp_all
+    cases h₂
+    rename_i ihf iha ihb
+    cases ihf
+    cases ihb
+    rename_i ih₁ ih₂
+    cases ih₁
+    rename_i ih₁₁ ih₁₂
+    cases ih₁₁
+    rename_i ih₁₃
+    simp [Env.getVal, Env.updateVal] at ih₁₃
+    rename_i va v₁ v₂
+    have := get_val_update_ne σ Ast.nu x va hneq
+    rw[this] at ih₁₂
+    have : Eval.EvalProp σ T Δ (.var x) v₂ := by {
+      apply Eval.EvalProp.Var ih₁₂
+    }
+    simp at ih₂
+    cases v₁
+    cases v₂ with
+    | vF val => {
+      simp at ih₂
+      rw[ih₂] at ih₁₃
+      rw[ih₁₃] at iha
+      rename_i x₁ x₂
+      have h := (@predToProp_congr σ T Δ τ φ v (.var x) (.vF val) iha this).mpr h₃
+      exact h
+    }
+    | _ => simp at ih₂
+    cases v₂ with
+    | vN val => {
+      simp at ih₂
+      rw[ih₂] at ih₁₃
+      rw[ih₁₃] at iha
+      rename_i h val'
+      have h := (@predToProp_congr σ T Δ τ φ v (.var x) (.vN val) iha this).mpr h₃
+      exact h
+    }
+    | _ => simp at ih₂
+    cases v₂ with
+    | vInt val => {
+      simp at ih₂
+      rw[ih₂] at ih₁₃
+      rw[ih₁₃] at iha
+      rename_i h val'
+      have h := (@predToProp_congr σ T Δ τ φ v (.var x) (.vInt val) iha this).mpr h₃
+      exact h
+    }
+    | _ => simp at ih₂
+    cases v₂ with
+    | _ => simp at ih₂
+    cases v₂ with
+    | vBool val => {
+      simp at ih₂
+      rw[ih₂] at ih₁₃
+      rw[ih₁₃] at iha
+      rename_i h val'
+      have h := (@predToProp_congr σ T Δ τ φ v (.var x) (.vBool val) iha this).mpr h₃
+      exact h
+    }
+    | _ => simp at ih₂
+    cases v₂ with
+    | _ => simp at ih₂
+    cases v₂ with
+    | _ => simp at ih₂
 
 /--
 If a variable `x` is typed with a refinement `{_ : unit | e}` in a semantically valid
@@ -82,11 +162,12 @@ lemma constZ_refine_lt {Δ Γ Η x y} {h: x < y} :
   exact h
 }
 
-lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.getTy Γ x = (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN v₁))))} {h₁: v₁ < v₂} :
+lemma varZ_refine_lt {Δ Γ Η x v₁ v₂} {h₀: Env.getTy Γ x = (Ast.Ty.refin Ast.Ty.uint (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.constN v₁))))} {h₁: v₁ < v₂} {h₂: x ≠ nu} :
   @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.uint.refin (Ast.Predicate.dep Ast.nu ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constN v₂)))) := by {
   apply Ty.TypeJudgment.TE_SUB
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   exact h₀
+  exact h₂
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ T v h₃ h₄
@@ -143,8 +224,9 @@ lemma varZ_refine_int_diff_lt {Γ Η} (n x: String)
     (Ast.Ty.uint.refin (Ast.Predicate.dep Ast.nu  ((Ast.Expr.var Ast.nu).binRel Ast.RelOp.lt (Ast.Expr.constN height)))) := by {
     apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_BinOpUInt
-    apply Ty.TypeJudgment.TE_VarEnv
+    apply var_has_type_in_tyenv
     exact h₂
+    exact h₃
     apply Ty.TypeJudgment.TE_ConstN
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl

@@ -59,12 +59,13 @@ theorem lookupChip_correct : Ty.chipCorrect Δ' getChip 1 := by
   intro i hi Γ Η
   apply Ty.TypeJudgment.TE_LookUp; repeat rfl
   apply Ty.TypeJudgment.TE_SUB
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   unfold Env.getTy Env.updateTy
   simp
   apply And.intro
   rfl
   rfl
+  simp [Ast.nu]
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ T v h₁ h₂
@@ -99,12 +100,13 @@ theorem lookupChip_correct_2 : Ty.chipCorrect Δ' lookupChip_2 1 := by
         ["i'", "trace'", "i", "trace"]))
   rw[ht]
   apply Ty.TypeJudgment.TE_SUB
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   unfold Env.getTy Env.updateTy
   simp
   apply And.intro
   rfl
   rfl
+  simp [Ast.nu]
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ T v h₁ h₂

@@ -113,10 +113,6 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
     Env.getTy Γ x = (Ast.Ty.refin T φ) →
     TypeJudgment Γ Η (Ast.Expr.var x) (Ast.Ty.refin T (Ast.Predicate.dep Ast.nu (Ast.exprEq (Ast.Expr.var Ast.nu) (Ast.Expr.var x))))
 
-  | TE_VarEnv {Γ: Env.TyEnv} {Η: Env.UsedNames} {x : String} {T: Ast.Ty} {φ: Ast.Predicate}:
-    Env.getTy Γ x = (Ast.Ty.refin T φ) →
-    TypeJudgment Γ Η (Ast.Expr.var x) (Ast.Ty.refin T φ)
-
   -- TE-VAR-FUNC
   | TE_VarFunc {Γ: Env.TyEnv} {Η: Env.UsedNames} {f x : String} {τ₁ τ₂: Ast.Ty}:
     Env.getTy Γ f = (Ast.Ty.func x τ₁ τ₂) →
@@ -244,6 +240,8 @@ inductive TypeJudgment {Δ: Env.ChipEnv}:
       ([(Env.freshName Η indStepEqKLabel), (Env.freshName Η indStepPrevLabel), (Env.freshName Η indBaseLabel)] ++ Η) e (Ast.Ty.refin τ (Ast.renameVarinPred φ i (Ast.Expr.constN (k + 1)))))
     : TypeJudgment Γ Η e (Ast.Ty.refin τ φ)
   -/
+
+
 
 /--
 Creates the initial value (`σ`) and type (`Γ`) environments for verifying a chip's body.
