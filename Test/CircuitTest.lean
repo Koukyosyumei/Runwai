@@ -138,14 +138,17 @@ theorem assertChip_correct : Ty.chipCorrect Δ assertChip 1 := by
       apply Ty.TypeJudgment.TE_Var
       apply get_update_ne
       simp
-      apply Ty.TypeJudgment.TE_VarEnv
+      apply var_has_type_in_tyenv
       apply get_update_ne
+      simp
+      unfold Ast.nu
       simp
       apply constZ_refine_lt
       simp
     . apply Ty.TypeJudgment.TE_ConstF
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_self
+  simp [Ast.nu]
   simp [Ast.renameTy]
 
 theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
@@ -154,8 +157,10 @@ theorem iszeroChip_correct : Ty.chipCorrect Δ iszeroChip 1 := by
   auto_trace_index
   apply isZero_typing_soundness
   repeat apply get_update_ne; simp
-  apply Ty.TypeJudgment.TE_VarEnv
-  apply get_update_self;
+  apply var_has_type_in_tyenv
+  apply get_update_self
+  simp
+  simp [Ast.nu]
   repeat decide
   repeat rfl
   simp [Ast.renameTy]
@@ -170,26 +175,30 @@ theorem iszeroChip2_correct : Ty.chipCorrect Δ iszeroChip2 1 := by
   apply Ty.TypeJudgment.TE_App
   apply Ty.TypeJudgment.TE_App
   apply iszero_func_typing_soundness
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_ne_of_get
   simp
   apply get_update_ne_of_get
   simp
   apply get_update_self
+  simp [Ast.nu]
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_ne_of_get
   simp
   apply get_update_self
+  simp [Ast.nu]
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_self
+  simp [Ast.nu]
   rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_self
+  simp [Ast.nu]
   repeat rfl
   simp [Ast.renameTy]
 
@@ -200,19 +209,25 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply get_update_self
   apply Ty.TypeJudgment.TE_Branch
   apply Ty.TypeJudgment.TE_BinOpRel
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_ne
   simp
+  simp [Ast.nu]
   apply Ty.TypeJudgment.TE_ConstN
   apply Ty.TypeJudgment.TE_Assert
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_ArrayIndex
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_ne
   simp
   simp[Η, Env.freshName]
-  apply Ty.TypeJudgment.TE_VarEnv
+  simp [Ast.nu]
+  apply var_has_type_in_tyenv
   apply get_update_ne
+  simp
+  simp[Η, Env.freshName]
+  simp
+  unfold Ast.nu
   simp
   simp[Η, Env.freshName]
   apply constZ_refine_lt
@@ -226,9 +241,10 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply get_update_self
   apply Ty.TypeJudgment.TE_Branch
   apply Ty.TypeJudgment.TE_BinOpRel
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_ne
   simp
+  simp [Ast.nu]
   apply Ty.TypeJudgment.TE_BinOpUInt
   apply Ty.TypeJudgment.TE_Var
   apply get_update_ne
@@ -237,10 +253,11 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_Assert
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_ArrayIndex
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_ne
   simp
   simp[Η, Env.freshName]
+  simp [Ast.nu]
   apply varZ_refine_int_diff_lt "@n" (Env.freshName Η Ty.branchLabel)
   apply get_update_ne
   simp[Η, Env.freshName]
@@ -255,12 +272,14 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
   apply Ty.TypeJudgment.TE_BinOpField
   apply Ty.TypeJudgment.TE_ArrayIndex
   apply Ty.TypeJudgment.TE_ArrayIndex
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_ne
   simp[Η, Env.freshName, Ty.branchLabel]
-  apply Ty.TypeJudgment.TE_VarEnv
+  simp [Ast.nu]
+  apply var_has_type_in_tyenv
   apply get_update_ne
   simp[Η, Env.freshName, Ty.branchLabel]
+  simp [Ast.nu]
   apply constZ_refine_lt
   simp
   apply Ty.TypeJudgment.TE_ConstF
@@ -288,8 +307,9 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
           (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))) with hΓ'
   have hau: @Ty.TypeJudgment Δ Γ' Η (Ast.Expr.var "u₁") clkChip.goal := by {
     apply Ty.TypeJudgment.TE_SUB
-    apply Ty.TypeJudgment.TE_VarEnv
+    apply var_has_type_in_tyenv
     apply get_update_self
+    simp [Ast.nu]
     apply Ty.SubtypeJudgment.TSub_RefineInduction "i"
     have hΓ: Γ = Ty.makeEnvs clkChip height := by{
       rfl
@@ -778,17 +798,20 @@ theorem koalabearWordRangeCheckerChip_correct : Ty.chipCorrect Δ koalabearWordR
     simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]
     apply Ty.TypeJudgment.TE_ArrayIndex
     apply Ty.TypeJudgment.TE_ArrayIndex
-    apply Ty.TypeJudgment.TE_VarEnv
+    apply var_has_type_in_tyenv
     apply get_update_ne
     try (simp)
-    apply Ty.TypeJudgment.TE_VarEnv
+    try (simp [Ast.nu])
+    apply var_has_type_in_tyenv
     try (apply get_update_self)
     try (apply get_update_ne)
     try (simp)
+    try (simp [Ast.nu])
     apply constZ_refine_lt
     try (simp)
     rfl
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_self
+  try (simp [Ast.nu])
   repeat rfl
   simp [Ast.renameTy, Ast.renameVarinPred, Ast.renameVar]

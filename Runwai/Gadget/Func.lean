@@ -69,20 +69,25 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
   (hne₂: ¬ y = u₁)
   (hne₃: ¬ u₁ = u₂)
   (hne₄: ¬ y = u₂)
-  (hne₅: ¬ x = u₂):
+  (hne₅: ¬ x = u₂)
+  (hne₆: y ≠ nu)
+  (hne₇: u₂ ≠ nu)
+  (hne₈: x ≠ nu):
   @Ty.TypeJudgment Δ Γ Η
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
     apply Ty.TypeJudgment.TE_LetIn; apply get_update_self;
-    apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_VarEnv; exact hty
+    apply Ty.TypeJudgment.TE_Assert; apply var_has_type_in_tyenv; exact hty; exact hne₆
     repeat apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_VarEnv; exact htx; exact htinv
+    apply Ty.TypeJudgment.TE_ConstF; apply var_has_type_in_tyenv; exact htx; exact hne₈; exact htinv
     apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_LetIn; apply get_update_self
-    apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_BinOpField; apply Ty.TypeJudgment.TE_VarEnv
+    apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_BinOpField; apply var_has_type_in_tyenv
     rw[← htx]; apply get_update_ne; exact hne₁
-    apply Ty.TypeJudgment.TE_VarEnv
+    simp [hne₈]
+    apply var_has_type_in_tyenv
     rw[← hty]; apply get_update_ne; exact hne₂
+    exact hne₆
     apply Ty.TypeJudgment.TE_ConstF
     have h_sub : @Ty.SubtypeJudgment Δ (Env.updateTy
       (Env.updateTy Γ u₁
@@ -120,8 +125,9 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
         repeat apply Eval.EvalProp.Var; rfl
       }
     apply Ty.TypeJudgment.TE_SUB
-    apply Ty.TypeJudgment.TE_VarEnv
+    apply var_has_type_in_tyenv
     apply get_update_self
+    simp [hne₇]
     exact h_sub
     rfl
     simp [renameTy, renameVar]
@@ -148,9 +154,10 @@ lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: En
       apply get_update_ne_of_get
       simp
       apply get_update_self
-      apply Ty.TypeJudgment.TE_VarEnv
+      apply var_has_type_in_tyenv
       apply get_update_self
-      repeat simp
+      simp [Ast.nu]
+      repeat simp; simp [Ast.nu]
     }
 
 abbrev koalabear_word_range_checker_func: Ast.Expr :=
@@ -495,52 +502,60 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
     apply get_update_self;
     apply Ty.TypeJudgment.TE_Assert
     apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_VarEnv
+    apply var_has_type_in_tyenv
     apply get_update_ne
     simp
+    simp [Ast.nu]
     apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_VarEnv
+    apply var_has_type_in_tyenv
     apply get_update_ne
     simp
+    simp [Ast.nu]
     repeat apply Ty.TypeJudgment.TE_ConstF
 
   apply Ty.TypeJudgment.TE_LetIn;
   apply get_update_self;
   apply Ty.TypeJudgment.TE_Assert
   repeat apply Ty.TypeJudgment.TE_BinOpField
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_ne
   simp
+  simp [Ast.nu]
   repeat
     apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_VarEnv
+    apply var_has_type_in_tyenv
     apply get_update_ne
     simp
+    simp [Ast.nu]
     repeat apply Ty.TypeJudgment.TE_ConstF
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_ne
   simp
+  simp [Ast.nu]
 
   apply Ty.TypeJudgment.TE_LetIn;
   apply get_update_self;
   apply Ty.TypeJudgment.TE_Assert
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_ne
   simp
+  simp [Ast.nu]
   apply Ty.TypeJudgment.TE_ConstF
 
   repeat
     apply Ty.TypeJudgment.TE_LetIn;
     apply get_update_self;
     apply Ty.TypeJudgment.TE_Assert
-    apply Ty.TypeJudgment.TE_VarEnv
+    apply var_has_type_in_tyenv
     apply get_update_ne
     simp
+    simp [Ast.nu]
     apply Ty.TypeJudgment.TE_BinOpField
     repeat
-      apply Ty.TypeJudgment.TE_VarEnv
+      apply var_has_type_in_tyenv
       apply get_update_ne
       simp
+      simp [Ast.nu]
 
   repeat
     apply Ty.TypeJudgment.TE_LetIn;
@@ -549,13 +564,15 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
     apply Ty.TypeJudgment.TE_ConstF
     apply Ty.TypeJudgment.TE_BinOpField
     repeat
-      apply Ty.TypeJudgment.TE_VarEnv
+      apply var_has_type_in_tyenv
       apply get_update_ne
       simp
+      simp [Ast.nu]
 
   apply Ty.TypeJudgment.TE_SUB
-  apply Ty.TypeJudgment.TE_VarEnv
+  apply var_has_type_in_tyenv
   apply get_update_self
+  simp [Ast.nu]
   apply koalabear_word_range_checker_subtype_soundness
   repeat
     apply get_update_ne
