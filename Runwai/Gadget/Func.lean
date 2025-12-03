@@ -8,14 +8,75 @@ import Runwai.Gadget.FieldLemmas
 open Ast
 open Lean Meta Elab Tactic
 
-/-- タクティクのステップ実行結果を表す型 -/
-inductive VCGStepResult
-  | done                          -- ゴールが解決された
-  | progress (goals : List MVarId) -- 進行して新しいゴールが生成された
-  | noAction                      -- 何も適用できなかった
+/-- ゴールの EvalProp (Branch) を if文の等式に変換する補題 -/
+theorem vcg_branch_intro {σ T Δ c t f vc vt vf v}
+    (hc : Eval.EvalProp σ T Δ c (Ast.Value.vBool vc))
+    (ht : Eval.EvalProp σ T Δ t vt)
+    (hf : Eval.EvalProp σ T Δ f vf)
+    (hv : v = if vc then vt else vf) :
+    Eval.EvalProp σ T Δ (Ast.Expr.branch c t f) v := by
+  subst hv
+  split
+  · apply Eval.EvalProp.IfTrue
+    rename_i h
+    rw[h] at hc
+    exact hc
+    exact ht
+  · apply Eval.EvalProp.IfFalse
+    rename_i h
+    simp at h
+    rw[h] at hc
+    exact hc
+    exact hf
+
+/-- ゴールの EvalProp (Rel) を decide の等式に変換する補題 -/
+theorem vcg_rel_intro {σ T Δ e1 e2 v1 v2 op v_bool v}
+    (h1 : Eval.EvalProp σ T Δ e1 v1)
+    (h2 : Eval.EvalProp σ T Δ e2 v2)
+    (hop : Eval.evalRelOp op v1 v2 = some v_bool)
+    (hv : v = Ast.Value.vBool v_bool) :
+    Eval.EvalProp σ T Δ (Ast.Expr.binRel e1 op e2) v := by
+  subst hv
+  apply Eval.EvalProp.Rel
+  · exact h1
+  · exact h2
+  · exact hop
+
+/-- ゴールの EvalProp (ConstF) を値の等式に変換する補題 -/
+theorem vcg_constF_intro {σ T Δ f v}
+    (hv : v = Ast.Value.vF f) :
+    Eval.EvalProp σ T Δ (Ast.Expr.constF f) v := by
+  subst hv; apply Eval.EvalProp.ConstF
+
+/-- ゴールの EvalProp (Var) を環境の等式に変換する補題 -/
+theorem vcg_var_intro {σ T Δ x v}
+    (hv : Env.getVal σ x = v) :
+    Eval.EvalProp σ T Δ (Ast.Expr.var x) v := by
+  apply Eval.EvalProp.Var; assumption
 
 /--
-式の形から、評価結果として期待される Value のコンストラクタを推測する。
+EvalProp 形式のゴールを、これらの補題を使って数式（値の等式）に分解・変換する
+-/
+syntax "runwai_goal_to_math" : tactic
+macro_rules
+| `(tactic| runwai_goal_to_math) => `(tactic|
+    repeat (first
+      | apply vcg_constF_intro
+      | apply vcg_var_intro; assumption -- 変数は環境にあれば即解決
+      | apply vcg_rel_intro; assumption; assumption -- 引数の評価はコンテキストから探す
+      | apply vcg_branch_intro; assumption; assumption; assumption -- 条件分岐もコンテキストから探す
+      -- それ以外のケースは EvalProp のまま残すか、通常の apply で処理
+    )
+  )
+
+/-- Step result -/
+inductive VCGStepResult
+  | done
+  | progress (goals : List MVarId)
+  | noAction
+
+/--
+Infer the expected Value constructor from the AST expression.
 -/
 def getExpectedValueCtor (e : Lean.Expr) : Option Name :=
   let fn := e.getAppFn
@@ -39,7 +100,7 @@ def getExpectedValueCtor (e : Lean.Expr) : Option Name :=
     none
 
 /--
-Runwaiの式のコンストラクタをチェックし、自動分解すべきものか判定する。
+Expressions that represent a computation step to be broken down.
 -/
 def isDestructibleExpr (e : Lean.Expr) : Bool :=
   let fn := e.getAppFn
@@ -58,127 +119,318 @@ def isDestructibleExpr (e : Lean.Expr) : Bool :=
     n == ``Ast.Expr.len ||
     n == ``Ast.Expr.toN ||
     n == ``Ast.Expr.toF ||
+    n == ``Ast.Expr.constF ||
     n == ``Ast.Expr.lookup
   else
     false
 
 /--
-値の形状（例: v = vF x）を特定し、コンテキスト全体を書き換える。
-依存関係のエラーを防ぐため、simpAll ではなく限定的な simp を使用する。
+Canonicalize a value variable `v` into `Ctor x` if the `EvalProp` dictates it.
+Example: `EvalProp ... (fieldExpr ...) v` => `v` becomes `Value.vF ...`.
 -/
-def canonicalizeValue (mvarId : MVarId) (hypFVarId : FVarId) : MetaM VCGStepResult := do
-  mvarId.withContext do
-    let decl ← hypFVarId.getDecl
-    let type ← instantiateMVars decl.type
-    if type.isAppOfArity ``Eval.EvalProp 5 then
-      let rawExprArg := type.getArg! 3
-      let exprArg ← whnf rawExprArg
-      let valArg := type.getArg! 4
+def canonicalizeValueFromExpr (mvarId : MVarId) (hypFVarId : FVarId) : TacticM VCGStepResult := do
+  let ctx ← mvarId.withContext getLCtx
+  let some decl := ctx.find? hypFVarId | return .noAction
+  let type ← instantiateMVars decl.type
 
-      -- 値がすでにコンストラクタ形式ならスキップ
-      if valArg.isApp && (valArg.getAppFn.isConstOf ``Ast.Value.vF || valArg.getAppFn.isConstOf ``Ast.Value.vN || valArg.getAppFn.isConstOf ``Ast.Value.vBool) then
-        return VCGStepResult.noAction
+  if !type.isAppOfArity ``Eval.EvalProp 5 then return .noAction
+  let rawExprArg := type.getArg! 3
+  let exprArg ← whnf rawExprArg
+  let valArg := type.getArg! 4
+  if !valArg.isFVar then return .noAction
 
-      -- 値が変数（FVar）の場合のみ処理
-      if !valArg.isFVar then return VCGStepResult.noAction
+  let some ctorName := getExpectedValueCtor exprArg | return .noAction
 
-      if let some ctorName := getExpectedValueCtor exprArg then
-        try
-          -- 1. 「値は特定のコンストラクタの形をしている」という定理 (∃ x.., v = Ctor x..) を証明する
-          let shapeThm ← mkFreshExprMVar none
-          let (_, shapeMVarId) ← shapeThm.mvarId!.intro1
+  try
+    let (nextGoal, eqName) ← mvarId.withContext do
+      -- 1. Prove ∃ x, v = Ctor x
+      let shapeThm ← mkFreshExprMVar none
+      let (_, shapeGoal) ← shapeThm.mvarId!.intro1
+      shapeGoal.withContext do
+         let casesGoals ← shapeGoal.cases hypFVarId
+         casesGoals.forM fun s => do
+           let (vars, s') ← s.mvarId.intros
+           let witnesses := vars.map Expr.fvar
+           let s'' ← s'.existsi witnesses.toList
+           s''.refl
 
-          let _ ← shapeMVarId.withContext do
-             let subgoals ← shapeMVarId.cases hypFVarId
-             subgoals.forM fun s => do
-                let s_mvar := s.mvarId
-                let (vars, s_mvar) ← s_mvar.intros
-                let witnesses := vars.map Expr.fvar
-                let s_mvar ← s_mvar.existsi witnesses.toList
-                s_mvar.refl
+      -- 2. Assert theorem and decompose
+      let shapeType ← inferType shapeThm
+      let mvarId2 ← mvarId.assert (Name.mkSimple "h_shape") shapeType shapeThm
+      let (hExistsFVarId, mvarId3) ← mvarId2.intro1P
 
-          -- 2. 証明した定理をコンテキストに追加 (assert)
-          let shapeType ← inferType shapeThm
-          let mvarId2 ← mvarId.assert (Name.mkSimple "h_shape") shapeType shapeThm
-          let (hExistsFVarId, mvarId3) ← mvarId2.intro1P
+      let subgoals ← mvarId3.cases hExistsFVarId
+      if let some subgoal := subgoals[0]? then
+        if let some hEqExpr := subgoal.fields.back? then
+           if hEqExpr.isFVar then
+             let decl ← hEqExpr.fvarId!.getDecl
+             return (subgoal.mvarId, decl.userName)
+           else failure
+        else failure
+      else failure
 
-          -- 3. 存在記号を分解して等式を取り出す
-          let (subgoals) ← mvarId3.cases hExistsFVarId
+    replaceMainGoal [nextGoal]
+    evalTactic (← `(tactic| simp only [$(mkIdent eqName):term] at *))
+    let newGoals ← getGoals
+    if newGoals.isEmpty then return .done else return .progress newGoals
+  catch _ => return .noAction
 
-          if let some subgoal := subgoals.get? 0 then
-             -- 等式が含まれるフィールドを探す
-             -- 注: existsi で複数の変数を導入した場合、最後のフィールドが等式になる傾向があるが、
-             -- 確実性を期すために simp でコンテキストにあるこの新しい仮説を使って書き換えを行う。
+/-- Destruct an EvalProp hypothesis using cases. -/
+def destructEvalProp (mvarId : MVarId) (hypFVarId : FVarId) : TacticM VCGStepResult := do
+  try
+    let subgoals ← mvarId.withContext do
+      let (newGoals) ← mvarId.cases hypFVarId
+      return newGoals.map (·.mvarId) |>.toList
 
-            let hEqName := subgoal.fields.getLast!_toList -- 最後のintroされた変数が等式であると仮定
-
-             /-
-             -- ★修正点: simpAllではなく、特定の仮説のみを使った simp を実行する
-             -- これにより、無関係な仮説間の依存関係エラーを回避する。
-             let (simplifiedGoals) ← subgoal.mvarId (ctx := { simpTheorems := #[],congrTheorems := ← getCongrTheorems })
-                                     (simprocs := #[])
-                                     (fvarIdsToSimp := ← getPropHyps) -- 全ての命題を対象に
-                                     (lemmas := [hEqName]) -- この等式を使って書き換える
-
-             if simplifiedGoals.isEmpty then
-               return VCGStepResult.done
-             else
-             -/
-            return VCGStepResult.progress [subgoal.mvarId]
-          else
-             return VCGStepResult.noAction
-        catch _ => return VCGStepResult.noAction
-      else
-        return VCGStepResult.noAction
-    else
-      return VCGStepResult.noAction
+    replaceMainGoal subgoals
+    if subgoals.isEmpty then return .done else return .progress subgoals
+  catch _ => return .noAction
 
 /--
-VCGループの本体。
+  Look for equalities `v = Value.vF ...` (or reversed) in context and use them
+  to rewrite everything. This cleans up what `cases` might leave behind.
 -/
+def propagateEqualities (mvarId : MVarId) : TacticM VCGStepResult := do
+  let ctx ← mvarId.withContext getLCtx
+  for decl in ctx do
+    if decl.isImplementationDetail then continue
+    let type ← instantiateMVars decl.type
+    if let some (_, lhs, rhs) := type.eq? then
+       -- Check if one side is a variable and the other is a Value constructor
+       let isValCtor (e : Lean.Expr) := e.isApp && e.getAppFn.isConst && e.getAppFn.constName!.toString.startsWith "Runwai.Ast.Value.v"
+
+       if lhs.isFVar && isValCtor rhs then
+         try
+           evalTactic (← `(tactic| simp only [$(mkIdent decl.userName):term] at *))
+           return .progress (← getGoals)
+         catch _ => continue
+
+       if rhs.isFVar && isValCtor lhs then
+          try
+           evalTactic (← `(tactic| simp only [← $(mkIdent decl.userName):term] at *))
+           return .progress (← getGoals)
+         catch _ => continue
+  return .noAction
+
+/--
+  **Fallback**: Identify variables caught in `match` expressions (common in EvalRelOp)
+  and brute-force split them with `cases`. This resolves stuck `evalRelOp` proofs.
+-/
+def splitMatchVariables (mvarId : MVarId) : TacticM VCGStepResult := do
+  let ctx ← mvarId.withContext getLCtx
+  for decl in ctx do
+    if decl.isImplementationDetail then continue
+    let type ← instantiateMVars decl.type
+
+    -- Heuristic: If hypothesis is `lhs = some true` (typical for success flags)
+    if let some (_, lhs, rhs) := type.eq? then
+       if rhs.isAppOfArity ``Option.some 1 &&
+          (rhs.getArg! 0).isAppOfArity ``Bool.true 0 then
+
+          -- Find a generic Value-typed variable in the lhs
+          let foundVal ← lhs.withApp fun fn args => do
+             for arg in args do
+               if arg.isFVar then
+                 let argType ← inferType arg
+                 if argType.isConstOf ``Ast.Value then
+                    return some arg.fvarId!
+             return none
+
+          if let some fvarId := foundVal then
+             try
+               let subgoals ← mvarId.withContext do
+                  let (newGoals) ← mvarId.cases fvarId
+                  return newGoals.map (·.mvarId) |>.toList
+
+               replaceMainGoal subgoals
+               -- After splitting, simplify immediately to kill invalid branches
+               evalTactic (← `(tactic|
+                  all_goals (try simp only [
+                    Eval.evalRelOp, Option.some.injEq, decide_eq_true_eq,
+                    Bool.true_eq_false, Bool.false_eq_true
+                  ] at *)
+               ))
+               return .progress (← getGoals)
+             catch _ => continue
+  return .noAction
+
+def splitMatchVariables' (mvarId : MVarId) : TacticM VCGStepResult := do
+  let ctx ← mvarId.withContext getLCtx
+  for decl in ctx do
+    if decl.isImplementationDetail then continue
+    let type ← instantiateMVars decl.type
+    if let some (_, lhs, rhs) := type.eq? then
+       let isSome (e : Lean.Expr) := e.isAppOfArity ``Option.some 1
+
+       if isSome rhs || isSome lhs then
+          let targetExpr := if isSome rhs then lhs else rhs
+
+          let candidatesRef ← IO.mkRef ([] : List FVarId)
+
+          -- 式中の変数を収集
+          targetExpr.forEach fun e => do
+             if e.isFVar then
+                -- 型チェックはMetaM内で行う必要があるためここでは収集だけ
+                candidatesRef.modify (fun cs => e.fvarId! :: cs)
+             --return ()
+
+          let foundVal ← candidatesRef.get
+          let foundVal := foundVal.eraseDups
+
+          for fvarId in foundVal do
+             try
+               let subgoals ← mvarId.withContext do
+                  let type ← inferType (Expr.fvar fvarId)
+                  if type.isConstOf ``Ast.Value then
+                    let (newGoals) ← mvarId.cases fvarId
+                    return some (newGoals.map (·.mvarId) |>.toList)
+                  else
+                    return none
+
+               if let some newGoals := subgoals then
+                 replaceMainGoal newGoals
+                 -- 分解直後に矛盾する枝(None = Some等)を消すためにsimpする
+                 evalTactic (← `(tactic|
+                    all_goals (try simp only [
+                      Eval.evalRelOp, Eval.evalFieldOp, Eval.evalUIntOp, Eval.evalSIntOp, Eval.evalBoolOp,
+                      Option.some.injEq, Option.noConfusion,
+                      decide_eq_true_eq, Bool.true_eq_false, Bool.false_eq_true
+                    ] at *)
+                 ))
+                 return .progress (← getGoals)
+             catch _ => continue
+  return .noAction
+
+/-- normalize an expression enough to compare evaluation keys -/
+def normalizeExpr (e : Lean.Expr) : MetaM Lean.Expr := do
+  let e ← instantiateMVars e
+  let e ← whnf e
+  -- βη簡約を追加
+  let e ← reduce e
+  return e
+
+def unifyEvaluations (mvarId : MVarId) : TacticM VCGStepResult := do
+  let ctx ← mvarId.withContext getLCtx
+  -- Expr のキー比較には reduce 後のノーマルフォームを使う
+  let mut seen : Std.HashMap Lean.Expr (Lean.Expr × FVarId) := {}
+
+  for decl in ctx do
+    if decl.isImplementationDetail then continue
+    try
+      let type ← instantiateMVars decl.type
+      if type.isAppOfArity ``Eval.EvalProp 5 then
+        -- e を取り出して正規化
+        let rawExprArg := type.getArg! 3
+        let eNorm ← normalizeExpr rawExprArg
+        let v := type.getArg! 4
+
+        -- ★ defEq による式一致チェックに変更
+        let mut found? : Option (Lean.Expr × FVarId) := none
+        for (k, entry) in seen.toList do
+          if ← isDefEq eNorm k then
+            found? := some entry
+            break
+
+        match found? with
+        | none =>
+            seen := seen.insert eNorm (v, decl.fvarId)
+
+        | some (v_prev, h_prev) =>
+            -- すでに defEq な e が存在したので決定性定理を使う
+            --if ← isDefEq v v_prev then
+            --  continue
+
+            let (nextGoal, eqName) ← mvarId.withContext do
+              let hCurr := Expr.fvar decl.fvarId
+              let hPrev := Expr.fvar h_prev
+              let proof ← mkAppM ``evalprop_deterministic #[hCurr, hPrev]
+              let eqType ← inferType proof
+              let g ← mvarId.assert (Name.mkSimple "h_det") eqType proof
+              let (_, g') ← g.intro1P
+              return (g', decl.fvarId)
+
+            replaceMainGoal [nextGoal]
+
+            -- 得られた等式で全体を書き換える
+            evalTactic (← `(tactic| simp_all))
+
+            let goals ← getGoals
+            if goals.isEmpty then
+              return .done
+            else
+              return .progress goals
+
+    catch _ => continue
+
+  return .noAction
+
 partial def vcgLoop : TacticM Unit := do
   let mvarId ← getMainGoal
   if (← mvarId.isAssigned) then return ()
 
-  mvarId.withContext do
-    let lctx ← getLCtx
+  let ctx ← mvarId.withContext getLCtx
 
-    -- Pass 1: Canonicalize Value Shapes
-    for decl in lctx do
-      if decl.isImplementationDetail then continue
-      match (← canonicalizeValue mvarId decl.fvarId) with
-      | VCGStepResult.done =>
-          replaceMainGoal []
-          return ()
-      | VCGStepResult.progress newGoals =>
-          replaceMainGoal newGoals
-          return (← vcgLoop)
-      | VCGStepResult.noAction => continue
+  -- 1. Canonicalize value shapes from expression types
+  for decl in ctx do
+    if decl.isImplementationDetail then continue
+    match (← canonicalizeValueFromExpr mvarId decl.fvarId) with
+    | .done => replaceMainGoal []; return ()
+    | .progress gs => replaceMainGoal gs; return (← vcgLoop)
+    | .noAction => continue
 
-    -- Pass 2: Destruct Complex Expressions
-    for decl in lctx do
-      if decl.isImplementationDetail then continue
-      let type ← instantiateMVars decl.type
-      if type.isAppOfArity ``Eval.EvalProp 5 then
-        let rawExprArg := type.getArg! 3
-        let exprArg ← whnf rawExprArg
+  -- 2. 評価結果の統合 (Unification using evalprop_deterministic)
+  match (← unifyEvaluations mvarId) with
+  | .done => replaceMainGoal []; return ()
+  | .progress gs => replaceMainGoal gs; return (← vcgLoop)
+  | .noAction => pure ()
 
-        if isDestructibleExpr exprArg then
-            -- try cases
-            try
-              let (subgoals) ← mvarId.cases decl.fvarId
-              replaceMainGoal (subgoals.map (·.mvarId) |>.toList)
-              return (← vcgLoop)
-            catch _ => continue
+  -- 2. Propagate known equalities
+  match (← propagateEqualities mvarId) with
+  | .done => replaceMainGoal []; return ()
+  | .progress gs => replaceMainGoal gs; return (← vcgLoop)
+  | .noAction => pure ()
+
+  -- 3. Destruct EvalProp hypotheses
+  for decl in ctx do
+    if decl.isImplementationDetail then continue
+    let type ← instantiateMVars decl.type
+    if type.isAppOfArity ``Eval.EvalProp 5 then
+      let rawExprArg := type.getArg! 3
+      let exprArg ← whnf rawExprArg
+
+      if isDestructibleExpr exprArg then
+        match (← destructEvalProp mvarId decl.fvarId) with
+        | .done => replaceMainGoal []; return ()
+        | .progress gs => replaceMainGoal gs; return (← vcgLoop)
+        | .noAction => continue
+
+  -- 4. Fallback: Split variables stuck in matches
+  match (← splitMatchVariables mvarId) with
+  | .done => replaceMainGoal []; return ()
+  | .progress gs => replaceMainGoal gs; return (← vcgLoop)
+  | .noAction => pure ()
 
   return ()
 
-/--
-ユーザー向けタクティク
--/
+partial def vcgLoop' : TacticM Unit := do
+  let mvarId ← getMainGoal
+  if (← mvarId.isAssigned) then return ()
+
+  match (← unifyEvaluations mvarId) with
+  | .done => replaceMainGoal []; return ()
+  | .progress gs => replaceMainGoal gs; return (← vcgLoop)
+  | .noAction => pure ()
+
+  -- 4. Fallback: Split variables stuck in matches
+  match (← splitMatchVariables' mvarId) with
+  | .done => replaceMainGoal []; return ()
+  | .progress gs => replaceMainGoal gs; return (← vcgLoop)
+  | .noAction => pure ()
+
+
 elab "runwai_vcg" : tactic => do
   vcgLoop
-  -- 最後に算術や環境の整理
+  -- Final arithmetic simplification
   evalTactic (← `(tactic|
     try simp only [
       Eval.evalFieldOp, Eval.evalUIntOp, Eval.evalSIntOp,
@@ -188,6 +440,9 @@ elab "runwai_vcg" : tactic => do
       decide_eq_true_eq
     ] at *
   ))
+
+elab "runwai_vcga" : tactic => do
+  vcgLoop'
 
 abbrev iszero_func: Ast.Expr :=
   (.lam "x" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
@@ -202,36 +457,29 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Ast.Expr} {σ: Env.ValEnv} {T: E
   (h₂ : Eval.EvalProp σ T Δ (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)) (Value.vBool true))
   (hx : Eval.EvalProp σ T Δ x xv) (hy : Eval.EvalProp σ T Δ y yv) (hinv : Eval.EvalProp σ T Δ inv invv) :
   Eval.EvalProp σ T Δ (exprEq y (.branch (x.binRel RelOp.eq (Expr.constF 0)) (Expr.constF 1) (Expr.constF 0))) (Value.vBool true) := by {
-  --simp [Ast.exprEq] at *
   runwai_vcg
-  cases h₁; cases h₂; rename_i v₁ v₂ ih₁ ih₂ r v₃ v₄ ih₃ ih₄ ih₅
-  cases ih₂; cases ih₃; cases ih₄; rename_i v₅ v₆ ih₂ ih₃ ih₄ i₃ i₄ ih₆ ih₇ ih₈
-  cases ih₂; cases ih₃; rename_i i₅ i₆ ih₂ ih₃ ih₉
-  cases ih₂; rename_i i₁ i₂ ih₂ ihh₁ ihh₂
-  cases ih₂
-  have he₁ := evalprop_deterministic hy ih₁
-  have he₂ := evalprop_deterministic hx ih₆
-  have he₃ := evalprop_deterministic hinv ih₃
-  have he₄ := evalprop_deterministic hy ih₇
-  cases ih₈; simp at ih₅; cases ih₉; simp at ih₄; cases ihh₂; simp at ih₄
-  set x_val := i₃; set y_val := i₄; set inv_val := i₆
-  have he₅ := evalprop_deterministic ih₆ ihh₁
-  simp at r
-  rw[he₄] at he₁; rw[← ih₄, ← he₁] at r
+  rename_i v₁ v₂ ih₁ ih₂ r v₃ v₄ v₅ ih₄ ih₅ ih₆ ih₇ f₁ f₂ h₂ h₃ h₄ x_val h₅
+  rw[← ih₆] at ih₁
+  rw[← h₄] at ih₁
+  rw[← ih₄] at ih₇
   simp_all
-  rw[← he₅] at ih₅ r
-  apply Eval.EvalProp.Rel; exact ih₁
+  rw[← h₄] at hy
+  apply Eval.EvalProp.Rel; exact hy
   have h₃: x_val = 0 → Eval.EvalProp σ T Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 1) := by {
     intro h
-    apply Eval.EvalProp.IfTrue; apply Eval.EvalProp.Rel; exact ihh₁
+    apply Eval.EvalProp.IfTrue; apply Eval.EvalProp.Rel; exact hx
     apply Eval.EvalProp.ConstF; simp [Eval.evalRelOp]
-    simp_all; apply Eval.EvalProp.ConstF
+    rw[← h_det]
+    simp_all;
+    apply Eval.EvalProp.ConstF
   }
   have h₄: x_val ≠ 0 → Eval.EvalProp σ T Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 0) := by {
     intro h
-    apply Eval.EvalProp.IfFalse; apply Eval.EvalProp.Rel; exact ihh₁
+    apply Eval.EvalProp.IfFalse; apply Eval.EvalProp.Rel; exact hx
     apply Eval.EvalProp.ConstF; simp [Eval.evalRelOp]
-    simp_all; apply Eval.EvalProp.ConstF
+    rw[← h_det]
+    simp_all;
+    apply Eval.EvalProp.ConstF
   }
   have h₅: Eval.EvalProp σ T Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (if x_val = 0 then (Value.vF 1) else (Value.vF 0)) := by {
     by_cases h : x_val = 0
@@ -240,8 +488,8 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Ast.Expr} {σ: Env.ValEnv} {T: E
   }
   exact h₅
   by_cases hz: x_val = 0
-  . simp_all; rw[← he₅] at ih₄; rw [zero_mul, neg_zero, zero_add] at ih₄; rw[← ih₄]; simp
-  . simp_all; rw[← ih₄]; simp
+  . simp_all; rw[← h₄]; simp; rw[← h₅] at h₂; rw [zero_mul] at h₂; rw[← h₂];
+  . simp_all; rw[← h₄]; simp; simp [← h_det] at ih₅; simp_all;
 }
 
 lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
@@ -254,24 +502,20 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
   (hne₃: ¬ u₁ = u₂)
   (hne₄: ¬ y = u₂)
   (hne₅: ¬ x = u₂)
-  (hne₆: y ≠ nu)
-  (hne₇: u₂ ≠ nu)
-  (hne₈: x ≠ nu):
+  (hne₇: u₂ ≠ nu):
   @Ty.TypeJudgment Δ Γ Η
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
     apply Ty.TypeJudgment.TE_LetIn; apply get_update_self;
-    apply Ty.TypeJudgment.TE_Assert; apply var_has_type_in_tyenv; exact hty; exact hne₆
+    apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_Var; exact hty;
     repeat apply Ty.TypeJudgment.TE_BinOpField
-    apply Ty.TypeJudgment.TE_ConstF; apply var_has_type_in_tyenv; exact htx; exact hne₈; exact htinv
+    apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_Var; exact htx; exact htinv
     apply Ty.TypeJudgment.TE_ConstF; apply Ty.TypeJudgment.TE_LetIn; apply get_update_self
-    apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_BinOpField; apply var_has_type_in_tyenv
+    apply Ty.TypeJudgment.TE_Assert; apply Ty.TypeJudgment.TE_BinOpField; apply Ty.TypeJudgment.TE_Var
     rw[← htx]; apply get_update_ne; exact hne₁
-    simp [hne₈]
-    apply var_has_type_in_tyenv
+    apply Ty.TypeJudgment.TE_Var
     rw[← hty]; apply get_update_ne; exact hne₂
-    exact hne₆
     apply Ty.TypeJudgment.TE_ConstF
     have h_sub : @Ty.SubtypeJudgment Δ (Env.updateTy
       (Env.updateTy Γ u₁
@@ -338,9 +582,8 @@ lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: En
       apply get_update_ne_of_get
       simp
       apply get_update_self
-      apply var_has_type_in_tyenv
+      apply Ty.TypeJudgment.TE_Var
       apply get_update_self
-      simp [Ast.nu]
       repeat simp; simp [Ast.nu]
     }
 
@@ -500,6 +743,7 @@ lemma koalabear_word_range_checker_subtype_soundness {Γ Δ}
     rename_i most_sig_byte_decomp_7 h_most_sig_byte_decomp_7_env
 
     unfold PropSemantics.predToProp PropSemantics.exprToProp
+
     obtain ⟨most_sig_byte_decomp_0, h⟩ := hb₁''
     obtain ⟨h_most_sig_byte_decomp_0_env, h_most_sig_byte_decomp_0⟩ := h
     obtain ⟨most_sig_byte_decomp_1, h⟩ := hb₂''
@@ -686,60 +930,52 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
     apply get_update_self;
     apply Ty.TypeJudgment.TE_Assert
     apply Ty.TypeJudgment.TE_BinOpField
-    apply var_has_type_in_tyenv
+    apply Ty.TypeJudgment.TE_Var
     apply get_update_ne
     simp
-    simp [Ast.nu]
     apply Ty.TypeJudgment.TE_BinOpField
-    apply var_has_type_in_tyenv
+    apply Ty.TypeJudgment.TE_Var
     apply get_update_ne
     simp
-    simp [Ast.nu]
     repeat apply Ty.TypeJudgment.TE_ConstF
 
   apply Ty.TypeJudgment.TE_LetIn;
   apply get_update_self;
   apply Ty.TypeJudgment.TE_Assert
   repeat apply Ty.TypeJudgment.TE_BinOpField
-  apply var_has_type_in_tyenv
+  apply Ty.TypeJudgment.TE_Var
   apply get_update_ne
   simp
-  simp [Ast.nu]
   repeat
     apply Ty.TypeJudgment.TE_BinOpField
-    apply var_has_type_in_tyenv
+    apply Ty.TypeJudgment.TE_Var
     apply get_update_ne
     simp
-    simp [Ast.nu]
     repeat apply Ty.TypeJudgment.TE_ConstF
-  apply var_has_type_in_tyenv
+  apply Ty.TypeJudgment.TE_Var
   apply get_update_ne
   simp
-  simp [Ast.nu]
 
   apply Ty.TypeJudgment.TE_LetIn;
   apply get_update_self;
   apply Ty.TypeJudgment.TE_Assert
-  apply var_has_type_in_tyenv
+  apply Ty.TypeJudgment.TE_Var
   apply get_update_ne
   simp
-  simp [Ast.nu]
   apply Ty.TypeJudgment.TE_ConstF
 
   repeat
     apply Ty.TypeJudgment.TE_LetIn;
     apply get_update_self;
     apply Ty.TypeJudgment.TE_Assert
-    apply var_has_type_in_tyenv
+    apply Ty.TypeJudgment.TE_Var
     apply get_update_ne
     simp
-    simp [Ast.nu]
     apply Ty.TypeJudgment.TE_BinOpField
     repeat
-      apply var_has_type_in_tyenv
+      apply Ty.TypeJudgment.TE_Var
       apply get_update_ne
       simp
-      simp [Ast.nu]
 
   repeat
     apply Ty.TypeJudgment.TE_LetIn;
@@ -748,10 +984,9 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
     apply Ty.TypeJudgment.TE_ConstF
     apply Ty.TypeJudgment.TE_BinOpField
     repeat
-      apply var_has_type_in_tyenv
+      apply Ty.TypeJudgment.TE_Var
       apply get_update_ne
       simp
-      simp [Ast.nu]
 
   apply Ty.TypeJudgment.TE_SUB
   apply var_has_type_in_tyenv
