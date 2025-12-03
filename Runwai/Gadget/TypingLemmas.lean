@@ -5,8 +5,10 @@ import Runwai.Gadget.PredLemmas
 
 open Ast
 
-lemma ty_varenv {Γ: Env.TyEnv} {Δ: Env.ChipEnv} {Η: Env.UsedNames}
-    {x : String} {τ: Ast.Ty} {φ: Ast.Predicate} (h: Env.getTy Γ x = (Ast.Ty.refin τ φ)):
+lemma var_has_type_in_tyenv {Γ: Env.TyEnv} {Δ: Env.ChipEnv} {Η: Env.UsedNames}
+    {x : String} {τ: Ast.Ty} {φ: Ast.Predicate}
+    (h: Env.getTy Γ x = (Ast.Ty.refin τ φ))
+    (hneq : x ≠ Ast.nu):
     @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.refin τ φ) := by
     apply Ty.TypeJudgment.TE_SUB
     apply Ty.TypeJudgment.TE_Var h
@@ -26,7 +28,61 @@ lemma ty_varenv {Γ: Env.TyEnv} {Δ: Env.ChipEnv} {Η: Env.UsedNames}
     rename_i ih₁₁ ih₁₂
     cases ih₁₁
     rename_i ih₁₃
-    sorry
+    simp [Env.getVal, Env.updateVal] at ih₁₃
+    rename_i va v₁ v₂
+    have := get_val_update_ne σ Ast.nu x va hneq
+    rw[this] at ih₁₂
+    have : Eval.EvalProp σ T Δ (.var x) v₂ := by {
+      apply Eval.EvalProp.Var ih₁₂
+    }
+    simp at ih₂
+    cases v₁
+    cases v₂ with
+    | vF val => {
+      simp at ih₂
+      rw[ih₂] at ih₁₃
+      rw[ih₁₃] at iha
+      rename_i x₁ x₂
+      have h := (@predToProp_congr σ T Δ τ φ v (.var x) (.vF val) iha this).mpr h₃
+      exact h
+    }
+    | _ => simp at ih₂
+    cases v₂ with
+    | vN val => {
+      simp at ih₂
+      rw[ih₂] at ih₁₃
+      rw[ih₁₃] at iha
+      rename_i h val'
+      have h := (@predToProp_congr σ T Δ τ φ v (.var x) (.vN val) iha this).mpr h₃
+      exact h
+    }
+    | _ => simp at ih₂
+    cases v₂ with
+    | vInt val => {
+      simp at ih₂
+      rw[ih₂] at ih₁₃
+      rw[ih₁₃] at iha
+      rename_i h val'
+      have h := (@predToProp_congr σ T Δ τ φ v (.var x) (.vInt val) iha this).mpr h₃
+      exact h
+    }
+    | _ => simp at ih₂
+    cases v₂ with
+    | _ => simp at ih₂
+    cases v₂ with
+    | vBool val => {
+      simp at ih₂
+      rw[ih₂] at ih₁₃
+      rw[ih₁₃] at iha
+      rename_i h val'
+      have h := (@predToProp_congr σ T Δ τ φ v (.var x) (.vBool val) iha this).mpr h₃
+      exact h
+    }
+    | _ => simp at ih₂
+    cases v₂ with
+    | _ => simp at ih₂
+    cases v₂ with
+    | _ => simp at ih₂
 
 /--
 If a variable `x` is typed with a refinement `{_ : unit | e}` in a semantically valid
