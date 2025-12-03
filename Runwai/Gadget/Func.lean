@@ -6,6 +6,188 @@ import Runwai.Gadget.TypingLemmas
 import Runwai.Gadget.FieldLemmas
 
 open Ast
+open Lean Meta Elab Tactic
+
+/-- タクティクのステップ実行結果を表す型 -/
+inductive VCGStepResult
+  | done                          -- ゴールが解決された
+  | progress (goals : List MVarId) -- 進行して新しいゴールが生成された
+  | noAction                      -- 何も適用できなかった
+
+/--
+式の形から、評価結果として期待される Value のコンストラクタを推測する。
+-/
+def getExpectedValueCtor (e : Lean.Expr) : Option Name :=
+  let fn := e.getAppFn
+  if fn.isConst then
+    let n := fn.constName!
+    if n == ``Ast.Expr.fieldExpr || n == ``Ast.Expr.constF || n == ``Ast.Expr.toF then
+      some ``Ast.Value.vF
+    else if n == ``Ast.Expr.uintExpr || n == ``Ast.Expr.constN || n == ``Ast.Expr.len || n == ``Ast.Expr.toN || n == ``Ast.Expr.StoU then
+      some ``Ast.Value.vN
+    else if n == ``Ast.Expr.sintExpr || n == ``Ast.Expr.constInt || n == ``Ast.Expr.UtoS then
+      some ``Ast.Value.vInt
+    else if n == ``Ast.Expr.boolExpr || n == ``Ast.Expr.binRel || n == ``Ast.Expr.constBool then
+      some ``Ast.Value.vBool
+    else if n == ``Ast.Expr.arr then
+      some ``Ast.Value.vArr
+    else if n == ``Ast.Expr.lam then
+      some ``Ast.Value.vClosure
+    else
+      none
+  else
+    none
+
+/--
+Runwaiの式のコンストラクタをチェックし、自動分解すべきものか判定する。
+-/
+def isDestructibleExpr (e : Lean.Expr) : Bool :=
+  let fn := e.getAppFn
+  if fn.isConst then
+    let n := fn.constName!
+    n == ``Ast.Expr.letIn ||
+    n == ``Ast.Expr.assertE ||
+    n == ``Ast.Expr.fieldExpr ||
+    n == ``Ast.Expr.uintExpr ||
+    n == ``Ast.Expr.sintExpr ||
+    n == ``Ast.Expr.boolExpr ||
+    n == ``Ast.Expr.binRel ||
+    n == ``Ast.Expr.branch ||
+    n == ``Ast.Expr.app ||
+    n == ``Ast.Expr.arrIdx ||
+    n == ``Ast.Expr.len ||
+    n == ``Ast.Expr.toN ||
+    n == ``Ast.Expr.toF ||
+    n == ``Ast.Expr.lookup
+  else
+    false
+
+/--
+値の形状（例: v = vF x）を特定し、コンテキスト全体を書き換える。
+依存関係のエラーを防ぐため、simpAll ではなく限定的な simp を使用する。
+-/
+def canonicalizeValue (mvarId : MVarId) (hypFVarId : FVarId) : MetaM VCGStepResult := do
+  mvarId.withContext do
+    let decl ← hypFVarId.getDecl
+    let type ← instantiateMVars decl.type
+    if type.isAppOfArity ``Eval.EvalProp 5 then
+      let rawExprArg := type.getArg! 3
+      let exprArg ← whnf rawExprArg
+      let valArg := type.getArg! 4
+
+      -- 値がすでにコンストラクタ形式ならスキップ
+      if valArg.isApp && (valArg.getAppFn.isConstOf ``Ast.Value.vF || valArg.getAppFn.isConstOf ``Ast.Value.vN || valArg.getAppFn.isConstOf ``Ast.Value.vBool) then
+        return VCGStepResult.noAction
+
+      -- 値が変数（FVar）の場合のみ処理
+      if !valArg.isFVar then return VCGStepResult.noAction
+
+      if let some ctorName := getExpectedValueCtor exprArg then
+        try
+          -- 1. 「値は特定のコンストラクタの形をしている」という定理 (∃ x.., v = Ctor x..) を証明する
+          let shapeThm ← mkFreshExprMVar none
+          let (_, shapeMVarId) ← shapeThm.mvarId!.intro1
+
+          let _ ← shapeMVarId.withContext do
+             let subgoals ← shapeMVarId.cases hypFVarId
+             subgoals.forM fun s => do
+                let s_mvar := s.mvarId
+                let (vars, s_mvar) ← s_mvar.intros
+                let witnesses := vars.map Expr.fvar
+                let s_mvar ← s_mvar.existsi witnesses.toList
+                s_mvar.refl
+
+          -- 2. 証明した定理をコンテキストに追加 (assert)
+          let shapeType ← inferType shapeThm
+          let mvarId2 ← mvarId.assert (Name.mkSimple "h_shape") shapeType shapeThm
+          let (hExistsFVarId, mvarId3) ← mvarId2.intro1P
+
+          -- 3. 存在記号を分解して等式を取り出す
+          let (subgoals) ← mvarId3.cases hExistsFVarId
+
+          if let some subgoal := subgoals.get? 0 then
+             -- 等式が含まれるフィールドを探す
+             -- 注: existsi で複数の変数を導入した場合、最後のフィールドが等式になる傾向があるが、
+             -- 確実性を期すために simp でコンテキストにあるこの新しい仮説を使って書き換えを行う。
+
+            let hEqName := subgoal.fields.getLast!_toList -- 最後のintroされた変数が等式であると仮定
+
+             /-
+             -- ★修正点: simpAllではなく、特定の仮説のみを使った simp を実行する
+             -- これにより、無関係な仮説間の依存関係エラーを回避する。
+             let (simplifiedGoals) ← subgoal.mvarId (ctx := { simpTheorems := #[],congrTheorems := ← getCongrTheorems })
+                                     (simprocs := #[])
+                                     (fvarIdsToSimp := ← getPropHyps) -- 全ての命題を対象に
+                                     (lemmas := [hEqName]) -- この等式を使って書き換える
+
+             if simplifiedGoals.isEmpty then
+               return VCGStepResult.done
+             else
+             -/
+            return VCGStepResult.progress [subgoal.mvarId]
+          else
+             return VCGStepResult.noAction
+        catch _ => return VCGStepResult.noAction
+      else
+        return VCGStepResult.noAction
+    else
+      return VCGStepResult.noAction
+
+/--
+VCGループの本体。
+-/
+partial def vcgLoop : TacticM Unit := do
+  let mvarId ← getMainGoal
+  if (← mvarId.isAssigned) then return ()
+
+  mvarId.withContext do
+    let lctx ← getLCtx
+
+    -- Pass 1: Canonicalize Value Shapes
+    for decl in lctx do
+      if decl.isImplementationDetail then continue
+      match (← canonicalizeValue mvarId decl.fvarId) with
+      | VCGStepResult.done =>
+          replaceMainGoal []
+          return ()
+      | VCGStepResult.progress newGoals =>
+          replaceMainGoal newGoals
+          return (← vcgLoop)
+      | VCGStepResult.noAction => continue
+
+    -- Pass 2: Destruct Complex Expressions
+    for decl in lctx do
+      if decl.isImplementationDetail then continue
+      let type ← instantiateMVars decl.type
+      if type.isAppOfArity ``Eval.EvalProp 5 then
+        let rawExprArg := type.getArg! 3
+        let exprArg ← whnf rawExprArg
+
+        if isDestructibleExpr exprArg then
+            -- try cases
+            try
+              let (subgoals) ← mvarId.cases decl.fvarId
+              replaceMainGoal (subgoals.map (·.mvarId) |>.toList)
+              return (← vcgLoop)
+            catch _ => continue
+
+  return ()
+
+/--
+ユーザー向けタクティク
+-/
+elab "runwai_vcg" : tactic => do
+  vcgLoop
+  -- 最後に算術や環境の整理
+  evalTactic (← `(tactic|
+    try simp only [
+      Eval.evalFieldOp, Eval.evalUIntOp, Eval.evalSIntOp,
+      Eval.evalRelOp, Eval.evalBoolOp,
+      Env.getVal, Env.updateVal, Env.getTy,
+      Option.some.injEq, if_true, if_false,
+      decide_eq_true_eq
+    ] at *
+  ))
 
 abbrev iszero_func: Ast.Expr :=
   (.lam "x" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
@@ -14,12 +196,14 @@ abbrev iszero_func: Ast.Expr :=
     (.letIn "u₁" (.assertE (.var "y") (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var "x")) .mul (.var "inv")) (.add) (.constF 1)))
     (.letIn "u₂" (.assertE (.fieldExpr (.var "x") .mul (.var "y")) (.constF 0)) (.var "u₂"))))))
 
-lemma isZero_eval_eq_branch_semantics {x y inv: Expr} {σ: Env.ValEnv} {T: Env.TraceEnv} {Δ: Env.ChipEnv}
+lemma isZero_eval_eq_branch_semantics {x y inv: Ast.Expr} {σ: Env.ValEnv} {T: Env.TraceEnv} {Δ: Env.ChipEnv}
   (h₁ : Eval.EvalProp σ T Δ (exprEq y ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr
                   FieldOp.add (Expr.constF 1))) (Value.vBool true))
   (h₂ : Eval.EvalProp σ T Δ (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)) (Value.vBool true))
   (hx : Eval.EvalProp σ T Δ x xv) (hy : Eval.EvalProp σ T Δ y yv) (hinv : Eval.EvalProp σ T Δ inv invv) :
   Eval.EvalProp σ T Δ (exprEq y (.branch (x.binRel RelOp.eq (Expr.constF 0)) (Expr.constF 1) (Expr.constF 0))) (Value.vBool true) := by {
+  --simp [Ast.exprEq] at *
+  runwai_vcg
   cases h₁; cases h₂; rename_i v₁ v₂ ih₁ ih₂ r v₃ v₄ ih₃ ih₄ ih₅
   cases ih₂; cases ih₃; cases ih₄; rename_i v₅ v₆ ih₂ ih₃ ih₄ i₃ i₄ ih₆ ih₇ ih₈
   cases ih₂; cases ih₃; rename_i i₅ i₆ ih₂ ih₃ ih₉

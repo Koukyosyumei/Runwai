@@ -330,6 +330,7 @@ theorem clpChip_correct : Ty.chipCorrect Δ clkChip 2 := by {
                       (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.constF 1) (Ast.Expr.constF 1))))))
       have hu₄ := h₁ "@ind_base" (Ast.Ty.unit.refin (Ast.Predicate.ind (Ast.exprEq (Ast.Expr.var "i") (Ast.Expr.constN 0))))
       simp [Env.getTy, Env.updateTy, Ty.indBaseLabel] at hu₀ hu₄
+      runwai_vcg
       cases hu₀ with
       | inl h => {
         obtain ⟨h₁, h₂⟩ := h

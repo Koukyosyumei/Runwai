@@ -1,6 +1,7 @@
 import Runwai.Ast
 import Runwai.Typing
 import Runwai.Gadget
+import Runwai.Eval
 
 syntax "auto_trace_index" : tactic
 macro_rules
