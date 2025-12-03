@@ -37,9 +37,7 @@ Ty.TypeJudgment 専用の自動化 tactic。
 - それ以外は try get_update_self や assumption
 - repeat で繰り返す
 -/
-elab "autoTy" x:ident : tactic => do
-  let target_varname := x.getId.toString
-
+elab "autoTy" target:str : tactic => do
   let rec loop (depth : Nat) : TacticM Unit := do
     if depth == 0 then return ()
     let g ← Tactic.getMainGoal
@@ -48,7 +46,7 @@ elab "autoTy" x:ident : tactic => do
     let args := t.getAppArgs
     if args.size > 3 then
         let targetExpr := args[3]!
-        if isTargetVarX targetExpr target_varname then
+        if isTargetVarX targetExpr target.getString then
           return ()
           --Lean.logInfo "Target variable 'x' found. Stopping autoTy."
 
@@ -571,7 +569,7 @@ lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyE
     (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
       (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
     (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
-    autoTy u₂
+    autoTy "u₂"
     rw[← htx]; apply get_update_ne; exact hne₁
     apply Ty.TypeJudgment.TE_Var
     rw[← hty]; apply get_update_ne; exact hne₂
@@ -981,7 +979,7 @@ lemma koalabear_word_range_checker_func_typing_soundness (Δ: Env.ChipEnv) (Η: 
                                   .add (.uintExpr (.toN (.var "value_2")) .mul (.constN (256^2))))
                                   .add (.uintExpr (.toN (.var "value_3")) .mul (.constN (256^3))))
         .lt (.constN 2130706433)))))))))))))))))))))) := by {
-  autoTy u₁₁
+  autoTy "u₁₁"
   apply Ty.TypeJudgment.TE_SUB
   apply var_has_type_in_tyenv
   apply get_update_self
