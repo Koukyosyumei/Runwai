@@ -50,6 +50,9 @@ elab "autoTy" target:str : tactic => do
           return ()
           --Lean.logInfo "Target variable 'x' found. Stopping autoTy."
 
+    let _ ← tryLean (evalTactic (← `(tactic| apply var_has_subtype_in_tyenv)))
+    let _ ← tryLean (evalTactic (← `(tactic| apply constZ_refine_lt)))
+    let _ ← tryLean (evalTactic (← `(tactic| simp [Ast.nu])))
     let _ ← tryLean (evalTactic (← `(tactic| assumption)))
     let applied ←
       if isTyTypeJudgment t then

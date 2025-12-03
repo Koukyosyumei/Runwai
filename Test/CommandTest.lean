@@ -28,24 +28,10 @@ import Runwai.Tactic
 }
 
 #runwai_prove Δ₀ Assert1 := by {
-  apply Ty.TypeJudgment.TE_LetIn
-  · apply get_update_self
-  · apply Ty.TypeJudgment.TE_Assert
-    · apply Ty.TypeJudgment.TE_ArrayIndex
-      apply Ty.TypeJudgment.TE_ArrayIndex
-      apply Ty.TypeJudgment.TE_Var
-      apply get_update_ne
-      simp
-      apply var_has_type_in_tyenv
-      apply get_update_ne
-      simp
-      simp [Ast.nu]
-      apply constZ_refine_lt
-      simp
-    . apply Ty.TypeJudgment.TE_ConstF
-  . apply var_has_type_in_tyenv;
-    apply get_update_self
-    simp [Ast.nu]
+  autoTy "u"
+  apply var_has_type_in_tyenv;
+  apply get_update_self
+  simp [Ast.nu]
   simp[Ast.renameTy]
 }
 
@@ -61,16 +47,12 @@ import Runwai.Tactic
 }
 
 #runwai_prove Δ₂ Lookup := by {
-  apply Ty.TypeJudgment.TE_LookUp; repeat rfl
-  simp
+  autoTy "u"
+  repeat rfl
   apply Ty.TypeJudgment.TE_SUB
   apply var_has_type_in_tyenv
-  unfold Env.getTy Env.updateTy
-  simp
-  apply And.intro
-  rfl
-  rfl
-  simp [Ast.nu]
+  apply get_update_self
+  decide
   apply Ty.SubtypeJudgment.TSub_Refine
   apply Ty.SubtypeJudgment.TSub_Refl
   intro σ T v h₁ h₂
