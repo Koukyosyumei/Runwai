@@ -1,0 +1,306 @@
+{
+  "kind": "LetIn",
+  "name": "u₀",
+  "val": {
+    "kind": "Branch",
+    "cond": {
+      "kind": "BinRel",
+      "op": "eq",
+      "lhs": {
+        "kind": "Var",
+        "name": "i"
+      },
+      "rhs": {
+        "kind": "ConstN",
+        "val": 0
+      }
+    },
+    "th": {
+      "kind": "AssertE",
+      "lhs": {
+        "kind": "ArrIdx",
+        "arr": {
+          "kind": "ArrIdx",
+          "arr": {
+            "kind": "Var",
+            "name": "trace"
+          },
+          "idx": {
+            "kind": "Var",
+            "name": "i"
+          }
+        },
+        "idx": {
+          "kind": "ConstN",
+          "val": 0
+        }
+      },
+      "rhs": {
+        "kind": "ConstF",
+        "val": 0
+      }
+    },
+    "els": {
+      "kind": "AssertE",
+      "lhs": {
+        "kind": "ConstF",
+        "val": 1
+      },
+      "rhs": {
+        "kind": "ConstF",
+        "val": 1
+      }
+    }
+  },
+  "body": {
+    "kind": "LetIn",
+    "name": "u₁",
+    "val": {
+      "kind": "Branch",
+      "cond": {
+        "kind": "BinRel",
+        "op": "eq",
+        "lhs": {
+          "kind": "Var",
+          "name": "i"
+        },
+        "rhs": {
+          "kind": "ConstN",
+          "val": 0
+        }
+      },
+      "th": {
+        "kind": "AssertE",
+        "lhs": {
+          "kind": "ArrIdx",
+          "arr": {
+            "kind": "ArrIdx",
+            "arr": {
+              "kind": "Var",
+              "name": "trace"
+            },
+            "idx": {
+              "kind": "Var",
+              "name": "i"
+            }
+          },
+          "idx": {
+            "kind": "ConstN",
+            "val": 1
+          }
+        },
+        "rhs": {
+          "kind": "ConstF",
+          "val": 1
+        }
+      },
+      "els": {
+        "kind": "AssertE",
+        "lhs": {
+          "kind": "ConstF",
+          "val": 1
+        },
+        "rhs": {
+          "kind": "ConstF",
+          "val": 1
+        }
+      }
+    },
+    "body": {
+      "kind": "LetIn",
+      "name": "u₂",
+      "val": {
+        "kind": "Branch",
+        "cond": {
+          "kind": "BinRel",
+          "op": "lt",
+          "lhs": {
+            "kind": "Var",
+            "name": "i"
+          },
+          "rhs": {
+            "kind": "UintExpr",
+            "op": "sub",
+            "lhs": {
+              "kind": "Var",
+              "name": "n"
+            },
+            "rhs": {
+              "kind": "ConstN",
+              "val": 1
+            }
+          }
+        },
+        "th": {
+          "kind": "AssertE",
+          "lhs": {
+            "kind": "ArrIdx",
+            "arr": {
+              "kind": "ArrIdx",
+              "arr": {
+                "kind": "Var",
+                "name": "trace"
+              },
+              "idx": {
+                "kind": "UintExpr",
+                "op": "add",
+                "lhs": {
+                  "kind": "Var",
+                  "name": "i"
+                },
+                "rhs": {
+                  "kind": "ConstN",
+                  "val": 1
+                }
+              }
+            },
+            "idx": {
+              "kind": "ConstN",
+              "val": 0
+            }
+          },
+          "rhs": {
+            "kind": "ArrIdx",
+            "arr": {
+              "kind": "ArrIdx",
+              "arr": {
+                "kind": "Var",
+                "name": "trace"
+              },
+              "idx": {
+                "kind": "Var",
+                "name": "i"
+              }
+            },
+            "idx": {
+              "kind": "ConstN",
+              "val": 1
+            }
+          }
+        },
+        "els": {
+          "kind": "AssertE",
+          "lhs": {
+            "kind": "ConstF",
+            "val": 1
+          },
+          "rhs": {
+            "kind": "ConstF",
+            "val": 1
+          }
+        }
+      },
+      "body": {
+        "kind": "LetIn",
+        "name": "u₃",
+        "val": {
+          "kind": "Branch",
+          "cond": {
+            "kind": "BinRel",
+            "op": "lt",
+            "lhs": {
+              "kind": "Var",
+              "name": "i"
+            },
+            "rhs": {
+              "kind": "UintExpr",
+              "op": "sub",
+              "lhs": {
+                "kind": "Var",
+                "name": "n"
+              },
+              "rhs": {
+                "kind": "ConstN",
+                "val": 1
+              }
+            }
+          },
+          "th": {
+            "kind": "AssertE",
+            "lhs": {
+              "kind": "ArrIdx",
+              "arr": {
+                "kind": "ArrIdx",
+                "arr": {
+                  "kind": "Var",
+                  "name": "trace"
+                },
+                "idx": {
+                  "kind": "UintExpr",
+                  "op": "add",
+                  "lhs": {
+                    "kind": "Var",
+                    "name": "i"
+                  },
+                  "rhs": {
+                    "kind": "ConstN",
+                    "val": 1
+                  }
+                }
+              },
+              "idx": {
+                "kind": "ConstN",
+                "val": 1
+              }
+            },
+            "rhs": {
+              "kind": "FieldExpr",
+              "op": "add",
+              "lhs": {
+                "kind": "ArrIdx",
+                "arr": {
+                  "kind": "ArrIdx",
+                  "arr": {
+                    "kind": "Var",
+                    "name": "trace"
+                  },
+                  "idx": {
+                    "kind": "Var",
+                    "name": "i"
+                  }
+                },
+                "idx": {
+                  "kind": "ConstN",
+                  "val": 0
+                }
+              },
+              "rhs": {
+                "kind": "ArrIdx",
+                "arr": {
+                  "kind": "ArrIdx",
+                  "arr": {
+                    "kind": "Var",
+                    "name": "trace"
+                  },
+                  "idx": {
+                    "kind": "Var",
+                    "name": "i"
+                  }
+                },
+                "idx": {
+                  "kind": "ConstN",
+                  "val": 1
+                }
+              }
+            }
+          },
+          "els": {
+            "kind": "AssertE",
+            "lhs": {
+              "kind": "ConstF",
+              "val": 1
+            },
+            "rhs": {
+              "kind": "ConstF",
+              "val": 1
+            }
+          }
+        },
+        "body": {
+          "kind": "Var",
+          "name": "u3"
+        }
+      }
+    }
+  }
+}
