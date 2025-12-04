@@ -3,6 +3,7 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Koukyosyumei/Runwai/lean_action_ci.yaml)
 ![GitHub License](https://img.shields.io/github/license/Koukyosyumei/Runwai)
 ![GitHub contributors](https://img.shields.io/github/contributors/Koukyosyumei/Runwai)
+[![Whitepaper](https://img.shields.io/badge/Whitepaper-PDF-blue)](https://koukyosyumei.github.io/assets/runwai.pdf)
 
 > [!IMPORTANT]
 > This tool is under active development. Usage patterns and features may change over time.
@@ -14,6 +15,8 @@
 <h3>🛬 Where zk Proofs Take Flight 🛫</h3>
 
 Runwai is a refinement-typed DSL for certified AIR constraints in zero-knowledge proof systems.
+
+> 📄 **Read the Runwai Whitepaper:**  [Link](https://koukyosyumei.github.io/assets/runwai.pdf)
 
 ## Quickstart
 
