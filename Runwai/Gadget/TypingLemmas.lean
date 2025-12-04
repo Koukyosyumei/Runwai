@@ -5,13 +5,11 @@ import Runwai.Gadget.PredLemmas
 
 open Ast
 
-lemma var_has_type_in_tyenv {Γ: Env.TyEnv} {Δ: Env.ChipEnv} {Η: Env.UsedNames}
+lemma var_has_subtype_in_tyenv {Γ: Env.TyEnv} {Δ: Env.ChipEnv}
     {x : String} {τ: Ast.Ty} {φ: Ast.Predicate}
     (h: Env.getTy Γ x = (Ast.Ty.refin τ φ))
     (hneq : x ≠ Ast.nu):
-    @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.refin τ φ) := by
-    apply Ty.TypeJudgment.TE_SUB
-    apply Ty.TypeJudgment.TE_Var h
+    Ty.SubtypeJudgment Δ Γ (τ.refin (Predicate.dep nu (exprEq (Expr.var nu) (Expr.var x)))) (τ.refin φ) := by
     apply Ty.SubtypeJudgment.TSub_Refine
     apply Ty.SubtypeJudgment.TSub_Refl
     intro σ T v h₁ h₂
@@ -83,6 +81,17 @@ lemma var_has_type_in_tyenv {Γ: Env.TyEnv} {Δ: Env.ChipEnv} {Η: Env.UsedNames
     | _ => simp at ih₂
     cases v₂ with
     | _ => simp at ih₂
+
+lemma var_has_type_in_tyenv {Γ: Env.TyEnv} {Δ: Env.ChipEnv} {Η: Env.UsedNames}
+    {x : String} {τ: Ast.Ty} {φ: Ast.Predicate}
+    (h: Env.getTy Γ x = (Ast.Ty.refin τ φ))
+    (hneq : x ≠ Ast.nu):
+    @Ty.TypeJudgment Δ Γ Η (Ast.Expr.var x) (Ast.Ty.refin τ φ) := by
+    apply Ty.TypeJudgment.TE_SUB
+    apply Ty.TypeJudgment.TE_Var h
+    apply @var_has_subtype_in_tyenv Γ Δ
+    exact h
+    exact hneq
 
 /--
 If a variable `x` is typed with a refinement `{_ : unit | e}` in a semantically valid

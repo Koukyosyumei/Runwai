@@ -6,3 +6,4 @@ import Runwai.Gadget.Func
 import Runwai.Gadget.PointwisePreserve
 import Runwai.Gadget.TypingLemmas
 import Runwai.Gadget.Utils
+import Runwai.Gadget.VCG
