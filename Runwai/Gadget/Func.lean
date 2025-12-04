@@ -557,71 +557,48 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Ast.Expr} {σ: Env.ValEnv} {T: E
   . simp_all; rw[← h₄]; simp; simp [← h_det] at ih₅; simp_all;
 }
 
-lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) (φ₁ φ₂ φ₃: Ast.Predicate)
+lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv)
   (x y inv u₁ u₂: String)
-  (htx: Env.getTy Γ x = (Ty.refin Ast.Ty.field φ₁))
-  (hty: Env.getTy Γ y = (Ty.refin Ast.Ty.field φ₂))
-  (htinv: @Ty.TypeJudgment Δ Γ Η (.var inv) (Ty.refin Ast.Ty.field φ₃))
-  (hne₁: ¬ x = u₁)
-  (hne₂: ¬ y = u₁)
   (hne₃: ¬ u₁ = u₂)
-  (hne₄: ¬ y = u₂)
-  (hne₅: ¬ x = u₂)
   (hne₇: u₂ ≠ nu):
-  @Ty.TypeJudgment Δ Γ Η
-    (Ast.Expr.letIn u₁ (.assertE (.var y) (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var x)) .mul (.var inv)) (.add) (.constF 1)))
-      (Ast.Expr.letIn u₂ (.assertE (.fieldExpr (.var x) .mul (.var y)) (.constF 0)) (.var u₂)))
-    (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
-    autoTy "u₂"
-    rw[← htx]; apply get_update_ne; exact hne₁
-    apply Ty.TypeJudgment.TE_Var
-    rw[← hty]; apply get_update_ne; exact hne₂
-    apply Ty.TypeJudgment.TE_ConstF
-    have h_sub : @Ty.SubtypeJudgment Δ (Env.updateTy
+  @Ty.TypeJudgment Δ
+    (Env.updateTy
       (Env.updateTy Γ u₁
         (Ty.unit.refin
-          (Ast.Predicate.ind
+          (Predicate.ind
             (exprEq (Expr.var y)
-              ((((Expr.constF 0).fieldExpr FieldOp.sub (.var x)).fieldExpr FieldOp.mul (Expr.var inv)).fieldExpr FieldOp.add
-                (Expr.constF 1))))))
-      u₂ (Ty.unit.refin (Ast.Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))))
-      (Ty.unit.refin (Ast.Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0))))
-      (Ty.unit.refin
-        (Ast.Predicate.ind (exprEq (Expr.var y) (((Expr.var x).binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0))))) := by {
-        apply Ty.SubtypeJudgment.TSub_Refine
-        apply Ty.SubtypeJudgment.TSub_Refl
-        unfold PropSemantics.tyenvToProp
-        simp[PropSemantics.predToProp]
-        intro σ T e h₂
-        set φ₁ := (Ast.Predicate.ind
-          (exprEq (Expr.var y)
-            ((((Expr.constF 0).fieldExpr FieldOp.sub (Expr.var x)).fieldExpr FieldOp.mul (Expr.var inv)).fieldExpr FieldOp.add
-              (Expr.constF 1))))
-        set φ₂ := (Ast.Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))
-        have h₃ := h₂ u₁ (Ty.unit.refin φ₁)
-        have h₄: Env.getTy (Env.updateTy (Env.updateTy Γ u₁ (Ty.unit.refin φ₁)) u₂ (Ty.unit.refin φ₂)) u₁ = (Ty.unit.refin φ₁) := by {
-          apply get_update_ne_of_get
-          exact hne₃
-          apply get_update_self
-        }
-        have h₅ := h₃ h₄
-        rw[h₄] at h₅
-        simp at h₅
-        unfold PropSemantics.predToProp PropSemantics.exprToProp at h₅
-        intro h₁
-        apply isZero_eval_eq_branch_semantics h₅ h₁
-        repeat apply Eval.EvalProp.Var; rfl
-      }
+              ((((Expr.constF 0).fieldExpr FieldOp.sub (Expr.var x)).fieldExpr FieldOp.mul (Expr.var inv)).fieldExpr
+                FieldOp.add (Expr.constF 1))))))
+      u₂ (Ty.unit.refin (Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))))
+    Η (Expr.var u₂)
+    (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var y) (.branch (.binRel (.var x) (.eq) (.constF 0)) (.constF 1) (.constF 0))))) := by {
     apply Ty.TypeJudgment.TE_SUB
     apply var_has_type_in_tyenv
     apply get_update_self
     simp [hne₇]
-    exact h_sub
-    rfl
-    simp [renameTy, renameVar]
-    rw [if_neg hne₄, if_neg hne₅]
-    simp [renameVar]
-    exact ⟨hne₂, hne₁⟩
+    apply Ty.SubtypeJudgment.TSub_Refine
+    apply Ty.SubtypeJudgment.TSub_Refl
+    unfold PropSemantics.tyenvToProp
+    simp[PropSemantics.predToProp]
+    intro σ T e h₂
+    set φ₁ := (Ast.Predicate.ind
+      (exprEq (Expr.var y)
+        ((((Expr.constF 0).fieldExpr FieldOp.sub (Expr.var x)).fieldExpr FieldOp.mul (Expr.var inv)).fieldExpr FieldOp.add
+          (Expr.constF 1))))
+    set φ₂ := (Ast.Predicate.ind (exprEq ((Expr.var x).fieldExpr FieldOp.mul (Expr.var y)) (Expr.constF 0)))
+    have h₃ := h₂ u₁ (Ty.unit.refin φ₁)
+    have h₄: Env.getTy (Env.updateTy (Env.updateTy Γ u₁ (Ty.unit.refin φ₁)) u₂ (Ty.unit.refin φ₂)) u₁ = (Ty.unit.refin φ₁) := by {
+      apply get_update_ne_of_get
+      exact hne₃
+      apply get_update_self
+    }
+    have h₅ := h₃ h₄
+    rw[h₄] at h₅
+    simp at h₅
+    unfold PropSemantics.predToProp PropSemantics.exprToProp at h₅
+    intro h₁
+    apply isZero_eval_eq_branch_semantics h₅ h₁
+    repeat apply Eval.EvalProp.Var; rfl
 }
 
 lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv) :
@@ -630,21 +607,11 @@ lemma iszero_func_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: En
     (Ty.func "y" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
     (Ty.func "inv" (Ast.Ty.refin Ast.Ty.field Ast.constTruePred)
       (Ty.refin Ast.Ty.unit (Ast.Predicate.ind (exprEq (.var "y") (.branch (.binRel (.var "x") (.eq) (.constF 0)) (.constF 1) (.constF 0)))))))) := by {
-      repeat
-        apply Ty.TypeJudgment.TE_Abs
-        apply get_update_self
+      autoTy "u₂"
       apply isZero_typing_soundness
-      apply get_update_ne_of_get
+      repeat decide
+      repeat rfl
       simp
-      apply get_update_ne_of_get
-      simp
-      apply get_update_self
-      apply get_update_ne_of_get
-      simp
-      apply get_update_self
-      apply Ty.TypeJudgment.TE_Var
-      apply get_update_self
-      repeat simp; simp [Ast.nu]
     }
 
 abbrev koalabear_word_range_checker_func: Ast.Expr :=

@@ -36,11 +36,8 @@ import Runwai.Tactic
 }
 
 #runwai_prove Δ₁ IsZero := by {
-  auto_trace_index
+  autoTy "u₂"
   apply isZero_typing_soundness
-  repeat apply get_update_ne; simp
-  apply var_has_type_in_tyenv
-  apply get_update_self;
   repeat decide
   repeat rfl
   simp[Ast.renameTy]
