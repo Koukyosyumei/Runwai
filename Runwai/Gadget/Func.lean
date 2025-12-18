@@ -28,32 +28,40 @@ lemma isZero_eval_eq_branch_semantics {x y inv: Ast.Expr} {σ: Env.ValEnv} {T: E
   rw[← ih₄] at ih₇
   simp_all
   rw[← h₄] at hy
-  apply Eval.EvalProp.Rel; exact hy
-  have h₃: x_val = 0 → Eval.EvalProp σ T Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 1) := by {
-    intro h
-    apply Eval.EvalProp.IfTrue; apply Eval.EvalProp.Rel; exact hx
-    apply Eval.EvalProp.ConstF; simp [Eval.evalRelOp]
-    rw[← h_det]
-    simp_all;
-    apply Eval.EvalProp.ConstF
+  apply Eval.EvalProp.Rel
+  exact hy
+  apply vcg_branch_intro'
+  apply vcg_rel_intro
+  assumption
+  apply vcg_constF_intro
+  rfl
+  simp
+  rw[← h_det]
+  simp
+  rfl
+  intro h
+  apply vcg_constF_intro
+  rfl
+  intro h
+  apply vcg_constF_intro
+  rfl
+  rfl
+  simp
+  by_cases h: x_val = 0
+  {
+    rw[h]
+    simp
+    rw[h] at h₅
+    rw[← h₅] at h₂
+    simp at h₂
+    simp_all
   }
-  have h₄: x_val ≠ 0 → Eval.EvalProp σ T Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (Value.vF 0) := by {
-    intro h
-    apply Eval.EvalProp.IfFalse; apply Eval.EvalProp.Rel; exact hx
-    apply Eval.EvalProp.ConstF; simp [Eval.evalRelOp]
-    rw[← h_det]
-    simp_all;
-    apply Eval.EvalProp.ConstF
+  {
+    simp [h]
+    rw[← h_det] at ih₅
+    simp at ih₅
+    simp_all
   }
-  have h₅: Eval.EvalProp σ T Δ ((x.binRel RelOp.eq (Expr.constF 0)).branch (Expr.constF 1) (Expr.constF 0)) (if x_val = 0 then (Value.vF 1) else (Value.vF 0)) := by {
-    by_cases h : x_val = 0
-    . simp_all
-    . simp_all
-  }
-  exact h₅
-  by_cases hz: x_val = 0
-  . simp_all; rw[← h₄]; simp; rw[← h₅] at h₂; rw [zero_mul] at h₂; rw[← h₂];
-  . simp_all; rw[← h₄]; simp; simp [← h_det] at ih₅; simp_all;
 }
 
 lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv)

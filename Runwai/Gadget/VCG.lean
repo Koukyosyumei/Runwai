@@ -461,6 +461,28 @@ theorem vcg_branch_intro {σ T Δ c t f vc vt vf v}
     exact hc
     exact hf
 
+theorem vcg_branch_intro' {σ T Δ c t f vc vt vf v}
+    (hc : Eval.EvalProp σ T Δ c (Ast.Value.vBool vc))
+    (ht : vc → Eval.EvalProp σ T Δ t vt)
+    (hf : ¬ vc → Eval.EvalProp σ T Δ f vf)
+    (hv : v = if vc then vt else vf) :
+    Eval.EvalProp σ T Δ (Ast.Expr.branch c t f) v := by
+  subst hv
+  split
+  · apply Eval.EvalProp.IfTrue
+    rename_i h
+    rw[h] at hc
+    exact hc
+    apply ht
+    assumption
+  · apply Eval.EvalProp.IfFalse
+    rename_i h
+    simp at h
+    rw[h] at hc
+    exact hc
+    apply hf
+    assumption
+
 theorem vcg_rel_intro {σ T Δ e1 e2 v1 v2 op v_bool v}
     (h1 : Eval.EvalProp σ T Δ e1 v1)
     (h2 : Eval.EvalProp σ T Δ e2 v2)
