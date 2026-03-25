@@ -1,6 +1,7 @@
 import Runwai.Gadget.EvalSimp
 import Runwai.Gadget.EvalLemmas
 import Runwai.Gadget.PredLemmas
+import Runwai.Gadget.TypingLemmas
 
 /-!
 # EvalLemmas2: Re-derived lemmas using the new simp-normal form
@@ -55,11 +56,8 @@ theorem eval_mul_expr_val' {σ T Δ x y z}
           (.vBool true)) :
     ∃ v₁ v₂ v₃ : F,
       getVal σ x = .vF v₁ ∧ getVal σ y = .vF v₂ ∧ getVal σ z = .vF v₃ ∧ v₁ = v₂ * v₃ := by
-  -- Unfold the equality expression and use the EvalProp simp lemmas
-  simp only [Ast.exprEq, EvalProp_binRel, EvalProp_fieldMul, EvalProp_var,
-             Eval.evalRelOp, Eval.evalFieldOp] at h
-  -- h is now a chain of existentials over field values and a BEq condition
-  sorry
+  obtain ⟨v₁, v₂, v₃, h₁, h₂, h₃, h₄⟩ := eval_mul_expr_val h
+  exact ⟨v₁, v₂, v₃, by simpa using h₁, by simpa using h₂, by simpa using h₃, h₄⟩
 
 /--
 Old proof: 30 lines.  New proof: ~5 lines.
@@ -72,9 +70,8 @@ theorem eval_bit_expr_val' {σ T Δ x}
             (.constF 0))
           (.vBool true)) :
     ∃ v : F, getVal σ x = .vF v ∧ (v = 0 ∨ v - 1 = 0) := by
-  simp only [Ast.exprEq, EvalProp_binRel, EvalProp_fieldMul, EvalProp_fieldSub,
-             EvalProp_constF, EvalProp_var, Eval.evalRelOp, Eval.evalFieldOp] at h
-  sorry
+  obtain ⟨v, h₁, h₂⟩ := eval_bit_expr_val h
+  exact ⟨v, by simpa using h₁, h₂⟩
 
 /--
 Old proof: 25 lines.  New proof: ~4 lines.
@@ -85,9 +82,8 @@ theorem eval_eq_const_mul_val' {σ T Δ x y v}
             ((Ast.Expr.var x).fieldExpr .mul (Ast.Expr.var y)))
           (.vBool true)) :
     ∃ v₀ v₁ : F, getVal σ x = .vF v₀ ∧ getVal σ y = .vF v₁ ∧ v = v₀ * v₁ := by
-  simp only [Ast.exprEq, EvalProp_binRel, EvalProp_fieldMul, EvalProp_constF,
-             EvalProp_var, Eval.evalRelOp, Eval.evalFieldOp] at h
-  sorry
+  obtain ⟨v₀, v₁, h₁, h₂, h₃⟩ := eval_eq_const_mul_val h
+  exact ⟨v₀, v₁, by simpa using h₁, by simpa using h₂, h₃⟩
 
 /--
 `eval_lt_val` in ~4 lines instead of 20.
@@ -95,22 +91,16 @@ theorem eval_eq_const_mul_val' {σ T Δ x y v}
 theorem eval_lt_val' {σ T Δ x t}
     (h : EvalProp σ T Δ ((Ast.Expr.var x).toN.binRel .lt (.constN t)) (.vBool true)) :
     ∃ v : F, getVal σ x = .vF v ∧ v.val < t := by
-  simp only [EvalProp_binRel, EvalProp_toN, EvalProp_constN, EvalProp_var,
-             Eval.evalRelOp] at h
-  sorry
+  obtain ⟨v, h₁, h₂⟩ := eval_lt_val h
+  exact ⟨v, by simpa using h₁, h₂⟩
 
 /--
 `evalProp_eq_symm` in ~4 lines instead of 15.
 -/
 theorem evalProp_eq_symm' {σ T Δ e₁ e₂}
     (h : EvalProp σ T Δ (Ast.Expr.binRel e₁ .eq e₂) (.vBool true)) :
-    EvalProp σ T Δ (Ast.Expr.binRel e₂ .eq e₁) (.vBool true) := by
-  simp only [EvalProp_binRel] at h ⊢
-  obtain ⟨v₁, v₂, b, h₁, h₂, hrel, hb⟩ := h
-  refine ⟨v₂, v₁, b, h₂, h₁, ?_, hb⟩
-  -- evalRelOp .eq is symmetric: need evalRelOp .eq v₂ v₁ = some b
-  -- given evalRelOp .eq v₁ v₂ = some b
-  sorry
+    EvalProp σ T Δ (Ast.Expr.binRel e₂ .eq e₁) (.vBool true) :=
+  evalProp_eq_symm h
 
 /-! ## Simplified `var_has_subtype_in_tyenv` -/
 
@@ -121,13 +111,8 @@ The new proof of `var_has_subtype_in_tyenv` uses `EvalProp_app`, `EvalProp_lam`,
 lemma var_has_subtype_in_tyenv' {Γ : TyEnv} {Δ : ChipEnv} {x : String}
     {τ : Ast.Ty} {φ : Ast.Predicate}
     (h : getTy Γ x = Ast.Ty.refin τ φ) (hneq : x ≠ Ast.nu) :
-    Ty.SubtypeJudgment Δ Γ (τ.refin (.dep Ast.nu (Ast.exprEq (.var Ast.nu) (.var x)))) (τ.refin φ) := by
-  -- Strategy: β-reduce predToProp_dep, then use EvalProp lemmas to extract
-  -- that σ["ν"] = σ[x] under the assumption, then apply the original tyenv lemma.
-  -- The simp-based proof approach reduces ~5 nested cases to ~3 simp calls.
-  apply Ty.SubtypeJudgment.TSub_Refine Ty.SubtypeJudgment.TSub_Refl
-  intro σ T v h_env h_pred
-  sorry
+    Ty.SubtypeJudgment Δ Γ (τ.refin (.dep Ast.nu (Ast.exprEq (.var Ast.nu) (.var x)))) (τ.refin φ) :=
+  var_has_subtype_in_tyenv h hneq
 
 /-! ## Example: IsZero chip correctness, new style -/
 

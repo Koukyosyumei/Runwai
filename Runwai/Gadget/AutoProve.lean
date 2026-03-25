@@ -213,6 +213,84 @@ theorem isZero_EvalProp_semantic {σ : Env.ValEnv} {T : Env.TraceEnv} {Δ : Env.
     EvalProp σ T Δ
       (Ast.exprEq y (.branch (x.binRel .eq (.constF 0)) (.constF 1) (.constF 0)))
       (.vBool true) := by
-  simp only [Ast.exprEq, EvalProp_binRel, EvalProp_fieldAdd, EvalProp_fieldSub,
-             EvalProp_fieldMul, EvalProp_constF, Eval.evalRelOp, Eval.evalFieldOp] at h₁ h₂ ⊢
-  sorry
+  -- Destructure h₁: y = ((0 - x) * inv) + 1
+  cases h₁
+  rename_i v_y v_rhs ih_y ih_rhs r_rel
+  -- ih_y : EvalProp σ T Δ y v_y
+  -- ih_rhs : EvalProp σ T Δ ((0-x)*inv+1) v_rhs
+  -- Determinism: v_y = yv
+  have hv_y : v_y = yv := evalprop_deterministic ih_y hy
+  subst hv_y
+  -- Destructure ih_rhs: add
+  cases ih_rhs
+  rename_i v_mul v_one ih_mul ih_one r_add
+  cases ih_one  -- should be ConstF 1
+  -- Destructure ih_mul: mul
+  cases ih_mul
+  rename_i v_sub v_inv ih_sub ih_inv r_mul
+  -- Determinism: vF v_inv = invv
+  have hv_inv : Ast.Value.vF v_inv = invv := evalprop_deterministic ih_inv hinv
+  subst hv_inv
+  -- Destructure ih_sub: sub
+  cases ih_sub
+  rename_i v_zero v_x ih_zero ih_x r_sub
+  cases ih_zero  -- should be ConstF 0
+  -- Determinism: vF v_x = xv
+  have hv_x : Ast.Value.vF v_x = xv := evalprop_deterministic ih_x hx
+  subst hv_x
+  -- Now r_sub, r_mul, r_add constrain the values
+  -- yv, xv, invv must be field values for evalFieldOp to produce a result
+  cases xv with
+  | vF xf =>
+    cases invv with
+    | vF invf =>
+      cases yv with
+      | vF yf =>
+        -- Simplify the field operations
+        simp only [Eval.evalFieldOp, Eval.evalRelOp] at r_sub r_mul r_add r_rel
+        -- r_sub : some (0 - xf) = some v_sub_inner
+        -- r_mul : some ((0 - xf) * invf) = some v_mul_inner
+        -- r_add : some ((0 - xf) * invf + 1) = some v_rhs_inner
+        -- r_rel : evalRelOp eq (vF yf) (vF v_rhs_inner) = some true
+        -- Extract equations
+        have h_sub : v_sub = Ast.Value.vF (0 - xf) := by simp at r_sub; exact r_sub.symm
+        have h_mul : v_mul = Ast.Value.vF ((0 - xf) * invf) := by
+          simp [h_sub] at r_mul; exact r_mul.symm
+        have h_rhs : v_rhs = Ast.Value.vF ((0 - xf) * invf + 1) := by
+          simp [h_mul] at r_add; exact r_add.symm
+        subst h_sub; subst h_mul; subst h_rhs
+        simp only [Eval.evalRelOp, decide_eq_true_eq] at r_rel
+        -- r_rel : yf = (0 - xf) * invf + 1
+        have h₁_eq : yf = (0 - xf) * invf + 1 := r_rel
+        -- Destructure h₂: x * y = 0
+        cases h₂
+        rename_i v_xy v_zero2 ih_xy ih_zero2 r_rel2
+        cases ih_xy
+        rename_i v_x2 v_y2 ih_x2 ih_y2 r_mul2
+        have hv_x2 : v_x2 = Ast.Value.vF xf := evalprop_deterministic ih_x2 hx
+        have hv_y2 : v_y2 = Ast.Value.vF yf := evalprop_deterministic ih_y2 hy
+        subst hv_x2; subst hv_y2
+        cases ih_zero2  -- ConstF 0
+        simp only [Eval.evalFieldOp, Eval.evalRelOp, decide_eq_true_eq] at r_mul2 r_rel2
+        have h_xy : v_xy = Ast.Value.vF (xf * yf) := by simp at r_mul2; exact r_mul2.symm
+        subst h_xy
+        simp only [Eval.evalRelOp, decide_eq_true_eq] at r_rel2
+        have h₂_eq : xf * yf = 0 := r_rel2.symm
+        -- Apply isZero_semantic
+        have hiz := isZero_semantic h₁_eq h₂_eq
+        -- Construct the conclusion
+        apply EvalProp.Rel hy
+        · rw [hiz]
+          by_cases hxf : xf = 0
+          · simp only [hxf, if_true]
+            exact EvalProp.IfTrue
+              (EvalProp.Rel hx EvalProp.ConstF (by simp [Eval.evalRelOp, hxf]))
+              EvalProp.ConstF
+          · simp only [hxf, if_false]
+            exact EvalProp.IfFalse
+              (EvalProp.Rel hx EvalProp.ConstF (by simp [Eval.evalRelOp, hxf]))
+              EvalProp.ConstF
+        · simp [Eval.evalRelOp, hiz]
+      | _ => simp only [Eval.evalFieldOp] at r_add
+    | _ => simp only [Eval.evalFieldOp] at r_mul
+  | _ => simp only [Eval.evalFieldOp] at r_sub

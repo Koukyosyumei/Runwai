@@ -1,5 +1,6 @@
 import Runwai.Eval.Compute
 import Runwai.PropSemantics
+import Runwai.Gadget.EvalLemmas
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
@@ -251,12 +252,30 @@ theorem exprToProp_evalC {e} :
   simp [PropSemantics.predToProp, PropSemantics.exprToProp]
 
 /-- The dep predicate after β-reduction: evaluate `body` with `ident` bound to the value of `v`.
-    The full proof requires `evalprop_deterministic` from `EvalLemmas`. -/
+    Uses `evalprop_deterministic` to unify the two evaluations of `v`. -/
 theorem predToProp_dep_beta {ident body} {v : Ast.Expr} :
     PropSemantics.predToProp σ T Δ τ (.dep ident body) v →
     ∀ σ' va, EvalProp σ T Δ v va → σ' = updateVal σ ident va →
              EvalProp σ' T Δ body (.vBool true) := by
-  sorry
+  intro h σ' va hv hσ'
+  simp only [PropSemantics.predToProp, PropSemantics.exprToProp] at h
+  -- h : EvalProp σ T Δ (app (lam ident τ body) v) (.vBool true)
+  -- Destruct the App rule
+  cases h with
+  | App ihf iha ihb =>
+    -- ihf : EvalProp σ T Δ (lam ident τ body) (vClosure ident body σ)
+    -- After cases ihf (lam rule), ihf shows closure = (ident, body, σ)
+    cases ihf
+    -- iha : EvalProp σ T Δ v va_inner (inner eval of the argument)
+    -- ihb : EvalProp (updateVal σ ident va_inner) T Δ body (.vBool true)
+    -- Use determinism: va = va_inner (the App's argument value)
+    have hva := evalprop_deterministic hv iha
+    -- hva : va = va_inner_from_app
+    -- Substitute va_inner_from_app → va in ihb
+    rw [← hva] at ihb
+    -- ihb : EvalProp (updateVal σ ident va) T Δ body (.vBool true)
+    rw [hσ']
+    exact ihb
 
 /-- Conjunction of predicates. -/
 @[simp] theorem predToProp_and {φ₁ φ₂ v} :
