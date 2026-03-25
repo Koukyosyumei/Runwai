@@ -2,6 +2,7 @@ import Runwai.Eval.Compute
 import Runwai.PropSemantics
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.Linarith
 
 /-!
 # EvalSimp: simp-normal forms for EvalProp and predToProp

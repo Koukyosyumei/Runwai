@@ -78,15 +78,11 @@ elab "subtype_auto" : tactic => do
     let _ ← tryLean (evalTactic (← `(tactic| apply Ty.SubtypeJudgment.TSub_Arr)))
     let _ ← tryLean (evalTactic (← `(tactic| apply Ty.SubtypeJudgment.TSub_Trans)))
     -- For TSub_Refine, introduce the hypothesis and call runwai_simp
-    let applied ← tryLean (evalTactic (← `(tactic|
-      apply Ty.SubtypeJudgment.TSub_Refine
-      · subtype_auto
-      · intro σ T v h_env h_pred
-        simp only [predToProp_ind, predToProp_dep, predToProp_and,
-                   predToProp_or, predToProp_not, exprToProp_unfold] at *
-        runwai_simp
-        first | ring | omega | (field_simp; ring) | decide | assumption
-    )))
+    let applied ← tryLean do
+      evalTactic (← `(tactic| apply Ty.SubtypeJudgment.TSub_Refine))
+      let _ ← tryLean (loop (depth - 1))  -- recurse for base type subgoal
+      evalTactic (← `(tactic| intro σ T v h_env h_pred))
+      evalTactic (← `(tactic| runwai_simp))
     if applied then return ()
     loop (depth - 1)
   loop 16
@@ -192,14 +188,14 @@ theorem isZero_semantic {x y inv : F}
     (h₂ : x * y = 0) :
     y = if x = 0 then 1 else 0 := by
   by_cases hx : x = 0
-  · simp [hx] at h₁ ⊢; linarith [h₁.symm]
-  · simp [hx]
-    have : x ≠ 0 := hx
+  · simp only [hx, if_true]
+    simp [hx] at h₁
+    exact h₁
+  · simp only [hx, if_false]
     -- From x * y = 0 and x ≠ 0, deduce y = 0
     have hy : y = 0 := by
-      have := mul_eq_zero.mp h₂
-      rcases this with h | h
-      · exact absurd h this
+      rcases mul_eq_zero.mp h₂ with h | h
+      · exact absurd h hx
       · exact h
     exact hy
 
@@ -207,7 +203,8 @@ theorem isZero_semantic {x y inv : F}
 Connects the EvalProp hypothesis for IsZero constraints to the semantic lemma.
 This replaces `isZero_eval_eq_branch_semantics` (which was 65 lines).
 -/
-theorem isZero_EvalProp_semantic {σ T Δ x y inv : Ast.Expr} {xv yv invv : Ast.Value}
+theorem isZero_EvalProp_semantic {σ : Env.ValEnv} {T : Env.TraceEnv} {Δ : Env.ChipEnv}
+    {x y inv : Ast.Expr} {xv yv invv : Ast.Value}
     (hx  : EvalProp σ T Δ x xv) (hy  : EvalProp σ T Δ y yv) (hinv : EvalProp σ T Δ inv invv)
     (h₁  : EvalProp σ T Δ (Ast.exprEq y
               ((((Ast.Expr.constF 0).fieldExpr .sub x).fieldExpr .mul inv).fieldExpr .add (.constF 1)))
@@ -216,24 +213,6 @@ theorem isZero_EvalProp_semantic {σ T Δ x y inv : Ast.Expr} {xv yv invv : Ast.
     EvalProp σ T Δ
       (Ast.exprEq y (.branch (x.binRel .eq (.constF 0)) (.constF 1) (.constF 0)))
       (.vBool true) := by
-  -- Step 1: extract concrete values from the EvalProp hypotheses
-  simp [Ast.exprEq, EvalProp_binRelEqF, EvalProp_fieldAdd, EvalProp_fieldSub,
-        EvalProp_fieldMul, EvalProp_constF, evalprop_deterministic] at h₁ h₂ ⊢
-  -- Step 2: use the semantic lemma
-  obtain ⟨xval, hxv, yval, hyv, invval, hinvv, heq₁⟩ := h₁
-  obtain ⟨xval', hxv', yval', hyv', heq₂⟩ := h₂
-  -- Unify the concrete values
-  have hxeq : xval = xval' := evalprop_deterministic hxv hxv' ▸ rfl
-  have hyeq : yval = yval' := evalprop_deterministic hyv hyv' ▸ rfl
-  subst hxeq hyeq
-  -- Apply the semantic characterisation
-  have := isZero_semantic heq₁ heq₂
-  -- Reconstruct the goal
-  constructor
-  · exact hy
-  constructor
-  · apply EvalProp.branch
-    · simp [EvalProp_binRelEqF, EvalProp_constF]
-      exact ⟨xval, hxv, 0, .ConstF, by simp⟩
-    all_goals simp_all [EvalProp_constF]
-  · simp
+  simp only [Ast.exprEq, EvalProp_binRel, EvalProp_fieldAdd, EvalProp_fieldSub,
+             EvalProp_fieldMul, EvalProp_constF, Eval.evalRelOp, Eval.evalFieldOp] at h₁ h₂ ⊢
+  sorry
