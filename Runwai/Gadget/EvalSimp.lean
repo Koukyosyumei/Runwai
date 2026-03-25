@@ -1,5 +1,7 @@
 import Runwai.Eval.Compute
 import Runwai.PropSemantics
+import Mathlib.Tactic.Ring
+import Mathlib.Tactic.FieldSimp
 
 /-!
 # EvalSimp: simp-normal forms for EvalProp and predToProp
@@ -77,7 +79,7 @@ variable {σ : ValEnv} {T : TraceEnv} {Δ : ChipEnv}
 @[simp] theorem EvalProp_var {x : String} {v} :
     EvalProp σ T Δ (.var x) v ↔ getVal σ x = v := by
   constructor
-  · intro h; cases h; rfl
+  · intro h; cases h; rename_i hv; exact hv
   · rintro rfl; exact .Var rfl
 
 -- ── Lambdas ──────────────────────────────────────────────────────────────────
@@ -116,63 +118,47 @@ variable {σ : ValEnv} {T : TraceEnv} {Δ : ChipEnv}
     ∃ a b : F, EvalProp σ T Δ e₁ (.vF a) ∧ EvalProp σ T Δ e₂ (.vF b) ∧ v = .vF (a + b) := by
   constructor
   · intro h; cases h; rename_i h₁ h₂ r
-    cases h₁; cases h₂; simp [evalFieldOp] at r; exact ⟨_, _, .ConstF, .ConstF, by simpa using r⟩
-    -- general case via evalprop_deterministic
-    exact ⟨_, _, ‹_›, ‹_›, by simp [evalFieldOp] at r; exact r⟩
-  · rintro ⟨a, b, h₁, h₂, rfl⟩
-    exact .FBinOp h₁ h₂ (by simp [evalFieldOp])
+    simp [evalFieldOp] at r; exact ⟨_, _, h₁, h₂, r.symm⟩
+  · rintro ⟨a, b, h₁, h₂, rfl⟩; exact .FBinOp h₁ h₂ (by simp [evalFieldOp])
 
 @[simp] theorem EvalProp_fieldSub {e₁ e₂} {v} :
     EvalProp σ T Δ (.fieldExpr e₁ .sub e₂) v ↔
     ∃ a b : F, EvalProp σ T Δ e₁ (.vF a) ∧ EvalProp σ T Δ e₂ (.vF b) ∧ v = .vF (a - b) := by
   constructor
-  · intro h; cases h; exact ⟨_, _, ‹_›, ‹_›, by simp [evalFieldOp] at *; assumption⟩
+  · intro h; cases h; rename_i h₁ h₂ r
+    simp [evalFieldOp] at r; exact ⟨_, _, h₁, h₂, r.symm⟩
   · rintro ⟨a, b, h₁, h₂, rfl⟩; exact .FBinOp h₁ h₂ (by simp [evalFieldOp])
 
 @[simp] theorem EvalProp_fieldMul {e₁ e₂} {v} :
     EvalProp σ T Δ (.fieldExpr e₁ .mul e₂) v ↔
     ∃ a b : F, EvalProp σ T Δ e₁ (.vF a) ∧ EvalProp σ T Δ e₂ (.vF b) ∧ v = .vF (a * b) := by
   constructor
-  · intro h; cases h; exact ⟨_, _, ‹_›, ‹_›, by simp [evalFieldOp] at *; assumption⟩
+  · intro h; cases h; rename_i h₁ h₂ r
+    simp [evalFieldOp] at r; exact ⟨_, _, h₁, h₂, r.symm⟩
   · rintro ⟨a, b, h₁, h₂, rfl⟩; exact .FBinOp h₁ h₂ (by simp [evalFieldOp])
 
 @[simp] theorem EvalProp_fieldDiv {e₁ e₂} {v} :
     EvalProp σ T Δ (.fieldExpr e₁ .div e₂) v ↔
     ∃ a b : F, EvalProp σ T Δ e₁ (.vF a) ∧ EvalProp σ T Δ e₂ (.vF b) ∧ v = .vF (a * b.inv) := by
   constructor
-  · intro h; cases h; exact ⟨_, _, ‹_›, ‹_›, by simp [evalFieldOp] at *; assumption⟩
+  · intro h; cases h; rename_i h₁ h₂ r
+    simp [evalFieldOp] at r; exact ⟨_, _, h₁, h₂, r.symm⟩
   · rintro ⟨a, b, h₁, h₂, rfl⟩; exact .FBinOp h₁ h₂ (by simp [evalFieldOp])
 
--- ── Equality relation ─────────────────────────────────────────────────────────
+-- ── Relational operations ─────────────────────────────────────────────────────
 
-@[simp] theorem EvalProp_binRelEqF {e₁ e₂} {v} :
-    EvalProp σ T Δ (.binRel e₁ .eq e₂) v ↔
-    ∃ a b : F, EvalProp σ T Δ e₁ (.vF a) ∧ EvalProp σ T Δ e₂ (.vF b) ∧ v = .vBool (a == b) := by
+/-- General simp normal form for `binRel` expressions.
+    Note: `evalRelOp .eq` accepts both `.vF` and `.vN`, so there is no
+    field-specific biconditional that holds unconditionally. -/
+@[simp] theorem EvalProp_binRel {e₁ e₂ op} {v} :
+    EvalProp σ T Δ (.binRel e₁ op e₂) v ↔
+    ∃ v₁ v₂ b, EvalProp σ T Δ e₁ v₁ ∧ EvalProp σ T Δ e₂ v₂ ∧
+               evalRelOp op v₁ v₂ = some b ∧ v = .vBool b := by
   constructor
-  · intro h; cases h; rename_i h₁ h₂ r
-    cases h₁; cases h₂
-    · exact ⟨_, _, ‹_›, ‹_›, by simp [evalRelOp] at r; exact r⟩
-    · simp [evalRelOp] at r
-    · simp [evalRelOp] at r
-    · simp [evalRelOp] at r
-    · simp [evalRelOp] at r
-  · rintro ⟨a, b, h₁, h₂, rfl⟩
-    exact .Rel h₁ h₂ (by simp [evalRelOp, BEq.beq, instBEq])
-
-@[simp] theorem EvalProp_binRelEqN {e₁ e₂} {v} :
-    EvalProp σ T Δ (.binRel e₁ .eq e₂) v ↔
-    (∃ a b : ℕ, EvalProp σ T Δ e₁ (.vN a) ∧ EvalProp σ T Δ e₂ (.vN b) ∧ v = .vBool (a == b)) ∨
-    (∃ a b : F, EvalProp σ T Δ e₁ (.vF a) ∧ EvalProp σ T Δ e₂ (.vF b) ∧ v = .vBool (a == b)) := by
-  constructor
-  · intro h; cases h; rename_i h₁ h₂ r
-    rcases h₁ with _ | _ | _ | _ | _ | _ | _ | _ | _ | _ | _ | _ | _ | _
-    all_goals (first
-      | (left; exact ⟨_, _, ‹_›, ‹_›, by simp [evalRelOp] at r; exact r⟩)
-      | (right; exact ⟨_, _, ‹_›, ‹_›, by simp [evalRelOp] at r; exact r⟩)
-      | simp [evalRelOp] at r)
-  · rintro (⟨a, b, h₁, h₂, rfl⟩ | ⟨a, b, h₁, h₂, rfl⟩)
-    · exact .Rel h₁ h₂ (by simp [evalRelOp])
-    · exact .Rel h₁ h₂ (by simp [evalRelOp, BEq.beq, instBEq])
+  · intro h
+    match h with
+    | .Rel h₁ h₂ r => exact ⟨_, _, _, h₁, h₂, r, rfl⟩
+  · rintro ⟨v₁, v₂, b, h₁, h₂, r, rfl⟩; exact .Rel h₁ h₂ r
 
 -- ── Assert ───────────────────────────────────────────────────────────────────
 
@@ -263,19 +249,13 @@ theorem exprToProp_evalC {e} :
     EvalProp σ T Δ (.app (.lam ident τ body) v) (.vBool true) := by
   simp [PropSemantics.predToProp, PropSemantics.exprToProp]
 
-/-- The dep predicate after β-reduction becomes: evaluate `body` with `ident` bound to `v`. -/
-theorem predToProp_dep_beta {ident body} {v : Ast.Expr} {val : Ast.Value} :
-    PropSemantics.predToProp σ T Δ τ (.dep ident body) v ↔
-    ∀ σ', (∃ va, EvalProp σ T Δ v va ∧ σ' = updateVal σ ident va) →
-          EvalProp σ' T Δ body (.vBool true) := by
-  simp [predToProp_dep, EvalProp_app, EvalProp_lam]
-  constructor
-  · rintro ⟨_, _, _, va, hf, hv, hb⟩ σ' ⟨va', hva', rfl⟩
-    cases hf; cases hf
-    have := evalprop_deterministic hv hva'
-    subst this; exact hb
-  · intro h
-    sorry -- direction requiring evidence that v evaluates to some va
+/-- The dep predicate after β-reduction: evaluate `body` with `ident` bound to the value of `v`.
+    The full proof requires `evalprop_deterministic` from `EvalLemmas`. -/
+theorem predToProp_dep_beta {ident body} {v : Ast.Expr} :
+    PropSemantics.predToProp σ T Δ τ (.dep ident body) v →
+    ∀ σ' va, EvalProp σ T Δ v va → σ' = updateVal σ ident va →
+             EvalProp σ' T Δ body (.vBool true) := by
+  sorry
 
 /-- Conjunction of predicates. -/
 @[simp] theorem predToProp_and {φ₁ φ₂ v} :
@@ -299,42 +279,18 @@ end PredSimp
 
 /-! ## Automation tactics -/
 
-open Lean Meta Elab Tactic in
 /--
 `runwai_simp` is the primary automation tactic for Runwai proof obligations.
 
-It applies three layers of simplification:
-1. Unfolds `EvalProp`, `exprToProp`, `predToProp`, `evalC` using the simp set above.
-2. Unfolds the operation helpers `evalFieldOp`, `evalRelOp`, `evalBoolOp`,
-   `evalUIntOp`, `evalSIntOp`.
-3. Unfolds `Env.getVal`, `Env.updateVal` to reduce variable lookups to `if`-then-`else`.
-
-After `runwai_simp`, the remaining goals are typically:
-- Pure field arithmetic (`ring` or `field_simp; ring`)
-- Pure integer/natural arithmetic (`omega`)
-- Trivial propositional goals (`simp` or `decide`)
-
-**Example** – old proof of `eval_mul_expr_val` (25 lines):
-```lean
-lemma eval_mul_expr_val ... (h : EvalProp ...) : ∃ v₁ v₂ v₃, ... := by
-  cases h; rename_i ...; cases ...; cases ...; simp ...; use ...; ...
-```
-
-**New proof** (4 lines):
-```lean
-lemma eval_mul_expr_val ... (h : EvalProp ...) : ∃ v₁ v₂ v₃, ... := by
-  simp [EvalProp_fieldMul, EvalProp_var, EvalProp_binRelEqF] at h
-  obtain ⟨a, b, ha, hb, heq⟩ := h
-  exact ⟨a, b, ha, hb, by simpa using heq⟩
-```
+It unfolds `EvalProp`, `exprToProp`, `predToProp`, and operation helpers
+to reduce goals to pure field/integer arithmetic.
 -/
-elab "runwai_simp" : tactic =>
-  evalTactic (← `(tactic|
-    simp only [
+macro "runwai_simp" : tactic =>
+  `(tactic| simp only [
       EvalProp_constF, EvalProp_constN, EvalProp_constInt, EvalProp_constBool,
       EvalProp_var, EvalProp_lam, EvalProp_letIn, EvalProp_app,
       EvalProp_fieldAdd, EvalProp_fieldSub, EvalProp_fieldMul, EvalProp_fieldDiv,
-      EvalProp_binRelEqF, EvalProp_assertE, EvalProp_branch,
+      EvalProp_binRel, EvalProp_assertE, EvalProp_branch,
       EvalProp_arrIdx, EvalProp_toN, EvalProp_toF, EvalProp_UtoS, EvalProp_StoU,
       exprToProp_unfold, predToProp_ind, predToProp_dep, predToProp_and,
       predToProp_or, predToProp_not,
@@ -342,33 +298,14 @@ elab "runwai_simp" : tactic =>
       Eval.evalRelOp, Eval.evalBoolOp,
       Env.getVal, Env.updateVal,
       Option.bind_some, Option.bind_none, Option.map_some, Option.map_none,
-      Option.some.injEq, decide_eq_true_eq, if_true, if_false
-    ] at *
-  ))
+      Option.some.injEq, if_true, if_false
+    ] at *)
 
-open Lean Meta Elab Tactic in
 /--
 `runwai_field` = `runwai_simp` followed by field-arithmetic tactics.
-
-Use this when the remaining goal after unfolding is a statement about field
-elements `F = ZMod p`.
-
-```lean
-theorem foo (h : EvalProp σ T Δ (assertE (x * y) (constF 0)) vUnit) : ... := by
-  runwai_field
-  -- or: runwai_simp; field_simp; ring
-```
 -/
-elab "runwai_field" : tactic =>
-  evalTactic (← `(tactic|
-    runwai_simp
-    first
-      | ring
-      | omega
-      | (field_simp; ring)
-      | (simp [ZMod.val_natCast]; omega)
-      | decide
-  ))
+macro "runwai_field" : tactic =>
+  `(tactic| (runwai_simp; first | ring | omega | (field_simp; ring) | (simp [ZMod.val_natCast]; omega) | decide))
 
 open Lean Meta Elab Tactic in
 /--
@@ -385,14 +322,11 @@ runwai_obtain h
 ```
 -/
 macro "runwai_obtain" h:ident : tactic =>
-  `(tactic|
-    (simp only [
+  `(tactic| simp only [
       EvalProp_constF, EvalProp_constN, EvalProp_constInt, EvalProp_constBool,
       EvalProp_var, EvalProp_lam, EvalProp_letIn, EvalProp_app,
       EvalProp_fieldAdd, EvalProp_fieldSub, EvalProp_fieldMul, EvalProp_fieldDiv,
-      EvalProp_assertE, EvalProp_branch, EvalProp_arrIdx,
+      EvalProp_binRel, EvalProp_assertE, EvalProp_branch, EvalProp_arrIdx,
       EvalProp_toN, EvalProp_toF, EvalProp_UtoS, EvalProp_StoU,
       Env.getVal, Env.updateVal
-    ] at $h:ident
-    try obtain _ := $h:ident)
-  )
+    ] at $h:ident)

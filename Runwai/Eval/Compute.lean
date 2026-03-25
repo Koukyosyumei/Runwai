@@ -407,13 +407,13 @@ theorem evalC_sound : ∀ {fuel σ T Δ e v},
     | .assertE e₁ e₂ =>
         simp only [evalC_assertE, Option.bind_eq_some_iff] at h
         obtain ⟨v₁, hv₁, v₂, hv₂, rest⟩ := h
-        -- specialize v₁ to vF; other constructors make rest absurd
-        rcases v₁ with _ | _ | _ | _ | _ | _ | fv₁ <;> simp at rest
-        rcases v₂ with _ | _ | _ | _ | _ | _ | fv₂ <;> simp at rest
-        split_ifs at rest with heq
-        · simp only [Option.some.injEq] at rest; subst rest; subst heq
-          exact .Assert (ih hv₁) (ih hv₂)
-        · simp at rest
+        -- specialize v₁/v₂ to vF; other constructors make rest absurd
+        rcases v₁ with _ | _ | _ | _ | _ | _ | fv₁ <;> try simp at rest
+        rcases v₂ with _ | _ | _ | _ | _ | _ | fv₂ <;> try simp at rest
+        -- simp normalised rest to: fv₁ = fv₂ ∧ v = .vUnit
+        obtain ⟨heq, rfl⟩ := rest
+        subst heq
+        exact .Assert (ih hv₁) (ih hv₂)
     | .arrIdx a i =>
         simp only [evalC_arrIdx, Option.bind_eq_some_iff] at h
         obtain ⟨va, hva, vi, hvi, rest⟩ := h
