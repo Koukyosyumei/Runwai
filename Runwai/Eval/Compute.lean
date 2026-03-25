@@ -235,6 +235,70 @@ arithmetic, replacing the old manual `cases EvalProp` boilerplate. -/
 @[simp] theorem evalC_lookup :
     evalC (n+1) σ T Δ (.lookup vn cn args e) = evalC n σ T Δ e := rfl
 
+/-! ## Auxiliary List.mapM lemmas -/
+
+/-- Monotonicity for `List.mapM` over `Option`: if `f x = some v → g x = some v` pointwise,
+    then `l.mapM f = some vs → l.mapM g = some vs`. -/
+private theorem List.mapM_Option_mono {α β : Type*} {l : List α} {f g : α → Option β}
+    (hfg : ∀ x v, f x = some v → g x = some v) :
+    ∀ {vs : List β}, l.mapM f = some vs → l.mapM g = some vs := by
+  induction l with
+  | nil =>
+    intro vs h
+    simp only [List.mapM_nil, pure, Option.some.injEq] at h
+    subst h
+    simp [List.mapM_nil]
+  | cons x xs ihl =>
+    intro vs h
+    rw [List.mapM_cons] at h
+    cases hfx : f x with
+    | none => simp [hfx] at h
+    | some vx =>
+      rw [hfx] at h
+      simp only [bind, Option.bind] at h
+      cases hxs : xs.mapM f with
+      | none => simp [hxs] at h
+      | some vs' =>
+        simp only [hxs] at h
+        simp only [pure, Option.some.injEq] at h
+        subst h
+        rw [List.mapM_cons]
+        simp only [bind, Option.bind, hfg x vx hfx]
+        simp only [ihl hxs]
+        simp
+
+/-- Inversion for `List.mapM` over `Option`: if the result is `some vs`, then every element
+    evaluates successfully, and we can recover per-element witnesses. -/
+private theorem List.mapM_Option_inv {α β : Type*} {l : List α} {f : α → Option β}
+    {vs : List β} (h : l.mapM f = some vs) :
+    l.length = vs.length ∧ ∀ p ∈ List.zip l vs, f p.1 = some p.2 := by
+  induction l generalizing vs with
+  | nil =>
+    simp only [List.mapM_nil, pure, Option.some.injEq] at h
+    subst h
+    simp
+  | cons x xs ihl =>
+    rw [List.mapM_cons] at h
+    cases hfx : f x with
+    | none => simp [hfx] at h
+    | some vx =>
+      rw [hfx] at h
+      simp only [bind, Option.bind] at h
+      cases hxs : xs.mapM f with
+      | none => simp [hxs] at h
+      | some vs' =>
+        simp only [hxs] at h
+        simp only [pure, Option.some.injEq] at h
+        subst h
+        obtain ⟨hlen, hzip⟩ := ihl hxs
+        constructor
+        · simp [hlen]
+        · intro p hp
+          simp only [List.zip_cons_cons, List.mem_cons] at hp
+          rcases hp with rfl | hmem
+          · exact hfx
+          · exact hzip p hmem
+
 /-! ## Monotonicity -/
 
 /--
@@ -253,8 +317,9 @@ theorem evalC_mono {n m : ℕ} (hnm : n ≤ m) :
     match e with
     | .constF _ | .constN _ | .constInt _ | .constBool _ | .var _ | .lam _ _ _ => exact h
     | .arr elems =>
-        simp only [evalC_arr] at *
-        sorry -- List.mapM monotonicity; requires auxiliary lemma
+        simp only [evalC_arr, Option.map_eq_some_iff] at *
+        obtain ⟨vs, hvs, rfl⟩ := h
+        exact ⟨vs, List.mapM_Option_mono (fun e ve he => ih hnm' he) hvs, rfl⟩
     | .letIn x e₁ e₂ =>
         simp only [evalC_letIn, Option.bind_eq_some_iff] at h ⊢
         obtain ⟨v₁, hv₁, hv₂⟩ := h
@@ -340,7 +405,11 @@ theorem evalC_sound : ∀ {fuel σ T Δ e v},
     | .constBool b => simp at h; subst h; exact .ConstBool
     | .var x       => simp at h; subst h; exact .Var rfl
     | .lam x _ body => simp at h; subst h; exact .Lam
-    | .arr elems   => sorry -- requires List.mapM inversion
+    | .arr elems =>
+        simp only [evalC_arr, Option.map_eq_some_iff] at h
+        obtain ⟨vs, hvs, rfl⟩ := h
+        obtain ⟨hlen, hzip⟩ := List.mapM_Option_inv hvs
+        exact .ConstArr hlen (fun ⟨xe, xv⟩ hmem => ih (hzip ⟨xe, xv⟩ hmem))
     | .letIn x e₁ e₂ =>
         simp only [evalC_letIn, Option.bind_eq_some_iff] at h
         obtain ⟨v₁, hv₁, hv₂⟩ := h
@@ -481,8 +550,36 @@ theorem evalC_complete : ∀ {σ T Δ e v},
       obtain ⟨n, hn⟩ := ih; exact ⟨n+1, by simp [hn]⟩
   | StoU _ ih =>
       obtain ⟨n, hn⟩ := ih; exact ⟨n+1, by simp [hn]⟩
-  | ConstArr _ _ _ =>
-      sorry -- requires List.mapM_fuel_exists lemma
+  | @ConstArr σ' T' Δ' xs es hlen hih ih_ih =>
+      -- ih_ih : ∀ xe ∈ List.zip xs es, ∃ fuel, evalC fuel σ' T' Δ' xe.1 = some xe.2
+      -- We need: ∃ fuel, (xs.mapM (evalC fuel σ' T' Δ')).map .vArr = some (.vArr es)
+      -- Strategy: show ∃ fuel, xs.mapM (evalC fuel σ' T' Δ') = some es, then wrap with +1.
+      suffices h : ∃ fuel, (xs.mapM (evalC fuel σ' T' Δ')) = some es by
+        obtain ⟨fuel, hfuel⟩ := h
+        exact ⟨fuel + 1, by simp [hfuel]⟩
+      -- Induction on xs/es simultaneously.
+      induction xs generalizing es with
+      | nil =>
+        have hes : es = [] := by cases es with | nil => rfl | cons _ _ => simp at hlen
+        subst hes
+        exact ⟨0, by simp [List.mapM_nil]⟩
+      | cons x xs' ihl =>
+        cases es with
+        | nil => simp at hlen
+        | cons e es' =>
+          have hx_ep : EvalProp σ' T' Δ' x e := hih ⟨x, e⟩ (by simp [List.zip_cons_cons])
+          have hlen' : xs'.length = es'.length := by simpa using hlen
+          have hih' : ∀ xe ∈ List.zip xs' es', EvalProp σ' T' Δ' xe.fst xe.snd := by
+            intro xe hxe; exact hih xe (by simp [List.zip_cons_cons]; exact Or.inr hxe)
+          have ih_ih' : ∀ xe ∈ List.zip xs' es', ∃ fuel, evalC fuel σ' T' Δ' xe.fst = some xe.snd := by
+            intro xe hxe; exact ih_ih xe (by simp [List.zip_cons_cons]; exact Or.inr hxe)
+          obtain ⟨nx, hnx⟩ := ih_ih ⟨x, e⟩ (by simp [List.zip_cons_cons])
+          obtain ⟨nxs, hnxs⟩ := ihl hih' hlen' ih_ih'
+          refine ⟨max nx nxs + 1, ?_⟩
+          rw [List.mapM_cons]
+          simp only [bind, Option.bind]
+          rw [evalC_mono (by omega) hnx]
+          rw [List.mapM_Option_mono (fun e' ve' he' => evalC_mono (by omega) he') hnxs]
   | Let _ _ ih₁ ih₂ =>
       obtain ⟨n₁, hn₁⟩ := ih₁; obtain ⟨n₂, hn₂⟩ := ih₂
       exact ⟨max n₁ n₂ + 1, by

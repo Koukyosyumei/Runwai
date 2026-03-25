@@ -213,74 +213,77 @@ theorem isZero_EvalProp_semantic {σ : Env.ValEnv} {T : Env.TraceEnv} {Δ : Env.
     EvalProp σ T Δ
       (Ast.exprEq y (.branch (x.binRel .eq (.constF 0)) (.constF 1) (.constF 0)))
       (.vBool true) := by
-  -- Destructure h₁: y = ((0 - x) * inv) + 1
-  cases h₁
-  rename_i v_y v_rhs ih_y ih_rhs r_rel
-  -- ih_y : EvalProp σ T Δ y v_y
-  -- ih_rhs : EvalProp σ T Δ ((0-x)*inv+1) v_rhs
-  -- Determinism: v_y = yv
-  have hv_y : v_y = yv := evalprop_deterministic ih_y hy
-  subst hv_y
-  -- Destructure ih_rhs: add
-  cases ih_rhs
-  rename_i v_mul v_one ih_mul ih_one r_add
-  cases ih_one  -- should be ConstF 1
-  -- Destructure ih_mul: mul
-  cases ih_mul
-  rename_i v_sub v_inv ih_sub ih_inv r_mul
-  -- Determinism: vF v_inv = invv
-  have hv_inv : Ast.Value.vF v_inv = invv := evalprop_deterministic ih_inv hinv
-  subst hv_inv
-  -- Destructure ih_sub: sub
-  cases ih_sub
-  rename_i v_zero v_x ih_zero ih_x r_sub
-  cases ih_zero  -- should be ConstF 0
-  -- Determinism: vF v_x = xv
-  have hv_x : Ast.Value.vF v_x = xv := evalprop_deterministic ih_x hx
-  subst hv_x
-  -- Now r_sub, r_mul, r_add constrain the values
-  -- yv, xv, invv must be field values for evalFieldOp to produce a result
-  cases xv with
+  -- Case-split on the concrete field values first
+  cases hxcase : xv with
   | vF xf =>
-    cases invv with
-    | vF invf =>
-      cases yv with
-      | vF yf =>
-        -- Simplify the field operations
-        simp only [Eval.evalFieldOp, Eval.evalRelOp] at r_sub r_mul r_add r_rel
-        -- r_sub : some (0 - xf) = some v_sub_inner
-        -- r_mul : some ((0 - xf) * invf) = some v_mul_inner
-        -- r_add : some ((0 - xf) * invf + 1) = some v_rhs_inner
-        -- r_rel : evalRelOp eq (vF yf) (vF v_rhs_inner) = some true
-        -- Extract equations
-        have h_sub : v_sub = Ast.Value.vF (0 - xf) := by simp at r_sub; exact r_sub.symm
-        have h_mul : v_mul = Ast.Value.vF ((0 - xf) * invf) := by
-          simp [h_sub] at r_mul; exact r_mul.symm
-        have h_rhs : v_rhs = Ast.Value.vF ((0 - xf) * invf + 1) := by
-          simp [h_mul] at r_add; exact r_add.symm
-        subst h_sub; subst h_mul; subst h_rhs
-        simp only [Eval.evalRelOp, decide_eq_true_eq] at r_rel
-        -- r_rel : yf = (0 - xf) * invf + 1
-        have h₁_eq : yf = (0 - xf) * invf + 1 := r_rel
-        -- Destructure h₂: x * y = 0
-        cases h₂
-        rename_i v_xy v_zero2 ih_xy ih_zero2 r_rel2
-        cases ih_xy
-        rename_i v_x2 v_y2 ih_x2 ih_y2 r_mul2
-        have hv_x2 : v_x2 = Ast.Value.vF xf := evalprop_deterministic ih_x2 hx
-        have hv_y2 : v_y2 = Ast.Value.vF yf := evalprop_deterministic ih_y2 hy
-        subst hv_x2; subst hv_y2
-        cases ih_zero2  -- ConstF 0
-        simp only [Eval.evalFieldOp, Eval.evalRelOp, decide_eq_true_eq] at r_mul2 r_rel2
-        have h_xy : v_xy = Ast.Value.vF (xf * yf) := by simp at r_mul2; exact r_mul2.symm
-        subst h_xy
-        simp only [Eval.evalRelOp, decide_eq_true_eq] at r_rel2
-        have h₂_eq : xf * yf = 0 := r_rel2.symm
+    rw [hxcase] at hx
+    cases hycase : yv with
+    | vF yf =>
+      rw [hycase] at hy
+      cases hinvcase : invv with
+      | vF invf =>
+        rw [hinvcase] at hinv
+        -- Extract h₁_eq: yf = (0 - xf) * invf + 1
+        have h₁_eq : yf = (0 - xf) * invf + 1 := by
+          cases h₁
+          rename_i v_l v_r hl hr r
+          -- hl : EvalProp ... y v_l
+          have hyl : v_l = Ast.Value.vF yf := evalprop_deterministic hl hy
+          subst hyl
+          -- hr : EvalProp ... ((0-x)*inv+1) v_r; it must be FBinOp add
+          cases hr
+          rename_i vf_mul_i vf_one_i h_lhs h_one r_add
+          cases h_one  -- ConstF: vf_one_i = 1
+          -- h_lhs : EvalProp ... ((0-x)*inv) (vF vf_mul_i); it must be FBinOp mul
+          cases h_lhs
+          rename_i vf_sub_i vf_inv_i h_sub h_inv r_mul
+          -- h_inv : EvalProp ... inv (vF vf_inv_i)
+          have hinv2 : vf_inv_i = invf := Ast.Value.vF.inj (evalprop_deterministic h_inv hinv)
+          subst hinv2
+          -- h_sub : FBinOp sub
+          cases h_sub
+          rename_i vf_zero_i vf_x_i h_zero h_x r_sub
+          cases h_zero  -- ConstF: vf_zero_i = 0
+          -- h_x : EvalProp ... x (vF vf_x_i)
+          have hx2 : vf_x_i = xf := Ast.Value.vF.inj (evalprop_deterministic h_x hx)
+          subst hx2
+          -- Simp field ops (r_sub, r_mul give F-level equalities; r_add gives Ast.Value eq)
+          simp only [Eval.evalFieldOp, Option.some.injEq, Ast.Value.vF.injEq] at r_sub r_mul
+          simp only [Eval.evalFieldOp, Option.some.injEq] at r_add
+          -- r_sub : 0 - xf = vf_sub_i   (F)
+          -- r_mul : vf_sub_i * invf = vf_mul_i  (F)
+          -- r_add : vF (vf_mul_i + 1) = v_r   (Ast.Value)
+          -- Substitute v_r via r_add
+          rw [← r_add] at r
+          simp only [Eval.evalRelOp, Option.some.injEq, decide_eq_true_eq] at r
+          -- r : yf = vf_mul_i + 1
+          rw [← r_mul] at r
+          -- r : yf = vf_sub_i * invf + 1
+          rw [← r_sub] at r
+          -- r : yf = (0 - xf) * invf + 1
+          exact r
+        -- Extract h₂_eq: xf * yf = 0
+        have h₂_eq : xf * yf = 0 := by
+          cases h₂
+          rename_i v_xy v_zero hl hr r
+          -- hl : FBinOp mul
+          cases hl
+          rename_i vf_x2 vf_y2 h_x2 h_y2 r_mul2
+          have hx3 : vf_x2 = xf := Ast.Value.vF.inj (evalprop_deterministic h_x2 hx)
+          have hy3 : vf_y2 = yf := Ast.Value.vF.inj (evalprop_deterministic h_y2 hy)
+          subst hx3; subst hy3
+          cases hr  -- ConstF 0
+          simp only [Eval.evalFieldOp, Option.some.injEq] at r_mul2
+          -- r_mul2 : vF (xf * yf) = v_xy  (Ast.Value)
+          rw [← r_mul2] at r
+          simp only [Eval.evalRelOp, Option.some.injEq, decide_eq_true_eq] at r
+          -- r : xf * yf = 0
+          exact r
         -- Apply isZero_semantic
         have hiz := isZero_semantic h₁_eq h₂_eq
-        -- Construct the conclusion
-        apply EvalProp.Rel hy
-        · rw [hiz]
+        -- Build: EvalProp branch (x = 0) 1 0 to vF yf
+        have h_branch : EvalProp σ T Δ (.branch (x.binRel .eq (.constF 0)) (.constF 1) (.constF 0)) (Ast.Value.vF yf) := by
+          rw [hiz]
           by_cases hxf : xf = 0
           · simp only [hxf, if_true]
             exact EvalProp.IfTrue
@@ -290,7 +293,42 @@ theorem isZero_EvalProp_semantic {σ : Env.ValEnv} {T : Env.TraceEnv} {Δ : Env.
             exact EvalProp.IfFalse
               (EvalProp.Rel hx EvalProp.ConstF (by simp [Eval.evalRelOp, hxf]))
               EvalProp.ConstF
-        · simp [Eval.evalRelOp, hiz]
-      | _ => simp only [Eval.evalFieldOp] at r_add
-    | _ => simp only [Eval.evalFieldOp] at r_mul
-  | _ => simp only [Eval.evalFieldOp] at r_sub
+        -- Build the conclusion
+        exact EvalProp.Rel hy h_branch (by simp [Eval.evalRelOp])
+      | _ =>
+        -- invv is not vF; h₁ cannot hold
+        exfalso
+        cases h₁ with | Rel _ hr _ =>
+        cases hr with | FBinOp h_lhs _ _ =>
+        cases h_lhs with | FBinOp _ h_inv _ =>
+        have := evalprop_deterministic h_inv hinv
+        rw [hinvcase] at this; exact absurd this (by simp)
+    | _ =>
+      -- yv is not vF; h₁ cannot hold since the chain forces v_rhs to be vF
+      -- but evalRelOp eq (non-vF) (vF ...) = none, contradicting r = some true
+      exfalso
+      cases h₁
+      rename_i v_l v_r hl hr r
+      have hyl := evalprop_deterministic hl hy
+      -- hyl : v_l = yv, where yv is non-vF in this branch
+      -- hr is the rhs eval, which must produce a vF value from the fieldOp chain
+      -- r : evalRelOp eq v_l v_r = some true
+      -- After chaining, v_l = yv which is non-vF.
+      -- For evalRelOp eq to succeed, both must be same variant.
+      -- v_r must be vF (from evalFieldOp chain).
+      -- So evalRelOp eq (non-vF yv) (vF ...) = none ≠ some true.
+      cases hr
+      rename_i vf_mul_i vf_one_i h_lhs h_one r_add
+      cases h_one
+      simp only [Eval.evalFieldOp, Option.some.injEq] at r_add
+      rw [← r_add, hyl] at r
+      simp [Eval.evalRelOp, hycase] at r
+  | _ =>
+    -- xv is not vF; h₁ cannot hold since evalFieldOp needs vF
+    exfalso
+    cases h₁ with | Rel _ hr _ =>
+    cases hr with | FBinOp h_lhs _ _ =>
+    cases h_lhs with | FBinOp h_submul _ _ =>
+    cases h_submul with | FBinOp _ h_x _ =>
+    have := evalprop_deterministic h_x hx
+    rw [hxcase] at this; exact absurd this (by simp)
