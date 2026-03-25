@@ -574,12 +574,16 @@ theorem evalC_complete : ∀ {σ T Δ e v},
           have ih_ih' : ∀ xe ∈ List.zip xs' es', ∃ fuel, evalC fuel σ' T' Δ' xe.fst = some xe.snd := by
             intro xe hxe; exact ih_ih xe (by simp [List.zip_cons_cons]; exact Or.inr hxe)
           obtain ⟨nx, hnx⟩ := ih_ih ⟨x, e⟩ (by simp [List.zip_cons_cons])
-          obtain ⟨nxs, hnxs⟩ := ihl hih' hlen' ih_ih'
+          obtain ⟨nxs, hnxs⟩ := ihl hlen' hih' ih_ih'
           refine ⟨max nx nxs + 1, ?_⟩
+          have hnx' := evalC_mono (show nx ≤ max nx nxs + 1 by omega) hnx
+          have hnxs' := List.mapM_Option_mono
+            (f := evalC nxs σ' T' Δ')
+            (g := evalC (max nx nxs + 1) σ' T' Δ')
+            (fun e' ve' he' => evalC_mono (show nxs ≤ max nx nxs + 1 by omega) he')
+            hnxs
           rw [List.mapM_cons]
-          simp only [bind, Option.bind]
-          rw [evalC_mono (by omega) hnx]
-          rw [List.mapM_Option_mono (fun e' ve' he' => evalC_mono (by omega) he') hnxs]
+          simp only [bind, Option.bind, hnx', hnxs', pure]
   | Let _ _ ih₁ ih₂ =>
       obtain ⟨n₁, hn₁⟩ := ih₁; obtain ⟨n₂, hn₂⟩ := ih₂
       exact ⟨max n₁ n₂ + 1, by
