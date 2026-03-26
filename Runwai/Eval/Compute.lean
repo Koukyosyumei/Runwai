@@ -377,7 +377,7 @@ private theorem exists_uniform_fuel_all {α : Type*} {l : List α} {f : ℕ → 
     obtain ⟨ny, hny⟩ := h y (List.mem_cons_self ..)
     obtain ⟨nys, hnys⟩ := ih (fun x hx => h x (List.mem_cons.mpr (Or.inr hx)))
     refine ⟨max ny nys, ?_⟩
-    rw [List.all_cons]
+    rw [List.all_cons, Bool.and_eq_true]
     constructor
     · exact hmono ny _ (Nat.le_max_left ..) y hny
     · exact List.all_mono' (fun x hx hfx =>
@@ -477,14 +477,15 @@ theorem evalC_mono {n m : ℕ} (hnm : n ≤ m) :
         · simp only [htr] at h ⊢
           rcases rv with _ | _ | _ | _ | _ | rows | _
           all_goals simp only at h
-          all_goals try simp at h   -- non-vArr shapes give none
+          -- close non-vArr cases (h : none = some v → contradiction)
+          all_goals try simp only [Option.none_ne_some] at h
           -- vArr rows case
           · -- (1) Propagate row-validity check
             have hall : (List.range rows.length).all (fun j =>
                 let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
                 match evalC n σ' T Δ c.body with
                 | some .vUnit => true | _ => false) = true := by
-              by_contra h'; push_neg at h'
+              by_contra h'
               simp only [Bool.not_eq_true] at h'
               simp [h'] at h
             have hall_m : (List.range rows.length).all (fun j =>
@@ -496,53 +497,54 @@ theorem evalC_mono {n m : ℕ} (hnm : n ≤ m) :
                 set σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
                 rcases heval : evalC n σ' T Δ c.body with _ | v
                 · simp [heval] at hj
-                · cases v <;> simp at hj
+                · cases v <;> simp [heval] at hj
                   simp [ih hnm' heval]) hall
-            -- (2) Propagate args mapM
-            rcases hmap : (args.map Prod.fst).mapM (fun callerE =>
+            -- (2) Extract args mapM result
+            have hmap : ∃ vs, (args.map Prod.fst).mapM (fun callerE =>
                 match evalC n σ T Δ callerE with
-                | some (.vF v) => some v | _ => none) with
-            | none =>
-              -- h: if !all_n then none else (match none with ...) = some v
-              simp only [hall, Bool.not_true, ite_false, hmap] at h
-            | some vs =>
-              have hmap_m : (args.map Prod.fst).mapM (fun callerE =>
-                  match evalC m' σ T Δ callerE with
-                  | some (.vF v) => some v | _ => none) = some vs :=
-                List.mapM_Option_mono (fun callerE v' hv' => by
-                  simp only at hv' ⊢
-                  rcases heval : evalC n σ T Δ callerE with _ | val
-                  · simp [heval] at hv'
-                  · rcases val with _ | _ | _ | _ | _ | _ | _
-                    all_goals simp at hv'
-                    simp [ih hnm' heval]) hmap
-              -- (3) Propagate any-check for witness row
-              have hany : (List.range rows.length).any (fun i =>
-                  let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
-                  (List.zip vs (args.map Prod.snd)).all (fun ⟨v, colE⟩ =>
-                    match evalC n σ' T Δ (.assertE (.constF v) colE) with
-                    | some .vUnit => true | _ => false)) = true := by
-                by_contra h'
-                push_neg at h'
-                simp [hall, hmap, h'] at h
-              have hany_m : (List.range rows.length).any (fun i =>
-                  let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
-                  (List.zip vs (args.map Prod.snd)).all (fun ⟨v, colE⟩ =>
-                    match evalC m' σ' T Δ (.assertE (.constF v) colE) with
-                    | some .vUnit => true | _ => false)) = true :=
-                List.any_mono' (fun i _ hi => List.all_mono' (fun ⟨v, colE⟩ _ hpair => by
-                  simp only at hpair ⊢
-                  set σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
-                  rcases heval : evalC n σ' T Δ (.assertE (.constF v) colE) with _ | val
-                  · simp [heval] at hpair
-                  · cases val <;> simp at hpair
-                    simp [ih hnm' heval]) hi) hany
-              -- Simplify h (fuel n) to just the body
-              simp only [hall, hmap, hany, Bool.not_true, ite_false] at h
-              -- Simplify goal (fuel m') to just the body
-              simp only [hall_m, hmap_m, hany_m, Bool.not_true, ite_false]
-              -- (4) Propagate body
-              exact ih hnm' h
+                | some (.vF v) => some v | _ => none) = some vs := by
+              simp only [hall, Bool.not_true, ite_false] at h
+              rcases hm : (args.map Prod.fst).mapM _ with _ | vs
+              · simp [hm] at h
+              · exact ⟨vs, rfl⟩
+            obtain ⟨vs, hvs⟩ := hmap
+            have hmap_m : (args.map Prod.fst).mapM (fun callerE =>
+                match evalC m' σ T Δ callerE with
+                | some (.vF v) => some v | _ => none) = some vs :=
+              List.mapM_Option_mono (fun callerE v' hv' => by
+                simp only at hv' ⊢
+                rcases heval : evalC n σ T Δ callerE with _ | val
+                · simp [heval] at hv'
+                · rcases val with _ | _ | _ | _ | _ | _ | _
+                  all_goals simp [heval] at hv'
+                  simp [ih hnm' heval]) hvs
+            -- (3) Propagate any-check for witness row
+            have hany : (List.range rows.length).any (fun i =>
+                let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
+                (List.zip vs (args.map Prod.snd)).all (fun ⟨v, colE⟩ =>
+                  match evalC n σ' T Δ (.assertE (.constF v) colE) with
+                  | some .vUnit => true | _ => false)) = true := by
+              by_contra h'
+              push_neg at h'
+              simp [hall, hvs, h'] at h
+            have hany_m : (List.range rows.length).any (fun i =>
+                let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
+                (List.zip vs (args.map Prod.snd)).all (fun ⟨v, colE⟩ =>
+                  match evalC m' σ' T Δ (.assertE (.constF v) colE) with
+                  | some .vUnit => true | _ => false)) = true :=
+              List.any_mono' (fun i _ hi => List.all_mono' (fun ⟨v, colE⟩ _ hpair => by
+                simp only at hpair ⊢
+                set σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
+                rcases heval : evalC n σ' T Δ (.assertE (.constF v) colE) with _ | val
+                · simp [heval] at hpair
+                · cases val <;> simp at hpair
+                  simp [ih hnm' heval]) hi) hany
+            -- Simplify h (fuel n) to just the body
+            simp only [hall, hvs, hany, Bool.not_true, ite_false] at h
+            -- Simplify goal (fuel m') to just the body
+            simp only [hall_m, hmap_m, hany_m, Bool.not_true, ite_false]
+            -- (4) Propagate body
+            exact ih hnm' h
 
 /-! ## Soundness: evalC → EvalProp
 
@@ -686,7 +688,7 @@ theorem evalC_sound : ∀ {fuel σ T Δ e v},
           · rcases rv with _ | _ | _ | _ | _ | rows | _
             all_goals simp only [hgettr] at h
             all_goals try simp at h
-            exact ⟨rows, hgettr⟩
+            exact ⟨rows, rfl⟩
         obtain ⟨rows, hrows⟩ := htr
         -- Rewrite getTrace result in h to trigger the match reduction
         simp only [hrows] at h
@@ -706,7 +708,7 @@ theorem evalC_sound : ∀ {fuel σ T Δ e v},
           simp only [hall, Bool.not_true, ite_false] at h
           rcases hm : (args.map Prod.fst).mapM _ with _ | vs
           · simp [hm] at h
-          · exact ⟨vs, hm⟩
+          · exact ⟨vs, rfl⟩
         obtain ⟨vs, hvs⟩ := hmap
         -- Step 4: extract witness row i (simplify using hall + hvs)
         simp only [hall, hvs, Bool.not_true, ite_false] at h
@@ -733,7 +735,7 @@ theorem evalC_sound : ∀ {fuel σ T Δ e v},
           set σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
           rcases heval : evalC n σ' T Δ c.body with _ | v'
           · simp [heval] at this
-          · cases v' <;> simp at this
+          · cases v' <;> simp [heval] at this
             exact ih heval
         -- Extract witness i
         rw [List.any_eq_true] at hany
@@ -749,7 +751,7 @@ theorem evalC_sound : ∀ {fuel σ T Δ e v},
           rcases heval : evalC n σ T Δ callerE with _ | val
           · simp [heval] at this
           · rcases val with _ | _ | _ | _ | _ | _ | _
-            all_goals simp at this
+            all_goals simp [heval] at this
             -- only the vF branch survives; this : fval = fv
             rename_i fval
             subst this
@@ -763,10 +765,11 @@ theorem evalC_sound : ∀ {fuel σ T Δ e v},
               EvalProp σ' T Δ (.assertE (.constF p.fst) p.snd) .vUnit := by
           intro σ' ⟨fv, colE⟩ hpair
           have := (List.all_eq_true.mp hi_check) ⟨fv, colE⟩ hpair
-          simp only at this
+          change (match evalC n σ' T Δ (.assertE (.constF fv) colE) with
+              | some .vUnit => true | _ => false) = true at this
           rcases heval : evalC n σ' T Δ (.assertE (.constF fv) colE) with _ | val
           · simp [heval] at this
-          · cases val <;> simp at this
+          · cases val <;> simp [heval] at this
             exact ih heval
         exact .LookUp (ih hbody) hc_def hrows h_callee_validity i vs h_bound h_args_len
           h_evals h_asserts
@@ -910,12 +913,12 @@ theorem evalC_complete : ∀ {σ T Δ e v},
            | some .vUnit => true | _ => false) = true := fun j hj => by
         obtain ⟨n_j, hn_j⟩ := ih_callee j (List.mem_range.mp hj); exact ⟨n_j, by simp [hn_j]⟩
       obtain ⟨n_rows, hn_rows⟩ := exists_uniform_fuel_all
-        (fun n m hnm j _ => by
-          simp only
-          rcases hev : evalC n _ T' Δ' c.body with _ | val
-          · simp [hev]
-          · cases val <;> simp
-            intro heq; exact heq ▸ by simp [evalC_mono hnm hev])
+        (fun n m hnm j h_flt => by
+          set σ_j := updateVal (updateVal σ' c.ident_t (.vArr rows)) c.ident_i (.vN j)
+          rcases hev : evalC n σ_j T' Δ' c.body with _ | val
+          · simp [hev] at h_flt
+          · cases val <;> simp [hev] at h_flt ⊢
+            simp [evalC_mono hnm hev])
         hrc_h
       -- (2) Uniform fuel for args mapM to produce vs
       -- Build per-element witnesses from ih_evals
@@ -956,9 +959,25 @@ theorem evalC_complete : ∀ {σ T Δ e v},
             refine ⟨max nx nxs, ?_⟩
             rw [List.mapM_cons]
             simp only [bind, Option.bind]
-            have hnx_m := evalC_mono (Nat.le_max_left nx nxs) hnx
-            have hnxs_m := List.mapM_Option_mono
-              (fun e' ve' he' => evalC_mono (Nat.le_max_right nx nxs) he') hnxs
+            have hnx_m : (match evalC (max nx nxs) σ' T' Δ' x with
+                | some (.vF v') => some v' | _ => none) = some fv := by
+              rcases hevx : evalC nx σ' T' Δ' x with _ | val
+              · simp [hevx] at hnx
+              · rcases val with _ | _ | _ | _ | _ | _ | _
+                all_goals simp [hevx] at hnx
+                rename_i fval
+                subst hnx
+                simp [evalC_mono (Nat.le_max_left nx nxs) hevx]
+            have hnxs_m : xs.mapM (fun callerE => match evalC (max nx nxs) σ' T' Δ' callerE with
+                | some (.vF v') => some v' | _ => none) = some fvs :=
+              List.mapM_Option_mono (fun e' ve' he' => by
+                rcases heve : evalC nxs σ' T' Δ' e' with _ | val
+                · simp [heve] at he'
+                · rcases val with _ | _ | _ | _ | _ | _ | _
+                  all_goals simp [heve] at he'
+                  rename_i fval
+                  subst he'
+                  simp [evalC_mono (Nat.le_max_right nx nxs) heve]) hnxs
             simp only [hnx_m, hnxs_m, pure]
       obtain ⟨n_args, hn_args⟩ := hmapM_exists
       -- (3) Uniform fuel for assertion all-check at witness row i
@@ -969,12 +988,12 @@ theorem evalC_complete : ∀ {σ T Δ e v},
            | some .vUnit => true | _ => false) = true := fun p hp => by
         obtain ⟨n_a, hn_a⟩ := ih_asserts p hp; exact ⟨n_a, by simp [hn_a]⟩
       obtain ⟨n_asserts, hn_asserts⟩ := exists_uniform_fuel_all
-        (fun n m hnm p _ => by
-          simp only
-          rcases hev : evalC n _ T' Δ' (.assertE _ p.snd) with _ | val
-          · simp [hev]
-          · cases val <;> simp
-            intro heq; exact heq ▸ by simp [evalC_mono hnm hev])
+        (fun n m hnm p h_flt => by
+          set σ_i := updateVal (updateVal σ' c.ident_t (.vArr rows)) c.ident_i (.vN i)
+          rcases hev : evalC n σ_i T' Δ' (.assertE (.constF p.fst) p.snd) with _ | val
+          · simp [hev] at h_flt
+          · cases val <;> simp [hev] at h_flt ⊢
+            simp [evalC_mono hnm hev])
         hasc_h
       -- (4) Combine all fuels and construct the evalC result
       set N := max (max (max n_rows n_args) n_asserts) n_body
@@ -987,10 +1006,11 @@ theorem evalC_complete : ∀ {σ T Δ e v},
           match evalC N σ'' T' Δ' c.body with
           | some .vUnit => true | _ => false) = true :=
         List.all_mono' (fun j _ hj => by
-          simp only at hj ⊢
-          rcases hev : evalC n_rows _ T' Δ' c.body with _ | val
+          set σ_j := updateVal (updateVal σ' c.ident_t (.vArr rows)) c.ident_i (.vN j)
+          show (match evalC N σ_j T' Δ' c.body with | some .vUnit => true | _ => false) = true
+          rcases hev : evalC n_rows σ_j T' Δ' c.body with _ | val
           · simp [hev] at hj
-          · cases val <;> simp at hj
+          · cases val <;> simp [hev] at hj ⊢
             simp [evalC_mono (by omega : n_rows ≤ N) hev]) hn_rows
       simp only [hall_N, Bool.not_true, ite_false]
       -- mapM at N (≥ n_args) gives vs
@@ -1002,7 +1022,7 @@ theorem evalC_complete : ∀ {σ T Δ e v},
           rcases hev : evalC n_args σ' T' Δ' callerE with _ | val
           · simp [hev] at hv'
           · rcases val with _ | _ | _ | _ | _ | _ | _
-            all_goals simp at hv'
+            all_goals simp [hev] at hv'
             simp [evalC_mono (by omega : n_args ≤ N) hev]) hn_args
       simp only [hmap_N]
       -- Any-check at witness row i holds at N (≥ n_asserts)
@@ -1014,10 +1034,12 @@ theorem evalC_complete : ∀ {σ T Δ e v},
         rw [List.any_eq_true]
         refine ⟨i, List.mem_range.mpr h_bound, ?_⟩
         exact List.all_mono' (fun p _ hp => by
-          simp only at hp ⊢
-          rcases hev : evalC n_asserts _ T' Δ' (.assertE _ p.snd) with _ | val
+          set σ_i := updateVal (updateVal σ' c.ident_t (.vArr rows)) c.ident_i (.vN i)
+          show (match evalC N σ_i T' Δ' (.assertE (.constF p.fst) p.snd) with
+              | some .vUnit => true | _ => false) = true
+          rcases hev : evalC n_asserts σ_i T' Δ' (.assertE (.constF p.fst) p.snd) with _ | val
           · simp [hev] at hp
-          · cases val <;> simp at hp
+          · cases val <;> simp [hev] at hp ⊢
             simp [evalC_mono (by omega : n_asserts ≤ N) hev]) hn_asserts
       simp only [hany_N, Bool.not_true, ite_false]
       exact evalC_mono (by omega : n_body ≤ N) hn_body
