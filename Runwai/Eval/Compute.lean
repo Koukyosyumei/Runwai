@@ -512,12 +512,11 @@ theorem evalC_mono {n m : ℕ} (hnm : n ≤ m) :
                 match evalC m' σ T Δ callerE with
                 | some (.vF v) => some v | _ => none) = some vs :=
               List.mapM_Option_mono (fun callerE v' hv' => by
-                simp only at hv' ⊢
                 rcases heval : evalC n σ T Δ callerE with _ | val
                 · simp [heval] at hv'
                 · rcases val with _ | _ | _ | _ | _ | _ | _
                   all_goals simp [heval] at hv'
-                  simp [ih hnm' heval]) hvs
+                  simp [ih hnm' heval, hv']) hvs
             -- (3) Propagate any-check for witness row
             have hany : (List.range rows.length).any (fun i =>
                 let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
@@ -533,11 +532,10 @@ theorem evalC_mono {n m : ℕ} (hnm : n ≤ m) :
                   match evalC m' σ' T Δ (.assertE (.constF v) colE) with
                   | some .vUnit => true | _ => false)) = true :=
               List.any_mono' (fun i _ hi => List.all_mono' (fun ⟨v, colE⟩ _ hpair => by
-                simp only at hpair ⊢
                 set σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
                 rcases heval : evalC n σ' T Δ (.assertE (.constF v) colE) with _ | val
                 · simp [heval] at hpair
-                · cases val <;> simp at hpair
+                · cases val <;> simp [heval] at hpair
                   simp [ih hnm' heval]) hi) hany
             -- Simplify h (fuel n) to just the body
             simp only [hall, hvs, hany, Bool.not_true, ite_false] at h
@@ -1018,12 +1016,11 @@ theorem evalC_complete : ∀ {σ T Δ e v},
           match evalC N σ' T' Δ' callerE with
           | some (.vF v') => some v' | _ => none) = some vs :=
         List.mapM_Option_mono (fun callerE v' hv' => by
-          simp only at hv' ⊢
           rcases hev : evalC n_args σ' T' Δ' callerE with _ | val
           · simp [hev] at hv'
           · rcases val with _ | _ | _ | _ | _ | _ | _
             all_goals simp [hev] at hv'
-            simp [evalC_mono (by omega : n_args ≤ N) hev]) hn_args
+            simp [evalC_mono (by omega : n_args ≤ N) hev, hv']) hn_args
       simp only [hmap_N]
       -- Any-check at witness row i holds at N (≥ n_asserts)
       have hany_N : (List.range rows.length).any (fun i' =>
