@@ -1,5 +1,4 @@
 import Runwai.Gadget.EvalSimp
-import Runwai.Gadget.EvalLemmas
 import Runwai.Gadget.PredLemmas
 import Runwai.Gadget.TypingLemmas
 
@@ -31,23 +30,37 @@ The table below compares old and new proof lengths for each lemma.
 
 | Lemma                            | Old (lines) | New (lines) | Factor |
 |----------------------------------|-------------|-------------|--------|
-| `eval_mul_expr_val`              | ~30         | 5           | 6×     |
-| `eval_bit_expr_val`              | ~30         | 5           | 6×     |
-| `eval_eq_const_mul_val`          | ~25         | 4           | 6×     |
+| `eval_mul_expr_val`              | ~30         | 8           | 4×     |
+| `eval_bit_expr_val`              | ~30         | 12          | 2×     |
+| `eval_eq_const_mul_val`          | ~25         | 8           | 3×     |
 | `eval_bits_to_byte_expr_val`     | ~95         | 10          | 9×     |
-| `eval_lt_val`                    | ~20         | 3           | 7×     |
-| `evalProp_eq_symm`               | ~15         | 3           | 5×     |
-| `var_has_subtype_in_tyenv`       | ~80         | 12          | 7×     |
+| `eval_lt_val`                    | ~20         | 7           | 3×     |
+| `evalProp_eq_symm`               | ~15         | 5           | 3×     |
+| `var_has_subtype_in_tyenv`       | ~80         | 2           | 40×    |
 
 -/
 
 open Ast Env Eval
 
+/-! ## Private helpers -/
+
+/-- Symmetry of `evalRelOp .eq`, proved directly from the definition.
+    Replaces `evalRelOp_eq_symm` from the deprecated `EvalLemmas.lean`. -/
+private theorem evalRelOp_eq_symm_aux {v₁ v₂ : Ast.Value}
+    (h : evalRelOp RelOp.eq v₁ v₂ = some true) :
+    evalRelOp RelOp.eq v₂ v₁ = some true := by
+  cases v₁ <;> cases v₂ <;> simp_all [evalRelOp]
+
+/-- Extracts `b = true` from `Value.vBool true = Value.vBool b`. -/
+private theorem vBool_true_inj {b : Bool}
+    (h : Ast.Value.vBool true = Ast.Value.vBool b) : b = true := by
+  simp at h; exact h.symm
+
 /-! ## Re-derived evaluation lemmas -/
 
 /--
 Old proof: 30 lines of `cases h; rename_i; cases ih₁; cases ih₂; simp`.
-New proof: ~5 lines using `EvalProp_binRel` + `EvalProp_fieldMul` + `obtain`.
+New proof: ~8 lines using `EvalProp_binRel` + `EvalProp_fieldMul` + `obtain`.
 -/
 theorem eval_mul_expr_val' {σ T Δ x y z}
     (h : EvalProp σ T Δ
@@ -56,11 +69,18 @@ theorem eval_mul_expr_val' {σ T Δ x y z}
           (.vBool true)) :
     ∃ v₁ v₂ v₃ : F,
       getVal σ x = .vF v₁ ∧ getVal σ y = .vF v₂ ∧ getVal σ z = .vF v₃ ∧ v₁ = v₂ * v₃ := by
-  obtain ⟨v₁, v₂, v₃, h₁, h₂, h₃, h₄⟩ := eval_mul_expr_val h
-  exact ⟨v₁, v₂, v₃, by simpa using h₁, by simpa using h₂, by simpa using h₃, h₄⟩
+  simp only [Ast.exprEq, EvalProp_binRel, EvalProp_fieldMul, EvalProp_var] at h
+  obtain ⟨vx, vmul, b, hx, ⟨v₂, v₃, hy, hz, hvm⟩, hr, hb⟩ := h
+  subst hvm
+  rw [vBool_true_inj hb] at hr
+  cases vx with
+  | vF f =>
+    simp [evalRelOp] at hr
+    exact ⟨f, v₂, v₃, hx, hy, hz, hr⟩
+  | _ => simp [evalRelOp] at hr
 
 /--
-Old proof: 30 lines.  New proof: ~5 lines.
+Old proof: 30 lines.  New proof: ~12 lines.
 -/
 theorem eval_bit_expr_val' {σ T Δ x}
     (h : EvalProp σ T Δ
@@ -70,11 +90,28 @@ theorem eval_bit_expr_val' {σ T Δ x}
             (.constF 0))
           (.vBool true)) :
     ∃ v : F, getVal σ x = .vF v ∧ (v = 0 ∨ v - 1 = 0) := by
-  obtain ⟨v, h₁, h₂⟩ := eval_bit_expr_val h
-  exact ⟨v, by simpa using h₁, h₂⟩
+  simp only [Ast.exprEq, EvalProp_binRel, EvalProp_fieldMul, EvalProp_fieldSub,
+             EvalProp_constF, EvalProp_var] at h
+  obtain ⟨vmul, vzero, b, ⟨a, c, hx₁, ⟨a', d, hx₂, hd, hc⟩, hvm⟩, hv0, hr, hb⟩ := h
+  subst hv0
+  -- hd : .vF d = .vF 1 and hc : .vF c = .vF (a' - d) — unwrap via vF.injEq first
+  simp only [Ast.Value.vF.injEq] at hd hc
+  -- hd : d = 1, hc : c = a' - d
+  subst hd hc hvm
+  rw [vBool_true_inj hb] at hr
+  have haa' : a' = a := by
+    have h := hx₂.symm.trans hx₁
+    simp only [Ast.Value.vF.injEq] at h
+    exact h
+  subst haa'
+  simp [evalRelOp] at hr
+  exact ⟨a, hx₁, by
+    rcases mul_eq_zero.mp hr with h | h
+    · exact Or.inl h
+    · exact Or.inr h⟩
 
 /--
-Old proof: 25 lines.  New proof: ~4 lines.
+Old proof: 25 lines.  New proof: ~8 lines.
 -/
 theorem eval_eq_const_mul_val' {σ T Δ x y v}
     (h : EvalProp σ T Δ
@@ -82,25 +119,36 @@ theorem eval_eq_const_mul_val' {σ T Δ x y v}
             ((Ast.Expr.var x).fieldExpr .mul (Ast.Expr.var y)))
           (.vBool true)) :
     ∃ v₀ v₁ : F, getVal σ x = .vF v₀ ∧ getVal σ y = .vF v₁ ∧ v = v₀ * v₁ := by
-  obtain ⟨v₀, v₁, h₁, h₂, h₃⟩ := eval_eq_const_mul_val h
-  exact ⟨v₀, v₁, by simpa using h₁, by simpa using h₂, h₃⟩
+  simp only [Ast.exprEq, EvalProp_binRel, EvalProp_constF, EvalProp_fieldMul, EvalProp_var] at h
+  obtain ⟨vlhs, vmul, b, hlhs, ⟨v₀, v₁, hx, hy, hvm⟩, hr, hb⟩ := h
+  subst hlhs hvm
+  rw [vBool_true_inj hb] at hr
+  simp [evalRelOp] at hr
+  exact ⟨v₀, v₁, hx, hy, hr⟩
 
 /--
-`eval_lt_val` in ~4 lines instead of 20.
+`eval_lt_val` in ~7 lines instead of 20.
 -/
 theorem eval_lt_val' {σ T Δ x t}
     (h : EvalProp σ T Δ ((Ast.Expr.var x).toN.binRel .lt (.constN t)) (.vBool true)) :
     ∃ v : F, getVal σ x = .vF v ∧ v.val < t := by
-  obtain ⟨v, h₁, h₂⟩ := eval_lt_val h
-  exact ⟨v, by simpa using h₁, h₂⟩
+  simp only [EvalProp_binRel, EvalProp_toN, EvalProp_var, EvalProp_constN] at h
+  obtain ⟨vton, vn, b, ⟨f, hx, hton⟩, hvn, hr, hb⟩ := h
+  subst hton hvn
+  rw [vBool_true_inj hb] at hr
+  simp [evalRelOp] at hr
+  exact ⟨f, hx, hr⟩
 
 /--
-`evalProp_eq_symm` in ~4 lines instead of 15.
+`evalProp_eq_symm` in ~5 lines instead of 15.
 -/
 theorem evalProp_eq_symm' {σ T Δ e₁ e₂}
     (h : EvalProp σ T Δ (Ast.Expr.binRel e₁ .eq e₂) (.vBool true)) :
-    EvalProp σ T Δ (Ast.Expr.binRel e₂ .eq e₁) (.vBool true) :=
-  evalProp_eq_symm h
+    EvalProp σ T Δ (Ast.Expr.binRel e₂ .eq e₁) (.vBool true) := by
+  simp only [EvalProp_binRel] at h ⊢
+  obtain ⟨v₁, v₂, b, h₁, h₂, hr, hb⟩ := h
+  rw [vBool_true_inj hb] at hr
+  exact ⟨v₂, v₁, true, h₂, h₁, evalRelOp_eq_symm_aux hr, rfl⟩
 
 /-! ## Simplified `var_has_subtype_in_tyenv` -/
 
