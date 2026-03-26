@@ -122,9 +122,38 @@ def evalC : ℕ → ValEnv → TraceEnv → ChipEnv → Ast.Expr → Option Ast.
       match v with
       | .vInt x => some (.vN x.natAbs)
       | _       => none
-  -- Lookup: evaluation only runs the body; lookup constraints are
-  -- verified by the type system (TE_LookUp), not the evaluator.
-  | n+1, σ, T, Δ, .lookup _ _ _ e => evalC n σ T Δ e
+  -- Lookup: verify all EvalProp.LookUp conditions, search for a valid witness row,
+  -- then evaluate the body.
+  | n+1, σ, T, Δ, .lookup _vname cname args e =>
+      let c := getChip Δ cname
+      match getTrace T c with
+      | some (.vArr rows) =>
+          -- (1) Check callee validity for all trace rows
+          if !(List.range rows.length).all (fun j =>
+                let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
+                match evalC n σ' T Δ c.body with
+                | some .vUnit => true
+                | _           => false)
+          then none
+          else
+          -- (2) Evaluate caller-side argument expressions to obtain witness values vs
+          match (args.map Prod.fst).mapM (fun callerE =>
+                match evalC n σ T Δ callerE with
+                | some (.vF v) => some v
+                | _            => none) with
+          | none    => none
+          | some vs =>
+              -- (3) Find a witness row index i where all assertions hold
+              if !(List.range rows.length).any (fun i =>
+                    let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
+                    (List.zip vs (args.map Prod.snd)).all (fun ⟨v, colE⟩ =>
+                      match evalC n σ' T Δ (.assertE (.constF v) colE) with
+                      | some .vUnit => true
+                      | _           => false))
+              then none
+              -- (4) Evaluate the body
+              else evalC n σ T Δ e
+      | _ => none
 
 /-! ## simp unfolding lemmas
 These let `simp [evalC_letIn, evalC_fieldExpr, ...]` reduce evalC goals to
@@ -233,7 +262,28 @@ arithmetic, replacing the old manual `cases EvalProp` boilerplate. -/
     match v with | .vInt x => some (.vN x.natAbs) | _ => none) := rfl
 
 @[simp] theorem evalC_lookup :
-    evalC (n+1) σ T Δ (.lookup vn cn args e) = evalC n σ T Δ e := rfl
+    evalC (n+1) σ T Δ (.lookup vn cn args e) =
+    let c := getChip Δ cn
+    match getTrace T c with
+    | some (.vArr rows) =>
+        if !(List.range rows.length).all (fun j =>
+              let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
+              match evalC n σ' T Δ c.body with
+              | some .vUnit => true | _ => false)
+        then none
+        else match (args.map Prod.fst).mapM (fun callerE =>
+              match evalC n σ T Δ callerE with
+              | some (.vF v) => some v | _ => none) with
+             | none => none
+             | some vs =>
+                 if !(List.range rows.length).any (fun i =>
+                       let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
+                       (List.zip vs (args.map Prod.snd)).all (fun ⟨v, colE⟩ =>
+                         match evalC n σ' T Δ (.assertE (.constF v) colE) with
+                         | some .vUnit => true | _ => false))
+                 then none
+                 else evalC n σ T Δ e
+    | _ => none := rfl
 
 /-! ## Auxiliary List.mapM lemmas -/
 
@@ -298,6 +348,40 @@ private theorem List.mapM_Option_inv {α β : Type*} {l : List α} {f : α → O
           rcases hp with rfl | hmem
           · exact hfx
           · exact hzip p hmem
+
+/-! ## Auxiliary lemmas for lookup monotonicity -/
+
+/-- If `f x = true → g x = true` for all `x ∈ l`, then `l.all f = true → l.all g = true`. -/
+private theorem List.all_mono' {α : Type*} {l : List α} {f g : α → Bool}
+    (hfg : ∀ x ∈ l, f x = true → g x = true) :
+    l.all f = true → l.all g = true := by
+  simp only [List.all_eq_true]
+  intro h x hx; exact hfg x hx (h x hx)
+
+/-- If `f x = true → g x = true` for all `x ∈ l`, then `l.any f = true → l.any g = true`. -/
+private theorem List.any_mono' {α : Type*} {l : List α} {f g : α → Bool}
+    (hfg : ∀ x ∈ l, f x = true → g x = true) :
+    l.any f = true → l.any g = true := by
+  simp only [List.any_eq_true]
+  intro ⟨x, hx, hfx⟩; exact ⟨x, hx, hfg x hx hfx⟩
+
+/-- From `∀ x ∈ l, ∃ fuel, f fuel x = true` and fuel-monotonicity, derive
+    `∃ N, l.all (f N) = true`. -/
+private theorem exists_uniform_fuel_all {α : Type*} {l : List α} {f : ℕ → α → Bool}
+    (hmono : ∀ n m, n ≤ m → ∀ x, f n x = true → f m x = true)
+    (h : ∀ x ∈ l, ∃ fuel, f fuel x = true) :
+    ∃ N, l.all (f N) = true := by
+  induction l with
+  | nil => exact ⟨0, by simp⟩
+  | cons y ys ih =>
+    obtain ⟨ny, hny⟩ := h y (List.mem_cons_self ..)
+    obtain ⟨nys, hnys⟩ := ih (fun x hx => h x (List.mem_cons.mpr (Or.inr hx)))
+    refine ⟨max ny nys, ?_⟩
+    rw [List.all_cons]
+    constructor
+    · exact hmono ny _ (Nat.le_max_left ..) y hny
+    · exact List.all_mono' (fun x hx hfx =>
+        hmono nys _ (Nat.le_max_right ..) x hfx) hnys
 
 /-! ## Monotonicity -/
 
@@ -384,8 +468,81 @@ theorem evalC_mono {n m : ℕ} (hnm : n ≤ m) :
         simp only [evalC_StoU, Option.bind_eq_some_iff] at h ⊢
         obtain ⟨v, hv, rest⟩ := h
         refine ⟨v, ih hnm' hv, ?_⟩; split at rest <;> simp_all [ih hnm']
-    | .lookup _ _ _ e =>
-        simp only [evalC_lookup] at h ⊢; exact ih hnm' h
+    | .lookup _vn cn args e =>
+        simp only [evalC_lookup] at h ⊢
+        set c := getChip Δ cn
+        -- Propagate getTrace (fuel-independent)
+        rcases htr : getTrace T c with _ | rv
+        · simp [htr] at h
+        · simp only [htr] at h ⊢
+          rcases rv with _ | _ | _ | _ | _ | rows | _
+          all_goals simp only at h
+          all_goals try simp at h   -- non-vArr shapes give none
+          -- vArr rows case
+          · -- (1) Propagate row-validity check
+            have hall : (List.range rows.length).all (fun j =>
+                let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
+                match evalC n σ' T Δ c.body with
+                | some .vUnit => true | _ => false) = true := by
+              by_contra h'; push_neg at h'
+              simp only [Bool.not_eq_true] at h'
+              simp [h'] at h
+            have hall_m : (List.range rows.length).all (fun j =>
+                let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
+                match evalC m' σ' T Δ c.body with
+                | some .vUnit => true | _ => false) = true :=
+              List.all_mono' (fun j _ hj => by
+                simp only at hj ⊢
+                set σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
+                rcases heval : evalC n σ' T Δ c.body with _ | v
+                · simp [heval] at hj
+                · cases v <;> simp at hj
+                  simp [ih hnm' heval]) hall
+            -- (2) Propagate args mapM
+            rcases hmap : (args.map Prod.fst).mapM (fun callerE =>
+                match evalC n σ T Δ callerE with
+                | some (.vF v) => some v | _ => none) with
+            | none =>
+              -- h: if !all_n then none else (match none with ...) = some v
+              simp only [hall, Bool.not_true, ite_false, hmap] at h
+            | some vs =>
+              have hmap_m : (args.map Prod.fst).mapM (fun callerE =>
+                  match evalC m' σ T Δ callerE with
+                  | some (.vF v) => some v | _ => none) = some vs :=
+                List.mapM_Option_mono (fun callerE v' hv' => by
+                  simp only at hv' ⊢
+                  rcases heval : evalC n σ T Δ callerE with _ | val
+                  · simp [heval] at hv'
+                  · rcases val with _ | _ | _ | _ | _ | _ | _
+                    all_goals simp at hv'
+                    simp [ih hnm' heval]) hmap
+              -- (3) Propagate any-check for witness row
+              have hany : (List.range rows.length).any (fun i =>
+                  let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
+                  (List.zip vs (args.map Prod.snd)).all (fun ⟨v, colE⟩ =>
+                    match evalC n σ' T Δ (.assertE (.constF v) colE) with
+                    | some .vUnit => true | _ => false)) = true := by
+                by_contra h'
+                push_neg at h'
+                simp [hall, hmap, h'] at h
+              have hany_m : (List.range rows.length).any (fun i =>
+                  let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
+                  (List.zip vs (args.map Prod.snd)).all (fun ⟨v, colE⟩ =>
+                    match evalC m' σ' T Δ (.assertE (.constF v) colE) with
+                    | some .vUnit => true | _ => false)) = true :=
+                List.any_mono' (fun i _ hi => List.all_mono' (fun ⟨v, colE⟩ _ hpair => by
+                  simp only at hpair ⊢
+                  set σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
+                  rcases heval : evalC n σ' T Δ (.assertE (.constF v) colE) with _ | val
+                  · simp [heval] at hpair
+                  · cases val <;> simp at hpair
+                    simp [ih hnm' heval]) hi) hany
+              -- Simplify h (fuel n) to just the body
+              simp only [hall, hmap, hany, Bool.not_true, ite_false] at h
+              -- Simplify goal (fuel m') to just the body
+              simp only [hall_m, hmap_m, hany_m, Bool.not_true, ite_false]
+              -- (4) Propagate body
+              exact ih hnm' h
 
 /-! ## Soundness: evalC → EvalProp
 
@@ -519,12 +676,100 @@ theorem evalC_sound : ∀ {fuel σ T Δ e v},
         split at rest
         · simp at rest; subst rest; exact .StoU (ih hv)
         · simp at rest
-    | .lookup _ _ _ e =>
-        -- evalC ignores the lookup and runs the body.
-        -- Full soundness for the lookup expression itself requires the lookup
-        -- witnesses; here we can only provide soundness for the body evaluation.
-        -- This case is handled at the type level via TE_LookUp.
-        sorry
+    | .lookup vname cname args e =>
+        simp only [evalC_lookup] at h
+        -- Step 1: extract rows from getTrace
+        set c := getChip Δ cname with hc_def
+        have htr : ∃ rows, getTrace T c = some (.vArr rows) := by
+          rcases hgettr : getTrace T c with _ | rv
+          · simp [hgettr] at h
+          · rcases rv with _ | _ | _ | _ | _ | rows | _
+            all_goals simp only [hgettr] at h
+            all_goals try simp at h
+            exact ⟨rows, hgettr⟩
+        obtain ⟨rows, hrows⟩ := htr
+        -- Rewrite getTrace result in h to trigger the match reduction
+        simp only [hrows] at h
+        -- Step 2: extract row-validity check
+        have hall : (List.range rows.length).all (fun j =>
+            let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
+            match evalC n σ' T Δ c.body with
+            | some .vUnit => true | _ => false) = true := by
+          rcases hb : (List.range rows.length).all _ with _ | _
+          · simp [hb] at h
+          · rfl
+        -- Step 3: extract args witness values vs
+        have hmap : ∃ vs, (args.map Prod.fst).mapM (fun callerE =>
+            match evalC n σ T Δ callerE with
+            | some (.vF v) => some v | _ => none) = some vs := by
+          -- Simplify the if-check using hall (all-rows check holds)
+          simp only [hall, Bool.not_true, ite_false] at h
+          rcases hm : (args.map Prod.fst).mapM _ with _ | vs
+          · simp [hm] at h
+          · exact ⟨vs, hm⟩
+        obtain ⟨vs, hvs⟩ := hmap
+        -- Step 4: extract witness row i (simplify using hall + hvs)
+        simp only [hall, hvs, Bool.not_true, ite_false] at h
+        -- h now: (if !any_check then none else evalC n σ T Δ e) = some v
+        have hany : (List.range rows.length).any (fun i =>
+            let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
+            (List.zip vs (args.map Prod.snd)).all (fun ⟨v, colE⟩ =>
+              match evalC n σ' T Δ (.assertE (.constF v) colE) with
+              | some .vUnit => true | _ => false)) = true := by
+          by_contra h'; push_neg at h'
+          simp [hvs, h'] at h
+        -- Step 5: extract body evaluation (simplify using hany)
+        have hbody : evalC n σ T Δ e = some v := by
+          simp only [hany, Bool.not_true, ite_false] at h; exact h
+        -- Build EvalProp.LookUp
+        -- h_callee_validity
+        have h_callee_validity : ∀ j : ℕ, j < rows.length →
+            let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
+            EvalProp σ' T Δ c.body .vUnit := by
+          intro j hj
+          have hmem : j ∈ List.range rows.length := List.mem_range.mpr hj
+          have := (List.all_eq_true.mp hall) j hmem
+          simp only at this
+          set σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN j)
+          rcases heval : evalC n σ' T Δ c.body with _ | v'
+          · simp [heval] at this
+          · cases v' <;> simp at this
+            exact ih heval
+        -- Extract witness i
+        rw [List.any_eq_true] at hany
+        obtain ⟨i, hi_mem, hi_check⟩ := hany
+        have h_bound : i < rows.length := List.mem_range.mp hi_mem
+        -- h_evals: each arg expression evaluates to vF
+        obtain ⟨hargs_len, hzip_evals⟩ := List.mapM_Option_inv hvs
+        have h_evals : ∀ p ∈ List.zip (args.map Prod.fst) vs,
+            EvalProp σ T Δ p.fst (.vF p.snd) := by
+          intro ⟨callerE, fv⟩ hpair
+          have := hzip_evals ⟨callerE, fv⟩ hpair
+          simp only at this
+          rcases heval : evalC n σ T Δ callerE with _ | val
+          · simp [heval] at this
+          · rcases val with _ | _ | _ | _ | _ | _ | _
+            all_goals simp at this
+            -- only the vF branch survives; this : fval = fv
+            rename_i fval
+            subst this
+            exact ih heval
+        -- h_args_len
+        have h_args_len : args.length = vs.length := by
+          rw [← hargs_len]; simp [List.length_map]
+        -- h_asserts: assertions hold at witness row i
+        have h_asserts : let σ' := updateVal (updateVal σ c.ident_t (.vArr rows)) c.ident_i (.vN i)
+            ∀ p ∈ List.zip vs (args.map Prod.snd),
+              EvalProp σ' T Δ (.assertE (.constF p.fst) p.snd) .vUnit := by
+          intro σ' ⟨fv, colE⟩ hpair
+          have := (List.all_eq_true.mp hi_check) ⟨fv, colE⟩ hpair
+          simp only at this
+          rcases heval : evalC n σ' T Δ (.assertE (.constF fv) colE) with _ | val
+          · simp [heval] at this
+          · cases val <;> simp at this
+            exact ih heval
+        exact .LookUp (ih hbody) hc_def hrows h_callee_validity i vs h_bound h_args_len
+          h_evals h_asserts
 
 /-! ## Completeness: EvalProp → ∃ fuel, evalC -/
 
@@ -653,9 +898,129 @@ theorem evalC_complete : ∀ {σ T Δ e v},
                _, evalC_mono (Nat.le_max_right na ni) hni, by simp [idx]⟩⟩
   | Len _ ih =>
       obtain ⟨n, hn⟩ := ih; exact ⟨n+1, by simp [hn]⟩
-  | LookUp h_body _ _ _ _ _ _ _ _ _ ih_body _ =>
-      obtain ⟨n, hn⟩ := ih_body
-      exact ⟨n+1, by simp [hn]⟩
+  | @LookUp σ' T' Δ' vname cname args e v c rows
+        h_body h_chip h_trace h_callee i vs h_bound h_args_len h_evals h_asserts
+        ih_body ih_callee ih_evals ih_asserts =>
+      obtain ⟨n_body, hn_body⟩ := ih_body
+      -- (1) Uniform fuel for callee-validity all-check over all rows
+      have hrc_h : ∀ j ∈ List.range rows.length, ∃ fuel,
+          (match evalC fuel
+              (updateVal (updateVal σ' c.ident_t (.vArr rows)) c.ident_i (.vN j))
+              T' Δ' c.body with
+           | some .vUnit => true | _ => false) = true := fun j hj => by
+        obtain ⟨n_j, hn_j⟩ := ih_callee j (List.mem_range.mp hj); exact ⟨n_j, by simp [hn_j]⟩
+      obtain ⟨n_rows, hn_rows⟩ := exists_uniform_fuel_all
+        (fun n m hnm j _ => by
+          simp only
+          rcases hev : evalC n _ T' Δ' c.body with _ | val
+          · simp [hev]
+          · cases val <;> simp
+            intro heq; exact heq ▸ by simp [evalC_mono hnm hev])
+        hrc_h
+      -- (2) Uniform fuel for args mapM to produce vs
+      -- Build per-element witnesses from ih_evals
+      have hmap_elems : ∀ p ∈ List.zip (args.map Prod.fst) vs,
+          ∃ fuel, (match evalC fuel σ' T' Δ' p.fst with
+                   | some (.vF v') => some v' | _ => none) = some p.snd := fun p hp =>
+        let ⟨n_p, hn_p⟩ := ih_evals p hp; ⟨n_p, by simp [hn_p]⟩
+      -- Get uniform fuel for the mapM via ConstArr-style induction on the zip
+      have hmapM_exists : ∃ n_args, (args.map Prod.fst).mapM (fun callerE =>
+          match evalC n_args σ' T' Δ' callerE with
+          | some (.vF v') => some v' | _ => none) = some vs := by
+        suffices ∀ l vs', (∀ p ∈ List.zip l vs', ∃ fuel,
+              (match evalC fuel σ' T' Δ' p.fst with
+               | some (.vF v') => some v' | _ => none) = some p.snd) →
+            l.length = vs'.length →
+            ∃ N, l.mapM (fun callerE =>
+              match evalC N σ' T' Δ' callerE with
+              | some (.vF v') => some v' | _ => none) = some vs' by
+          exact this _ _ hmap_elems (by simp [List.length_map, h_args_len])
+        intro l
+        induction l with
+        | nil =>
+          intro vs' _ hlen
+          cases vs' with
+          | nil => exact ⟨0, by simp⟩
+          | cons _ _ => simp at hlen
+        | cons x xs ihl =>
+          intro vs' hpairs hlen
+          cases vs' with
+          | nil => simp at hlen
+          | cons fv fvs =>
+            obtain ⟨nx, hnx⟩ := hpairs ⟨x, fv⟩ (by simp [List.zip_cons_cons])
+            have hpairs' : ∀ p ∈ List.zip xs fvs, ∃ fuel,
+                (match evalC fuel σ' T' Δ' p.fst with
+                 | some (.vF v') => some v' | _ => none) = some p.snd :=
+              fun p hp => hpairs p (by simp [List.zip_cons_cons]; exact Or.inr hp)
+            obtain ⟨nxs, hnxs⟩ := ihl fvs hpairs' (by simpa using hlen)
+            refine ⟨max nx nxs, ?_⟩
+            rw [List.mapM_cons]
+            simp only [bind, Option.bind]
+            have hnx_m := evalC_mono (Nat.le_max_left nx nxs) hnx
+            have hnxs_m := List.mapM_Option_mono
+              (fun e' ve' he' => evalC_mono (Nat.le_max_right nx nxs) he') hnxs
+            simp only [hnx_m, hnxs_m, pure]
+      obtain ⟨n_args, hn_args⟩ := hmapM_exists
+      -- (3) Uniform fuel for assertion all-check at witness row i
+      have hasc_h : ∀ p ∈ List.zip vs (args.map Prod.snd), ∃ fuel,
+          (match evalC fuel
+              (updateVal (updateVal σ' c.ident_t (.vArr rows)) c.ident_i (.vN i))
+              T' Δ' (.assertE (.constF p.fst) p.snd) with
+           | some .vUnit => true | _ => false) = true := fun p hp => by
+        obtain ⟨n_a, hn_a⟩ := ih_asserts p hp; exact ⟨n_a, by simp [hn_a]⟩
+      obtain ⟨n_asserts, hn_asserts⟩ := exists_uniform_fuel_all
+        (fun n m hnm p _ => by
+          simp only
+          rcases hev : evalC n _ T' Δ' (.assertE _ p.snd) with _ | val
+          · simp [hev]
+          · cases val <;> simp
+            intro heq; exact heq ▸ by simp [evalC_mono hnm hev])
+        hasc_h
+      -- (4) Combine all fuels and construct the evalC result
+      set N := max (max (max n_rows n_args) n_asserts) n_body
+      refine ⟨N + 1, ?_⟩
+      -- Unfold lookup and resolve chip/trace lookups (fuel-independent)
+      simp only [evalC_lookup, h_chip, h_trace]
+      -- All-rows check holds at N (≥ n_rows)
+      have hall_N : (List.range rows.length).all (fun j =>
+          let σ'' := updateVal (updateVal σ' c.ident_t (.vArr rows)) c.ident_i (.vN j)
+          match evalC N σ'' T' Δ' c.body with
+          | some .vUnit => true | _ => false) = true :=
+        List.all_mono' (fun j _ hj => by
+          simp only at hj ⊢
+          rcases hev : evalC n_rows _ T' Δ' c.body with _ | val
+          · simp [hev] at hj
+          · cases val <;> simp at hj
+            simp [evalC_mono (by omega : n_rows ≤ N) hev]) hn_rows
+      simp only [hall_N, Bool.not_true, ite_false]
+      -- mapM at N (≥ n_args) gives vs
+      have hmap_N : (args.map Prod.fst).mapM (fun callerE =>
+          match evalC N σ' T' Δ' callerE with
+          | some (.vF v') => some v' | _ => none) = some vs :=
+        List.mapM_Option_mono (fun callerE v' hv' => by
+          simp only at hv' ⊢
+          rcases hev : evalC n_args σ' T' Δ' callerE with _ | val
+          · simp [hev] at hv'
+          · rcases val with _ | _ | _ | _ | _ | _ | _
+            all_goals simp at hv'
+            simp [evalC_mono (by omega : n_args ≤ N) hev]) hn_args
+      simp only [hmap_N]
+      -- Any-check at witness row i holds at N (≥ n_asserts)
+      have hany_N : (List.range rows.length).any (fun i' =>
+          let σ'' := updateVal (updateVal σ' c.ident_t (.vArr rows)) c.ident_i (.vN i')
+          (List.zip vs (args.map Prod.snd)).all (fun ⟨fv, colE⟩ =>
+            match evalC N σ'' T' Δ' (.assertE (.constF fv) colE) with
+            | some .vUnit => true | _ => false)) = true := by
+        rw [List.any_eq_true]
+        refine ⟨i, List.mem_range.mpr h_bound, ?_⟩
+        exact List.all_mono' (fun p _ hp => by
+          simp only at hp ⊢
+          rcases hev : evalC n_asserts _ T' Δ' (.assertE _ p.snd) with _ | val
+          · simp [hev] at hp
+          · cases val <;> simp at hp
+            simp [evalC_mono (by omega : n_asserts ≤ N) hev]) hn_asserts
+      simp only [hany_N, Bool.not_true, ite_false]
+      exact evalC_mono (by omega : n_body ≤ N) hn_body
 
 /-! ## The Fundamental Equivalence -/
 
