@@ -478,7 +478,7 @@ theorem evalC_mono {n m : ℕ} (hnm : n ≤ m) :
           rcases rv with _ | _ | _ | _ | _ | rows | _
           all_goals simp only at h
           -- close non-vArr cases (h : none = some v → contradiction)
-          all_goals try simp only [Option.none_ne_some] at h
+          all_goals try contradiction
           -- vArr rows case
           · -- (1) Propagate row-validity check
             have hall : (List.range rows.length).all (fun j =>
