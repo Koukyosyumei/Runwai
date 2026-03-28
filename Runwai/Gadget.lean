@@ -7,3 +7,7 @@ import Runwai.Gadget.PointwisePreserve
 import Runwai.Gadget.TypingLemmas
 import Runwai.Gadget.Utils
 import Runwai.Gadget.VCG
+-- New automation layer (redesign)
+import Runwai.Gadget.EvalSimp
+import Runwai.Gadget.AutoProve
+import Runwai.Gadget.EvalLemmas2

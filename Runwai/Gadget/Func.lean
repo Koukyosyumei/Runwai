@@ -5,6 +5,7 @@ import Runwai.Gadget.EvalLemmas
 import Runwai.Gadget.TypingLemmas
 import Runwai.Gadget.FieldLemmas
 import Runwai.Gadget.VCG
+import Runwai.Eval.Compute
 
 open Ast
 
@@ -15,54 +16,58 @@ abbrev iszero_func: Ast.Expr :=
     (.letIn "u₁" (.assertE (.var "y") (.fieldExpr (.fieldExpr (.fieldExpr (.constF 0) .sub (.var "x")) .mul (.var "inv")) (.add) (.constF 1)))
     (.letIn "u₂" (.assertE (.fieldExpr (.var "x") .mul (.var "y")) (.constF 0)) (.var "u₂"))))))
 
+set_option maxHeartbeats 800000 in
 lemma isZero_eval_eq_branch_semantics {x y inv: Ast.Expr} {σ: Env.ValEnv} {T: Env.TraceEnv} {Δ: Env.ChipEnv}
   (h₁ : Eval.EvalProp σ T Δ (exprEq y ((((Expr.constF 0).fieldExpr FieldOp.sub x).fieldExpr FieldOp.mul inv).fieldExpr
                   FieldOp.add (Expr.constF 1))) (Value.vBool true))
   (h₂ : Eval.EvalProp σ T Δ (exprEq (x.fieldExpr FieldOp.mul y) (Expr.constF 0)) (Value.vBool true))
   (hx : Eval.EvalProp σ T Δ x xv) (hy : Eval.EvalProp σ T Δ y yv) (hinv : Eval.EvalProp σ T Δ inv invv) :
-  Eval.EvalProp σ T Δ (exprEq y (.branch (x.binRel RelOp.eq (Expr.constF 0)) (Expr.constF 1) (Expr.constF 0))) (Value.vBool true) := by {
-  runwai_vcg
-  rename_i v₁ v₂ ih₁ ih₂ r v₃ v₄ v₅ ih₄ ih₅ ih₆ ih₇ f₁ f₂ h₂ h₃ h₄ x_val h₅
-  rw[← ih₆] at ih₁
-  rw[← h₄] at ih₁
-  rw[← ih₄] at ih₇
-  simp_all
-  rw[← h₄] at hy
-  apply Eval.EvalProp.Rel
-  exact hy
-  apply vcg_branch_intro'
-  apply vcg_rel_intro
-  assumption
-  apply vcg_constF_intro
-  rfl
-  simp
-  rw[← h_det]
-  simp
-  rfl
-  intro h
-  apply vcg_constF_intro
-  rfl
-  intro h
-  apply vcg_constF_intro
-  rfl
-  rfl
-  simp
-  by_cases h: x_val = 0
-  {
-    rw[h]
-    simp
-    rw[h] at h₅
-    rw[← h₅] at h₂
-    simp at h₂
-    simp_all
-  }
-  {
-    simp [h]
-    rw[← h_det] at ih₅
-    simp at ih₅
-    simp_all
-  }
-}
+  Eval.EvalProp σ T Δ (exprEq y (.branch (x.binRel RelOp.eq (Expr.constF 0)) (Expr.constF 1) (Expr.constF 0))) (Value.vBool true) := by
+  -- Extract evalC witnesses for all hypotheses
+  obtain ⟨n₁, h₁e⟩ := Eval.evalC_complete h₁
+  obtain ⟨n₂, h₂e⟩ := Eval.evalC_complete h₂
+  obtain ⟨nx, hxe⟩ := Eval.evalC_complete hx
+  obtain ⟨ny, hye⟩ := Eval.evalC_complete hy
+  obtain ⟨ni, hie⟩ := Eval.evalC_complete hinv
+  set N := max (max nx ny) (max ni (max n₁ n₂))
+  -- Lift all to uniform fuel level
+  have hxN  : Eval.evalC N σ T Δ x   = some xv   := Eval.evalC_mono (by omega) hxe
+  have hyN  : Eval.evalC N σ T Δ y   = some yv   := Eval.evalC_mono (by omega) hye
+  have hiN  : Eval.evalC N σ T Δ inv = some invv  := Eval.evalC_mono (by omega) hie
+  -- Lift to specific depths needed by each expression's AST depth
+  have hxN1 : Eval.evalC (N+1) σ T Δ x   = some xv   := Eval.evalC_mono (by omega) hxN
+  have hyN1 : Eval.evalC (N+1) σ T Δ y   = some yv   := Eval.evalC_mono (by omega) hyN
+  have hiN2 : Eval.evalC (N+2) σ T Δ inv = some invv  := Eval.evalC_mono (by omega) hiN
+  have hyN4 : Eval.evalC (N+4) σ T Δ y   = some yv   := Eval.evalC_mono (by omega) hyN
+  -- Lift hypothesis evaluations to sufficient fuel
+  have h₁N := Eval.evalC_mono (show n₁ ≤ N + 5 from by omega) h₁e
+  have h₂N := Eval.evalC_mono (show n₂ ≤ N + 3 from by omega) h₂e
+  -- Case-split on xv, yv, invv; non-field cases close via evalFieldOp = none → False
+  rcases xv with xf | _ | _ | _ | _ | _ | _ <;>
+  rcases yv with yf | _ | _ | _ | _ | _ | _ <;>
+  rcases invv with invf | _ | _ | _ | _ | _ | _ <;>
+  simp only [Eval.evalC_binRel, Eval.evalC_fieldExpr, Eval.evalC_constF,
+             Eval.evalFieldOp, Eval.evalRelOp, hyN4, hxN1, hiN2, hyN1,
+             Option.some_bind, Option.bind_none, Option.map_some,
+             Option.some.injEq, Value.vBool.injEq, decide_eq_true_eq,
+             reduceCtorEq] at h₁N h₂N
+  -- Now xf, yf, invf are field values with: h₁N : yf = (0-xf)*invf+1, h₂N : xf*yf = 0
+  rw [← Eval.evalC_iff_EvalProp]
+  have hyN3 : Eval.evalC (N+3) σ T Δ y = some (.vF yf) := Eval.evalC_mono (by omega) hyN
+  use N + 4
+  simp only [Eval.evalC_binRel, Eval.evalC_branch, Eval.evalC_constF,
+             Eval.evalRelOp, hyN3, hxN1, Option.some_bind, Option.map_some,
+             Option.some.injEq, Value.vBool.injEq]
+  by_cases h : xf = 0
+  · simp [h]
+    have : yf = 1 := by simp [h] at h₁N; exact h₁N
+    simp [this, decide_eq_true_eq]
+  · simp [h]
+    have : yf = 0 := by
+      rcases mul_eq_zero.mp h₂N with h' | h'
+      · exact absurd h' h
+      · exact h'
+    simp [this, decide_eq_true_eq]
 
 lemma isZero_typing_soundness (Δ: Env.ChipEnv) (Η: Env.UsedNames) (Γ: Env.TyEnv)
   (x y inv u₁ u₂: String)
